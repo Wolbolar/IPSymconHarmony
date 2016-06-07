@@ -1,0 +1,11 @@
+{
+    "id": "{B0B4D0C2-192E-4669-A624-5D5E72DBB555}",
+    "name": "HarmonyDevice",
+    "type": 3,
+    "vendor": "Logitech",
+    "aliases": ["Logitech Harmony Device"],
+    "parentRequirements": ["{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}"],
+    "childRequirements": [],
+    "implemented": ["{7924862A-0EEA-46B9-B431-97A3108BA380}"],
+    "prefix": "LHD"
+}

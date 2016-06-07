@@ -1,0 +1,11 @@
+{
+    "id": "{03B162DB-7A3A-41AE-A676-2444F16EBEDF}",
+    "name": "HarmonyHub",
+    "type": 2,
+    "vendor": "Logitech",
+    "aliases": ["Logitech Harmony Hub"],
+    "parentRequirements": ["{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}"],
+    "childRequirements": ["{7924862A-0EEA-46B9-B431-97A3108BA380}"],
+    "implemented": ["{018EF6B5-AB94-40C6-AA53-46943E824ACF}", "{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}"],
+    "prefix": "HarmonyHub"
+}

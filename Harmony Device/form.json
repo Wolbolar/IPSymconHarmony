@@ -1,0 +1,34 @@
+{
+    "elements":
+            [
+				{ "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
+				{
+                    "name": "Name",
+                    "type": "ValidationTextBox",
+                    "caption": "Name"
+                },
+				{
+                    "name": "DeviceID",
+                    "type": "NumberSpinner",
+                    "caption": "DeviceID"
+                }
+            ],
+    "status":
+            [
+                {
+                    "code": 101,
+                    "icon": "inactive",
+                    "caption": "Die Instanz wird erstellt."
+                },
+				{
+                    "code": 102,
+                    "icon": "active",
+                    "caption": "Konfiguration gültig."
+                },
+                {
+                    "code": 104,
+                    "icon": "inactive",
+                    "caption": "Harmony Device ist inaktiv."
+                }
+            ]
+}

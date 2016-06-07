@@ -1,0 +1,103 @@
+{
+    "elements":
+            [
+                {
+                    "name": "Open",
+                    "type": "CheckBox",
+                    "caption": "Open"
+                },
+				{ "type": "Label", "label": "IP Adresse des Harmony Hub" },
+                {
+                    "name": "Host",
+                    "type": "ValidationTextBox",
+                    "caption": "IP Adresse"
+                },
+				{
+                    "name": "Port",
+                    "type": "NumberSpinner",
+                    "caption": "HarmonyHub Port"
+                },
+				{ "type": "Label", "label": "MyHarmony Zugangsdaten (Email/Passwort)" },
+                {
+                    "name": "Email",
+                    "type": "ValidationTextBox",
+                    "caption": "E-Mail"
+                },
+				{
+                    "name": "Password",
+                    "type": "PasswordTextBox",
+                    "caption": "Passwort"
+                },
+				{ "type": "Label", "label": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:" },
+				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub Geräte" },
+				{ "type": "Label", "label": "Erweiterte IP-Symcon Meldungen (Debug)" },
+				{
+                    "name": "Debug",
+                    "type": "CheckBox",
+                    "caption": "Debug"
+                },
+				{ "type": "Label", "label": "Harmony Devices zum Schalten anlegen:" },
+				{ "type": "Label", "label": "Variablen zum Schalten im Webfront anlegen (Achtung! Hohe Variabenanzahl)" },
+				{
+                    "name": "HarmonyVars",
+                    "type": "CheckBox",
+                    "caption": "Harmony Variablen"
+                },
+				{ "type": "Label", "label": "Skripte zum Schalten anlegen (Alternative oder Ergänzung zum Schalten aus dem Webfront):" },
+				{
+                    "name": "HarmonyScript",
+                    "type": "CheckBox",
+                    "caption": "Harmony Script"
+                }
+            ],
+	"actions":
+			[
+				{ "type": "Label", "label": "1. Logitech Harmony Hub Konfiguration auslesen:" },
+				{ "type": "Button", "label": "Konfiguration auslesen", "onClick": "HarmonyHub_getConfig($id);" },
+				{ "type": "Label", "label": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräte anlegen:" },
+				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" }
+			],		
+    "status":
+            [
+                {
+                    "code": 101,
+                    "icon": "inactive",
+                    "caption": "Die Instanz wird erstellt."
+                },
+				{
+                    "code": 102,
+                    "icon": "active",
+                    "caption": "Harmony Hub ereichbar."
+                },
+                {
+                    "code": 104,
+                    "icon": "inactive",
+                    "caption": "Interface geschlossen."
+                },
+                {
+                    "code": 202,
+                    "icon": "error",
+                    "caption": "Harmony Hub IP Adresse darf nicht leer sein."
+                },
+				{
+                    "code": 203,
+                    "icon": "error",
+                    "caption": "Keine gültige IP Adresse."
+                },
+                {
+                    "code": 204,
+                    "icon": "error",
+                    "caption": "Verbindung zum Harmony Hub verloren."
+                },
+				{
+                    "code": 205,
+                    "icon": "error",
+                    "caption": "Felder dürfen nicht leer sein."
+                },
+				{
+                    "code": 206,
+                    "icon": "error",
+                    "caption": "Kategorie zum Import auswählen."
+                }
+            ]
+}
