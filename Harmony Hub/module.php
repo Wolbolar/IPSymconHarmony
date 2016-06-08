@@ -388,18 +388,15 @@ class HarmonyHub extends IPSModule
         return ($instance['ConnectionID'] > 0) ? $instance['ConnectionID'] : false;
     }
 
-    protected function HasActiveParent($ParentID)
+    protected function HasActiveParent()
     {
-        if ($ParentID > 0)
+        $instance = IPS_GetInstance($this->InstanceID);
+        if ($instance['ConnectionID'] > 0)
         {
-            $parent = IPS_GetInstance($ParentID);
+            $parent = IPS_GetInstance($instance['ConnectionID']);
             if ($parent['InstanceStatus'] == 102)
-            {
-                $this->SetStatus(102);
                 return true;
-            }
         }
-        $this->SetStatus(203);
         return false;
     }
 
@@ -897,17 +894,14 @@ class HarmonyHub extends IPSModule
 	**/
 	protected function XMPP_Send($payload)
 	{
-		// Socket Prüfung auslagern, automtischer zyklische Verbindungswiederaufbau
-		/*
-		$ParentOpen = $this->ReadPropertyBoolean('Open');
+		$parentactive = $this->HasActiveParent();
 		$instanceHarmonySocket = $this->GetParent();
 		// Open the socket if it is disconnected
-		if ($instanceHarmonySocket['InstanceStatus'] != 102)
+		if (!$parentactive)
 		{
-			IPS_SetProperty($instanceHarmonySocket, 'Open', $ParentOpen);
+			IPS_SetProperty($instanceHarmonySocket, 'Open', true);
 			IPS_ApplyChanges($instanceHarmonySocket);
-		}
-		*/		
+		}	
 		$this->Send($payload);	
 	}
 
