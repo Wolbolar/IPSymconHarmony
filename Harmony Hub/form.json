@@ -55,7 +55,9 @@
 				{ "type": "Label", "label": "1. Logitech Harmony Hub Konfiguration auslesen:" },
 				{ "type": "Button", "label": "Konfiguration auslesen", "onClick": "HarmonyHub_getConfig($id);" },
 				{ "type": "Label", "label": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräte anlegen:" },
-				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" }
+				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
+				{ "type": "Label", "label": "Firmware Version und Logitech Harmony Hub Name neu auslesen:" },
+				{ "type": "Button", "label": "Update Harmony Info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
 			],		
     "status":
             [

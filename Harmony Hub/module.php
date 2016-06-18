@@ -34,9 +34,11 @@ class HarmonyHub extends IPSModule
 		
 		$this->RegisterVariableString("BufferIN", "BufferIN", "", 1);
 		$this->RegisterVariableString("HarmonyConfig", "Harmony Config", "", 4);
-		$this->RegisterVariableString("HarmonyIdentity", "Identity", "", 7);
+		$this->RegisterVariableString("HarmonyIdentity", "Identity", "", 7); //uuid
 		$this->RegisterVariableBoolean("HarmonyInSession", "In Session", "", 8);
 		$this->RegisterVariableBoolean("Configlock", "Config Lock", "", 9);
+		$this->RegisterVariableString("FirmwareVersion", "Firmware Version", "", 10);
+		$this->RegisterVariableString("HarmonyHubName", "Harmony Hub Name", "", 11);
 		IPS_SetHidden($this->GetIDForIdent('HarmonyInSession'), true);
 		IPS_SetHidden($this->GetIDForIdent('HarmonyIdentity'), true);
 		IPS_SetHidden($this->GetIDForIdent('HarmonyConfig'), true);
@@ -318,6 +320,9 @@ class HarmonyHub extends IPSModule
 		
 		//Harmony Aktivity Link setzten
 		$this->CreateAktivityLink();
+		
+		//Harmony Firmware und Name auslesen
+		$this->getDiscoveryInfo();
 	}
 	
 	protected function SetHarmonyActivityProfile()
@@ -595,8 +600,9 @@ class HarmonyHub extends IPSModule
 				//print_r($xml);
 				break;
 			case 'success':
-			   if ($debug) IPS_LogMessage("HARMONY XMPP", "RECV: Authentication SUCCESS\r\n");
-			   $this->XMPP_OpenStream(); // Step 3 - Open  new stream for binding
+			   if ($debug) IPS_LogMessage("Logitech Harmony Hub", "RECV: Authentication SUCCESS\r\n");
+			   
+			   //$this->XMPP_OpenStream(); // Step 3 - Open  new stream for binding
 			   break;
 			case 'failure':
 			   if ($debug) IPS_LogMessage("HARMONY XMPP", "RECV: Authentication FAILED\r\n");
@@ -615,10 +621,8 @@ class HarmonyHub extends IPSModule
 	protected function processIQ($xml)
 	{
 		$debug = $this->ReadPropertyBoolean('Debug');						
-		//$content = $this->XMPP_getPayload($xml); Fehler in XMPP_getPayload
 		$parentID = $this->GetParent();
-		//print_r($content);
-		
+				
 		preg_match('/<([a-z:]+)\s.*<([a-z:]+)\s/', $xml, $tag);
 		if (isset($tag[2]))
 		{ // to avoid message of "undefined offset"
@@ -636,15 +640,37 @@ class HarmonyHub extends IPSModule
 						SetValue($this->GetIDForIdent("HarmonyActivity"), $activity);
 					} 
 				}
-				/*
-				else 
-				{ // STEP 6 - We got an identity response message
-					if ($debug) IPS_LogMessage("HARMONY XMPP", "RECV: IQ Stanza received: identity = ".$content['identity']." - status = ".$content['status']."\r\n"); // Info/Query Stanza
-					$identityVariableId = @GetIDForIdent("HarmonyIdentity");
+				elseif(strpos($xml, "discoveryinfo")) //Response discoveryinfo
+				{
+					preg_match('/<!\[CDATA\[\s*(.*)\s*/', $xml, $cdata); // <!\[(CDATA)\[\s*(.*?)\s*>
+					$jsonrawstring = $cdata[1];
+					if (strpos($jsonrawstring, "current_fw_version"))
+					{
+						$jsonrawlength = strlen($jsonrawstring);
+						$jsonend = strripos($jsonrawstring, "]]>");
+						$jsondiscoveryinfo = substr($jsonrawstring, 0, ($jsonend-$jsonrawlength));
+						$discoveryinfo = json_decode($jsondiscoveryinfo, true);
+						// Auslesen Firmware und Name
+						$FirmwareVersion = $discoveryinfo['current_fw_version'];
+						$HarmonyHubName = $discoveryinfo['friendlyName'];
+						$hubProfiles = $discoveryinfo['hubProfiles'];
+						$uuid = $discoveryinfo['uuid'];
+						$remoteId = $discoveryinfo['remoteId'];
+						SetValue($this->GetIDForIdent("FirmwareVersion"), $FirmwareVersion);
+						SetValue($this->GetIDForIdent("HarmonyHubName"), $HarmonyHubName);
+						SetValue($this->GetIDForIdent("HarmonyIdentity"), $uuid);
+					}
+				}
+				elseif(strpos($xml, "identity")) // We got an identity response message
+				{ 
+					$content = $this->XMPP_getPayload($xml); 
+					if ($debug) IPS_LogMessage("Logitech Harmony Hub", "Hub Name: ".$content['friendlyName'].", identity = ".$content['identity']." - status = ".$content['status']."\r\n"); // Info/Query Stanza
+					$identityVariableId = $this->GetIDForIdent("HarmonyIdentity");
 					// Store Identity in String variable
 					SetValue($identityVariableId , $content['identity']);
 						
 					// STEP 7 - If we did the guest authentication (Session Auth == true), we start again now for the session authentication
+					/*
 					$inSessionVarId = @GetIDForIdent("HarmonyInSession");
 					if ($inSessionVarId === false)
 						{
@@ -658,8 +684,9 @@ class HarmonyHub extends IPSModule
 							SetValue($inSessionVarId, true); // We are in the Session Auth Process
 							}
 						}
+					*/	
 				}
-				*/
+				
 			} 
 			if ($tag[2] == "bind")
 			{ // This is not an OA message, we suppose it is a resource binding or identity request reply
@@ -841,7 +868,7 @@ class HarmonyHub extends IPSModule
 	**/
 	public function sendSessionTokenRequest()
 	{
-		$token = GetValue($this->GetIDForIdent("UserAuthToken"));
+		$token = GetValue($this->GetIDForIdent("HarmonyUserAuthToken"));
 		$tokenString = $token.":name=foo#iOS6.0.1#iPhone"; // "token=".
 		$this->XMPP_Send("<iq type='get' id='3174962747' from='guest'><oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pair'>token=".$tokenString."</oa></iq>");
 	}
@@ -1002,7 +1029,10 @@ class HarmonyHub extends IPSModule
 	protected function XMPP_getPayload($xml)
 	{
 		preg_match('/type="[a-zA-Z\.]+\?(.*)">/', $xml, $type);  // type= "connect.stateDigest?notify"
-		$items['type'] = $type[1]; // notify
+		if (!empty($type))
+		{
+			$items['type'] = $type[1]; // notify
+		}
 
 		preg_match('/<!\[(CDATA)\[\s*(.*?)\s*\]\]>/', $xml, $cdata); // gibt CDATA aus
 		preg_match('/^{(.*?)}/', $cdata[2], $cdatat); // Prüft auf {}
@@ -1044,6 +1074,22 @@ class HarmonyHub extends IPSModule
 		</iq>";
 		$this->XMPP_Send($iqString);
 	}
+	
+	
+	/**
+	* Sends a request to the XMPP Server to get Infos (Firmware Version, Hub Name)
+	*
+	* @return none
+	**/
+	public function getDiscoveryInfo()
+	{
+		$iqString = "<iq type='get' id='2320426445' from='".$this->from."'>
+		<oa xmlns='connect.logitech.com' mime='connect.discoveryinfo?get'>format=json</oa>	
+		</iq>";
+		$this->XMPP_Send($iqString);
+	}
+	
+	
 
 	/**
 	* Sends request to send an IR command to XMPP Server
@@ -1078,7 +1124,18 @@ class HarmonyHub extends IPSModule
 	**/
 	protected function sendcommandAction($deviceID, $command)
 	{
-	   $iqString = "<iq id='7725179067' type='render' from='dab4ae4c-6cac-4116-03a9-d9d39002c69b'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=press:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=0</oa></iq><iq id='7725179067' type='render' from='dab4ae4c-6cac-4116-03a9-d9d39002c69b'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=release:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=9</oa></iq>";
+	   $identityVariableId = IPS_GetVariableIDByName("HarmonyIdentity", $parentID);
+	   $identity = GetValue($identityVariableId);
+	   if ($identity == "")
+			{
+			   $this->sendSessionTokenRequest();
+			   IPS-SLeep(500);
+			   $identity = GetValue($identityVariableId);
+			} 
+			
+	   $iqString = "<iq id='7725179067' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=press:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=0</oa></iq>";
+	   $this->XMPP_Send($iqString);
+	   $iqString = "<iq id='7725179067' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=release:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=12</oa></iq>";
 	   $this->XMPP_Send($iqString);
 	}
 
@@ -1087,13 +1144,22 @@ class HarmonyHub extends IPSModule
 	* Device ID and Command name have to be retrieved from the config. No error check is made.
 	*
 	* @param $deviceID ID as retrieved from the Harmony config
-	* @param $command command as retrieved from teh Harmony config
+	* @param $command command as retrieved from the Harmony config
 	*
 	* @return none
 	**/
 
-	protected function sendcommandRender($deviceID, $command) {
-	   $iqString = "<iq id='4191874917' type='render' from='dab4ae4c-6cac-4116-03a9-d9d39002c69b'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\",\"command\"::\"$command\"}:status=press</oa></iq>";
+	protected function sendcommandRender($deviceID, $command)
+	{
+	   $identityVariableId = IPS_GetVariableIDByName("HarmonyIdentity", $parentID);
+	   $identity = GetValue($identityVariableId);
+	   if ($identity == "")
+			{
+			   $this->sendSessionTokenRequest();
+			   IPS-SLeep(500);
+			   $identity = GetValue($identityVariableId);
+			} 
+	   $iqString = "<iq id='4191874917' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\",\"command\"::\"$command\"}:status=press</oa></iq>";
 		$this->XMPP_Send($iqString);
 	}
 
@@ -1117,29 +1183,28 @@ class HarmonyHub extends IPSModule
 	/**
 	* Internal Authentication Processing function
 	**/
-	protected function processAuth()
+	public function processAuth()
 	{
 		// If we have been in a Sesssion Auth, we authenticate as guest to get the identity
-		$inSessionVarId = @GetIDForIdent("HarmonyInSession");
+		$inSessionVarId = $this->GetIDForIdent("HarmonyInSession");
 		$inSession = GetValue($inSessionVarId);
 
 		if ($inSession)
 			{
 			//XMPP_Auth('guest@x.com', 'guest');
-			XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
+			$this->XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
 			SetValue($inSessionVarId, false);
 			}
 		else
 			{
-			$identityVariableId = @IPS_GetVariableIDByName("Identity", $parentID);
-			if ($identityVariableId === false)
+			$identity = GetValue($this->GetIDForIdent("HarmonyIdentity"));
+			if ($identity == "")
 				{
-			   IPS_LogMessage("HARMONY XMPP", "ERROR in processAuth(): Identity Variable does not exist!");
+					$this->sendSessionTokenRequest();
 				} 
 			else
 				{
-				$identity = GetValue($identityVariableId);
-				XMPP_Auth($identity.'@connect.logitech.com', $identity); // Authenticate as session
+					$this->XMPP_Auth($identity.'@connect.logitech.com', $identity); // Authenticate as session
 				}
 			SetValue($inSessionVarId, true);
 			}
