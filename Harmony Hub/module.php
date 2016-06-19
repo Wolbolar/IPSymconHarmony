@@ -589,6 +589,14 @@ class HarmonyHub extends IPSModule
 					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
 					SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
 				}
+				elseif ($type == "notify") // Message bei Activity
+				{
+					$CurrentActivity = intval($content['activityId']);
+					$activities = $this->GetAvailableAcitivities();
+					$ActivityName = array_search($CurrentActivity, $activities);
+					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
+					SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
+				}
 				break;
 			case 'stream:stream':
 				if ($debug) IPS_LogMessage("HARMONY XMPP", "RECV: STREAM Confirmation received\r\n");
