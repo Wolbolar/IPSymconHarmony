@@ -286,9 +286,9 @@ class HarmonyHub extends IPSModule
 				{
 					@IPS_ApplyChanges($ParentID);
 					// Socket vor Trennung durch Hub wieder neu aufbauen
-					//$this->RegisterTimer('Update', 55, 'HarmonyHub_UpdateSocket($id)');
-					// Ping senden statt Socket neu Aufbau
-					$this->RegisterTimer('Update', 55, 'HarmonyHub_Ping($id)');
+					$this->RegisterTimer('Update', 55, 'HarmonyHub_UpdateSocket($id)');
+					// Ping senden statt Socket neu Aufbau, Funktioniert zur Zeit noch nicht zuverlässig
+					//$this->RegisterTimer('Update', 55, 'HarmonyHub_Ping($id)');
 				}
 					
 			}
