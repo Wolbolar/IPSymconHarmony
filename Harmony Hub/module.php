@@ -285,7 +285,10 @@ class HarmonyHub extends IPSModule
 				if ($change)
 				{
 					@IPS_ApplyChanges($ParentID);
-					$this->RegisterTimer('Update', 55, 'HarmonyHub_UpdateSocket($id)');
+					// Socket vor Trennung durch Hub wieder neu aufbauen
+					//$this->RegisterTimer('Update', 55, 'HarmonyHub_UpdateSocket($id)');
+					// Ping senden statt Socket neu Aufbau
+					$this->RegisterTimer('Update', 55, 'HarmonyHub_Ping($id)');
 				}
 					
 			}
@@ -589,13 +592,16 @@ class HarmonyHub extends IPSModule
 					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
 					SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
 				}
-				elseif ($type == "notify") // Message bei Activity
+				elseif ($type == "notify") // Notify z.B. Hue oder Activity
 				{
-					$CurrentActivity = intval($content['activityId']);
-					$activities = $this->GetAvailableAcitivities();
-					$ActivityName = array_search($CurrentActivity, $activities);
-					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
-					SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
+					if (isset($content['activityId']))
+					{
+						$CurrentActivity = intval($content['activityId']);
+						$activities = $this->GetAvailableAcitivities();
+						$ActivityName = array_search($CurrentActivity, $activities);
+						IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
+						SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity); 
+					}
 				}
 				break;
 			case 'stream:stream':
@@ -874,6 +880,14 @@ class HarmonyHub extends IPSModule
 		
 	}
 	
+	public function Ping()
+	{	
+		$iqString = "<iq type='get' id='2320426445' from='guest'>
+			<oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pingvnd.logitech.ping'>
+			</oa>
+			</iq>";
+		$this->XMPP_Send($iqString);
+	}
 	
 	
 	/**
