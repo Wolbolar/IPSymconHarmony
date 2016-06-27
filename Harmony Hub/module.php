@@ -589,18 +589,31 @@ class HarmonyHub extends IPSModule
 					$CurrentActivity = intval($content['activityId']);
 					$activities = $this->GetAvailableAcitivities();
 					$ActivityName = array_search($CurrentActivity, $activities);
-					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
+					IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started und finished");	
 					SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
 				}
+				//  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
 				elseif ($type == "notify") // Notify z.B. Hue oder Activity
 				{
 					if (isset($content['activityId']))
 					{
 						$CurrentActivity = intval($content['activityId']);
+						$activityStatus = intval($content['activityStatus']);
 						$activities = $this->GetAvailableAcitivities();
 						$ActivityName = array_search($CurrentActivity, $activities);
-						IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." started");	
-						SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity); 
+						SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
+						if ($activityStatus == 2)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." is started");
+						}
+						elseif ($activityStatus == 1)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." is starting");	
+						}
+						elseif ($activityStatus == 0)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Hub Status is off");	
+						}
 					}
 				}
 				break;
@@ -1054,14 +1067,31 @@ class HarmonyHub extends IPSModule
 	* @param string $xml
 	*
 	* @return array CDATA content formatted as 'type': Type of message, 'activityId', 'errorCode', 'errorString'
+	* activityId	ID of the current activity.
+	* activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
 	**/
 
 	protected function XMPP_getPayload($xml)
 	{
-		preg_match('/type="[a-zA-Z\.]+\?(.*)">/', $xml, $type);  // type= "connect.stateDigest?notify"
+		preg_match('/type="[a-zA-Z\.]+\?(.*)">/', $xml, $type);  // type= "connect.stateDigest?notify" 
 		if (!empty($type))
 		{
-			$items['type'] = $type[1]; // notify
+			if(strpos($type[0], 'notify'))
+			{
+				$items['type'] = "notify";
+				if(strpos($type[0], 'connect.stateDigest'))
+				{
+					$items['maintype'] = "state";
+				}
+				elseif(strpos($type[0], 'automation.state')) // message for HUE etc.
+				{
+					$items['maintype'] = "automation";
+				}
+			}
+			else
+			{
+				$items['type'] = $type[1];
+			}	
 		}
 
 		preg_match('/<!\[(CDATA)\[\s*(.*?)\s*\]\]>/', $xml, $cdata); // gibt CDATA aus
@@ -1201,11 +1231,14 @@ class HarmonyHub extends IPSModule
 	*
 	* @param $activityID ID as retrieved from the Harmony config
 	*
+	* timestamp A unix timestamp so the hub can identify the order of incoming activity triggering request
 	* @return none
 	**/
 	public function startActivity(integer $activityID)
 	{
-	   $iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=$activityID:timestamp=0</oa></iq>";
+	   //$timestamp = time();
+	   //$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=".$activityID.":timestamp=".$timestamp."</oa></iq>";
+	   $iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=".$activityID.":timestamp=0</oa></iq>";
 	   $this->XMPP_Send($iqString);
 
 	}
