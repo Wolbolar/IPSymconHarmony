@@ -479,7 +479,11 @@ class HarmonyHub extends IPSModule
 		// Empfangene Daten vom I/O
 		$data = json_decode($JSONString);
 		$dataio = $data->Buffer;
+		$debug = $this->ReadPropertyBoolean('Debug');
+		if($debug)
+		{
 		SetValueString($this->GetIDForIdent("IOIN"), $dataio);
+		}
 		//IPS_LogMessage("ReceiveData HarmonyHub", utf8_decode($data->Buffer));
 		
 		//Daten müssen erst zusammengesetzt werden
@@ -528,13 +532,13 @@ class HarmonyHub extends IPSModule
 			//Daten zur Auswertung übergeben
 			$this->ReadPayload($databuffer, $tag);
 		}
-		elseif ($tag == 'stream:stream')
+		elseif (strpos($databuffer, 'stream:stream'))
 		{
 			SetValueString($this->GetIDForIdent("BufferIN"), "");
 			//$this->BufferHarmonyIn = "";
 			$bufferdelete = true;
 			//Daten zur Auswertung übergeben
-			$this->ReadPayload($databuffer, $tag);
+			$this->ReadPayload($databuffer, "stream");
 		}
 		elseif ($tag == 'success')
 		{
@@ -617,7 +621,7 @@ class HarmonyHub extends IPSModule
 					}
 				}
 				break;
-			case 'stream:stream':
+			case 'stream':
 				if ($debug) IPS_LogMessage("HARMONY XMPP", "RECV: STREAM Confirmation received\r\n");
 				preg_match('/id=\'([a-zA-Z0-9-_]+)\'\s/', $payload, $id);
 				IPS_LogMessage("HARMONY XMPP", " -> id: ".$id[1]);
