@@ -1,0 +1,11 @@
+{
+    "id": "{7924719E-124F-44E8-8A50-63282D3BB860}",
+    "name": "HarmonyfakeRoku",
+    "type": 3,
+    "vendor": "Logitech",
+    "aliases": ["Logitech Harmony fakeRoku"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "LHFakeRoku"
+}

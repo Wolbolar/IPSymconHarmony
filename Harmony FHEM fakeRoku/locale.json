@@ -1,0 +1,10 @@
+{
+	"translations": {
+		"de": { 
+			"This instance is for getting keystrokes from the Harmony remote via fakeRoku": "Diese Instanz dient dazu Tastendrücke der Harmony von FHEM fakeRoku übermittelt zu bekommen",
+			"configuration valid": "Konfiguration gültig",
+			"Harmony Device is inactive": "Harmony Device ist inaktiv",
+			"creating instance": "Die Instanz wird erstellt"
+		}
+	}
+}
