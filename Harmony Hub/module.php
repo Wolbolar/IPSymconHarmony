@@ -943,7 +943,7 @@ class HarmonyHub extends IPSModule
 	*
 	* @return none
 	**/
-	protected function XMPP_OpenStream()
+	public function XMPP_OpenStream()
 	{
 	   $this->XMPP_Send("<stream:stream to='connect.logitech.com' xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' xml:lang='en' version='1.0'>"); //  xmlns:xml="http://www.w3.org/XML/1998/namespace"
 	}
@@ -953,7 +953,7 @@ class HarmonyHub extends IPSModule
 	*
 	* @return none
 	**/
-	protected function XMPP_CloseStream()
+	public function XMPP_CloseStream()
 	{
 		$this->XMPP_Send("</stream:stream>");  // <presence type='unavailable'/>
 	}
