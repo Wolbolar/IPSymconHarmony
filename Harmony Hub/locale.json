@@ -1,0 +1,36 @@
+{
+	"translations": {
+		"de": { 
+			"Open": "Aktiv",
+			"IP adress": "IP Adresse",
+			"HarmonyHub port": "Harmony Hub Port",
+			"email": "E-Mail",
+			"Password": "Passwort",
+			"category for Logitech Harmony Hub devices": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:",
+			"Harmony Hub devices": "Harmony Hub Geräte",
+			"IP Symcon messages (debugging)": "Erweiterte IP-Symcon Meldungen (Debug)",
+			"Debug": "Debug",
+			"Create Harmony devices for remote control:": "Harmony Devices zum Schalten anlegen:",
+			"Create variables for webfront (Please note: High numbers of variables)": "Variablen zum Schalten im Webfront anlegen (Achtung! Hohe Variabenanzahl)",
+			"Harmony variables": "Harmony Variablen",
+			"create scripts for remote control (alternative or addition for remote control via webfront):": "Skripte zum Schalten anlegen (Alternative oder Ergänzung zum Schalten aus dem Webfront):",
+			"Harmony script": "Harmony Skript",
+			"1. Read Logitech Harmony Hub configuration:": "1. Logitech Harmony Hub Konfiguration auslesen:",
+			"Read configuration": "Konfiguration auslesen",
+			"2. Create devices after reading the Logitech Harmony Hub configuration:": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräte anlegen:",
+			"Setup Harmony": "Setup Harmony",
+			"reload firmware version and Logitech Harmony Hub name:": "Firmware Version und Logitech Harmony Hub Name neu auslesen:",
+			"update Harmony info": "Aktualisieren der Harmony Info",
+			"Creating instance.": "Die Instanz wird erstellt.",
+			"Harmony Hub accessible.": "Harmony Hub ereichbar.",
+			"interface closed.": "Interface geschlossen.",
+			"Harmony Hub IP adress must not empty.": "Harmony Hub IP Adresse darf nicht leer sein.",
+			"No valid IP adress.": "Keine gültige IP Adresse.",
+			"connection to the Harmony Hub lost.": "Verbindung zum Harmony Hub verloren.",
+			"field must not be empty.": "Felder dürfen nicht leer sein.",
+			"select category for import.": "Kategorie zum Import auswählen."
+			
+			
+		}
+	}
+}

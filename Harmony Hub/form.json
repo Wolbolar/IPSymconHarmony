@@ -10,96 +10,96 @@
                 {
                     "name": "Host",
                     "type": "ValidationTextBox",
-                    "caption": "IP Adresse"
+                    "caption": "IP adress"
                 },
 				{
                     "name": "Port",
                     "type": "NumberSpinner",
-                    "caption": "HarmonyHub Port"
+                    "caption": "Harmonyhub port"
                 },
 				{ "type": "Label", "label": "MyHarmony Zugangsdaten (Email/Passwort)" },
                 {
                     "name": "Email",
                     "type": "ValidationTextBox",
-                    "caption": "E-Mail"
+                    "caption": "Email"
                 },
 				{
                     "name": "Password",
                     "type": "PasswordTextBox",
-                    "caption": "Passwort"
+                    "caption": "Password"
                 },
-				{ "type": "Label", "label": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:" },
-				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub Geräte" },
-				{ "type": "Label", "label": "Erweiterte IP-Symcon Meldungen (Debug)" },
+				{ "type": "Label", "label": "category for Logitech Harmony Hub devices" },
+				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub devices" },
+				{ "type": "Label", "label": "IP Symcon messages (debugging)" },
 				{
                     "name": "Debug",
                     "type": "CheckBox",
                     "caption": "Debug"
                 },
-				{ "type": "Label", "label": "Harmony Devices zum Schalten anlegen:" },
-				{ "type": "Label", "label": "Variablen zum Schalten im Webfront anlegen (Achtung! Hohe Variabenanzahl)" },
+				{ "type": "Label", "label": "Create Harmony devices for remote control:" },
+				{ "type": "Label", "label": "Create variables for webfront (Please note: High numbers of variables)" },
 				{
                     "name": "HarmonyVars",
                     "type": "CheckBox",
-                    "caption": "Harmony Variablen"
+                    "caption": "Harmony variables"
                 },
-				{ "type": "Label", "label": "Skripte zum Schalten anlegen (Alternative oder Ergänzung zum Schalten aus dem Webfront):" },
+				{ "type": "Label", "label": "create scripts for remote control (alternative or addition for remote control via webfront):" },
 				{
                     "name": "HarmonyScript",
                     "type": "CheckBox",
-                    "caption": "Harmony Script"
+                    "caption": "Harmony script"
                 }
             ],
 	"actions":
 			[
-				{ "type": "Label", "label": "1. Logitech Harmony Hub Konfiguration auslesen:" },
-				{ "type": "Button", "label": "Konfiguration auslesen", "onClick": "HarmonyHub_getConfig($id);" },
-				{ "type": "Label", "label": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräte anlegen:" },
+				{ "type": "Label", "label": "1. Read Logitech Harmony Hub configuration:" },
+				{ "type": "Button", "label": "Read configuration", "onClick": "HarmonyHub_getConfig($id);" },
+				{ "type": "Label", "label": "2. Create devices after reading the Logitech Harmony Hub configuration:" },
 				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
-				{ "type": "Label", "label": "Firmware Version und Logitech Harmony Hub Name neu auslesen:" },
-				{ "type": "Button", "label": "Update Harmony Info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
+				{ "type": "Label", "label": "reload firmware version and Logitech Harmony Hub name:" },
+				{ "type": "Button", "label": "update Harmony info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
 			],		
     "status":
             [
                 {
                     "code": 101,
                     "icon": "inactive",
-                    "caption": "Die Instanz wird erstellt."
+                    "caption": "Creating instance."
                 },
 				{
                     "code": 102,
                     "icon": "active",
-                    "caption": "Harmony Hub ereichbar."
+                    "caption": "Harmony Hub accessible."
                 },
                 {
                     "code": 104,
                     "icon": "inactive",
-                    "caption": "Interface geschlossen."
+                    "caption": "interface closed."
                 },
                 {
                     "code": 202,
                     "icon": "error",
-                    "caption": "Harmony Hub IP Adresse darf nicht leer sein."
+                    "caption": "Harmony Hub IP adress must not empty."
                 },
 				{
                     "code": 203,
                     "icon": "error",
-                    "caption": "Keine gültige IP Adresse."
+                    "caption": "No valid IP adress."
                 },
                 {
                     "code": 204,
                     "icon": "error",
-                    "caption": "Verbindung zum Harmony Hub verloren."
+                    "caption": "connection to the Harmony Hub lost."
                 },
 				{
                     "code": 205,
                     "icon": "error",
-                    "caption": "Felder dürfen nicht leer sein."
+                    "caption": "field must not be empty."
                 },
 				{
                     "code": 206,
                     "icon": "error",
-                    "caption": "Kategorie zum Import auswählen."
+                    "caption": "select category for import."
                 }
             ]
 }

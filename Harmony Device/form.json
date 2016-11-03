@@ -18,17 +18,17 @@
                 {
                     "code": 101,
                     "icon": "inactive",
-                    "caption": "Die Instanz wird erstellt."
+                    "caption": "creating instance"
                 },
 				{
                     "code": 102,
                     "icon": "active",
-                    "caption": "Konfiguration gültig."
+                    "caption": "configuration valid"
                 },
                 {
                     "code": 104,
                     "icon": "inactive",
-                    "caption": "Harmony Device ist inaktiv."
+                    "caption": "Harmony Device is inactive"
                 }
             ]
 }

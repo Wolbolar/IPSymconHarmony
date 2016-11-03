@@ -5,7 +5,6 @@ Modul für IP-Symcon ab Version 4. Ermöglicht die Kommunikation mit einem Logit
 Das Modul ist eine Erweiterung und Anpassung der Skripte von Zapp und der Diskussionen aus
 https://www.symcon.de/forum/threads/22682-Logitech-Harmony-Ultimate-Smart-Control-Hub-library
 als PHP-Modul für IP-Symcon ab Version 4.x.
-Beta Test
 
 ## Dokumentation
 
@@ -20,8 +19,8 @@ Beta Test
 ## 1. Funktionsumfang
 
 Mit Hilfe des Logitech Harmony Hub sind Geräte bedienbar, die sonst über IR-Fernbedienungen steuerbar sind oder auch neuere Geräte wie FireTV und AppleTV.
-Nähere Informationen zu ansteuerbaren Geräten über den Logitech Harmony Hub unter
-http://www.logitech.com/de-de/product/harmony-ultimate-hub
+Nähere Informationen zu ansteuerbaren Geräten über den Logitech Harmony Hub unter [Harmony Ultimate Hub](http://www.logitech.com/de-de/product/harmony-ultimate-hub "Harmony Ultimate Hub")
+
 Mit Hilfe des Moduls können die Geräte die im Logitech Harmony Hub hinterlegt sind in IP-Symcon importiert werden und dann von IP-Symcon über den Logitech Harmony Hub geschaltet werden.
 Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmony Hub eine Aktivität ausführt wird die aktuelle laufende Aktivität an IP-Symcon übermittelt.
 
@@ -35,7 +34,7 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
 
 ### Aktivität anzeigen:  
 
- - Anzeige der momentanen aktiven Harmony Activity des Harmony Hub  
+ - Anzeige der momentanen aktiven Harmony Activity des Harmony Hub 
    
 
 ## 2. Voraussetzungen
@@ -47,50 +46,63 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
 
 ### a. Laden des Moduls
 
-   Über das 'Modul Control' in IP-Symcon (Ver. 4.x) folgende URL hinzufügen:
+Über das 'Modul Control' in IP-Symcon (Ver. 4.x) folgende URL hinzufügen:
 	
     `git://github.com/Wolbolar/IPSymconHarmony.git`  
 
 ### b. Einrichtung in IPS
 
-	In IP-Symcon zunächst über Objekt hinzufügen -> Instanz hinzufügen eine neue Instanz anlegen. Als Hersteller Logitech eintragen und als Instanz Logitech Harmony Hub auswählen.
-	Das Konfigurationsformular ausfüllen:
-	Öffnen: Haken setzt damit die I/O Instanz aktiviert wird
-	IP Adresse: IP Adresse des Logitech Harmony Hub eintragen.
-	Port: Standard Port zur Kommunikation 5222 (nicht umstellen)
-	Zugangsdaten
-	Email: Emailadresse, die als Anmeldename für MyHarmony benutzt wird
-	Passwort: Passwort das zum Anmelden an MyHarmony benutzt wird
-	
-	Kategorie zum Anlegen der Logitech Harmony Hub Geräte
-	Es ist eine Kategorie in IP-Symcon anzulegen und hier im Feld Harmony Hub Geräte auszuwählen unter der dann die Geräte automatisch angelegt werden
-	
-	Debug blendet die Variablen IO und CommandOut ein, nur für Debug. Hier muss kein Haken gesetzt werden.
-	
-	
-	Standardmäßig wird mit dem Druck auf Übernehmen nur die Instanz der Harmony Hub Geräte und das Schalten der Harmony Hub Aktivitäten im Webfront angelegt.
-	Sollte es gewünscht sein auch einzelne Befehle an die an dem Logitech Harmony Hub angelernten Geräte zu schicken, kann bei Harmony Variablen und /oder Harmony Skript ein Haken gesetzt werden.
-	
-	Harmony Variablen
-	Es werden bei jedem Harmony Hub Gerät für jede im Harmony Hub hinterlegte Controllgroup eine Variable zum Schalten im Webfront angelegt. Hier können je nach Anzahl der im Harmony Hub konfigurierten Geräte eine hohe Anzahl an Variablen anfallen.
-	Die Option ist für IP-Symcon Nutzer gedacht die noch genügend Variablen zur Verfügung haben und Befehle aus dem Webfront absetzten wollen.	
-	
-	Harmony Skript
-	Diese Option kann als Alternative oder als Ergänzung zu Harmony Variablen genutzt werden. Es werden für jede im Harmony Hub hinterlegte Controllgroup eine Subkategorie mit Scripten angelegt.
-	Das einzelne Script sendet dann denn jeweiligen Befehl (Skriptname) an den Logitech Harmony Hub.
-	
-	Nachdem beim ersten Anlegen des Moduls auf Übernehmen gedrückt wurde wird zunächst mal der User Auth Token vom Modul abgefragt und in IP-Symcon abgelegt.
-	
-	Nachdem der User Auth Token in IP-Symcon abgelegt wurde kann nun in der Testumgebeung auf
-	Konfiguration auslesen
-	gedrückt werden.
-	Die Konfiguration des Logitech Harmony Hub wird ausgelesen und in der Variable Harmony Config abgelegt.
-	
-	Nachdem die Variable Harmony Config in IP-Symcon beschrieben wurde kann auf
-	Setup Harmony 
-	gedrückt werden.
-	Nun wird abhängig von der Auswahl unter Harmony Variablen und Harmony Skript die Variablen oder Skripte für die im Logitech Harmony Hub hinterlegten Geräte angelegt.
+Danach IP-Symcon 4.x eine Instanz hinzufügen (_**CTRL+1**_).
 
+Hier nun als Hersteller _Logitech_ eingeben und _Logitech Harmony Hub_ auswählen.
+
+![Modulauswahl](Doku/Harmony-Hub-1.png?raw=true "Modulauswahl")
+
+Im dem sich öffnenden Fenster zunächst bei Erstinstallation folgende Dinge auswählen:
+
+![Modulform 1](Doku/Harmony-Form-1.png?raw=true "Modul Form 1")
+![Modulform 2](Doku/Harmony-Form-2.png?raw=true "Modul Form 2")
+
+**1.** Haken bei Öffnen setzten. Dies ist notwenig damit der I/O Instanz später aktiv ist.
+
+**2.** IP Adresse des Logitech Harmony Hub eintragen
+
+**3.** Port bleibt unverändert auf 5222
+
+**4.** Email Adresse (entspricht Anmeldename) für MyHarmony
+
+**5.** Passwort für MyHarmony
+
+**6.** Vorher ist in IP Symcon eine Kategorie anlegen. Diese ist hier auszuwählen. Unter dieser Kategorie werden die Geräte Instanzen angelegt.
+
+**7.** Hier einen Haken setzten. Wird in einer späteren Version entfernt. Die Variablen CommandOut und IOIN zeigen die ein- und ausgehenden Daten an.
+
+Standardmäßig wird mit dem Druck auf Übernehmen nur die Instanz der Harmony Hub Geräte und das Schalten der Harmony Hub Aktivitäten im Webfront angelegt.
+Sollte es gewünscht sein auch einzelne Befehle an die an dem Logitech Harmony Hub angelernten Geräte zu schicken, kann bei Harmony Variablen und /oder Harmony Skript ein Haken gesetzt werden.
+
+
+**8.** _Optional_ Wenn diese Option gewählt wird werden für jede Befehlsgruppe eines Logitech Harmony Geräts eine Variable zum Schalten aus dem Webfront angelegt. **VORSICHT:** Diese Option sollte **nur gewählt werden wenn noch ausreichend Variablen in IP-Symcon verfügbar sind** oder die Variablenanzahl unbegrenzt ist, da eine hohe Anzahl an Variablen je nach angelernten Geräten im Harmony Hub verbraucht werden kann. Es werden bei jedem Harmony Hub Gerät für jede im Harmony Hub hinterlegte Controllgroup eine Variable zum Schalten im Webfront angelegt. Hier können je nach Anzahl der im Harmony Hub konfigurierten Geräte eine hohe Anzahl an Variablen anfallen.
+Die Option ist für IP-Symcon Nutzer gedacht die noch genügend Variablen zur Verfügung haben und Befehle aus dem Webfront absetzten wollen.	
+
+**9.** _Optional_ Dies Option kann gewählt werden als Alternative oder Ergänzung zu 8. Es werden für jede im Harmony Hub hinterlegte Controllgroup eine Subkategorie mit Scripten angelegt.
+Das einzelne Script sendet dann denn jeweiligen Befehl (Skriptname) an den Logitech Harmony Hub.
+
+
+Nach dem Druck auf Übernehmen wird zunächst der User Auth Token für den Logitech Harmony Hub abgefragt und in IP-Symcon abgelegt. Wenn das Abrufen des User Auth Token erfolgreich war kann mit Schritt 10 und 11 vorgefahren werden.
+
+**10.** Nachdem der User Auth Token vorhanden ist kann auf _Konfiguration auslesen_ geklickt werden. Es dauert einen Moment nach vollständigem Empfang vom Logitech Harmony Hub wird die Konfiguration in IP-Symcon in der Variable Harmony Config abgespeichert. Wenn sich etwas an den Geräten im Logitech Harmony Hub ändert ist die Konfiguration erneut auszulesen.
+
+**11.** Sobald die Konfiguration ausgelesen wurde kann auf _Setup Harmony_ gedrückt werden.
+Abhängig von der optionalen Auswahl 8 und 9 werden nun die Instanzen, Skripte und Variablen angelegt. 
+
+Im Webfront von IP-Symcon sieht das z.B. dann so aus:
+![Webfront](Doku/Harmony-Webfront-1.png?raw=true "Webfront")
+
+Es lassen sich über das Webfront oder die Skripte dann Befehle absetzten. Die Aktivität wird im Webfront angezeigt.
+Sobald ein Gerät oder Harmony Fernbedienung eine Harmony Aktivität auslöst wird diese auch in IP-Symcon aktualisiert.
+Die aktuelle Aktivität wird in der Variable Harmony Activity, diese liegt unter dem Logitech Harmony Splitter, angezeigt. Es wird automatisch ein Link unter der oben gewählten Kategorie zu dieser Variable angelegt.
+
+Die Variablennamen und die Bezeichnung der Befehle werden so angelegt wie diese von der Bezeichnung im Harmony Hub hinterlegt sind. Für jede angelegte Variable wird auch das Beschreibungsfeld genutzt, hier steht der eigentliche Befehl drinnen der an den Harmony Hub gesendet wird. Daher darf das Beschreibungsfeld der Variable nicht geändert werden. Die Bezeichnung der Variable sowie die Befehlsnamen die im Variablenprofile der Variable hinterlegt sind können individuell vom Nutzer angepasst werden. Dabei darf nur nicht die Reihenfolge im Variablenprofil verändert werden.
 
 ## 4. Funktionsreferenz
 
@@ -101,13 +113,17 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
  An jedes Device kann ein Befehl geschickt werden
  
  Liest die verfügbaren Funktionen des Geräts aus und gibt diese als Array aus
-  `LHD_GetCommands(integer $InstanceID)` 
-  Parameter $InstanceID ObjektID des Harmony Hub Geräts
+```php 
+LHD_GetCommands(integer $InstanceID) 
+```  
+Parameter _$InstanceID_ ObjektID des Harmony Hub Geräts
   
- Sendet einen Befehl an den Logitech Harmony Hub
- `LHD_Send(integer $InstanceID, string $Command)` 
- Parameter $InstanceID ObjektID des Harmony Hub Geräts
- Parameter $Command Befehl der gesendet werden soll, verfügbare Befehle werden über LHD_GetCommands ausgelesen.
+ Sendet einen Befehl an den Logitech Harmony Hub 
+```php
+LHD_Send(integer $InstanceID, string $Command)
+``` 
+ Parameter _$InstanceID_ ObjektID des Harmony Hub Geräts
+ Parameter _$Command_ Befehl der gesendet werden soll, verfügbare Befehle werden über LHD_GetCommands ausgelesen.
  
 ### Harmony Hub
  Es können Aktivitäten des Logitech Harmony Hub ausgeführt werden.
@@ -115,22 +131,31 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
  
  Wenn die Aktivität über Funktionen aktualisiert werden soll oder über ein Skript geschaltet sind die folgenden Funktionen zu benutzten:
  Fordert die aktuelle Aktivität des Logitech Harmony Hub an. Der Wert wird in die Variable Harmony Activity gesetzt.
-   `HarmonyHub_getCurrentActivity(integer $InstanceID)` 
-  Parameter $InstanceID ObjektID des Harmony Hub Splitters
+```php
+HarmonyHub_getCurrentActivity(integer $InstanceID) 
+```   
+  Parameter _$InstanceID_ ObjektID des Harmony Hub Splitters
 
  
  Liest alle verfügbaren Aktivitäten des Logitech Harmony Hub aus und gibt einen Array zurück.
-   `HarmonyHub_GetAvailableAcitivities(integer $InstanceID)` 
-  Parameter $InstanceID ObjektID des Harmony Hub Splitters
+```php
+HarmonyHub_GetAvailableAcitivities(integer $InstanceID) 
+```   
+  Parameter _$InstanceID_ ObjektID des Harmony Hub Splitters
   
   Liest alle verfügbaren Device IDs des Logitech Harmony Hub aus und gibt einen Array zurück.
-   `HarmonyHub_GetHarmonyDeviceIDs(integer $InstanceID)` 
-  Parameter $InstanceID ObjektID des Harmony Hub Splitters 
+```php
+HarmonyHub_GetHarmonyDeviceIDs(integer $InstanceID) 
+```   
+   
+  Parameter _$InstanceID_ ObjektID des Harmony Hub Splitters 
  
  Schaltet auf die gewünschte Logitech Harmony Hub Aktivität
- `HarmonyHub_startActivity(integer $InstanceID, integer $activityID)` 
-  Parameter $InstanceID ObjektID des Harmony Hub Splitters
-  Parameter $activityID ID der Harmony Aktivität, verfügbare IDs können über HarmonyHub_GetAvailableAcitivities ausgelesen werden
+```php
+HarmonyHub_startActivity(integer $InstanceID, integer $activityID)
+``` 
+  Parameter _$InstanceID_ ObjektID des Harmony Hub Splitters
+  Parameter _$activityID_ ID der Harmony Aktivität, verfügbare IDs können über HarmonyHub_GetAvailableAcitivities ausgelesen werden
 
 
 ## 5. Konfiguration:
@@ -170,7 +195,4 @@ GUID: `{7E03C651-E5BF-4EC6-B1E8-397234992DB4}`
 #### Logitech Harmony Device:
 
 GUID: `{C45FF6B3-92E9-4930-B722-0A6193C7FFB5}` 
-
-
-
 

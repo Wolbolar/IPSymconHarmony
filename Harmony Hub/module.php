@@ -244,6 +244,8 @@ class HarmonyHub extends IPSModule
 	{
 		$IOHarmonyHub = $this->GetParent();
 		IPS_ApplyChanges($IOHarmonyHub);
+		$inSessionVarId = $this->GetIDForIdent("HarmonyInSession");
+		SetValue($inSessionVarId, false);
 	}
 	
 	private function SetParentIP()
@@ -510,7 +512,7 @@ class HarmonyHub extends IPSModule
 		$tag = $tag[0];
 		$bufferdelete = false;
 		$configlock = GetValue($this->GetIDForIdent("Configlock"));
-		//if (strpos($databuffer, '</iq>') && ($this->lockgetConfig == true))
+		
 		if (strpos($databuffer, '</iq>') && ($configlock == true))	
 		{
 			//Daten komplett, weiterreichen
@@ -522,17 +524,65 @@ class HarmonyHub extends IPSModule
 			SetValue($this->GetIDForIdent("Configlock"), false);
 			//Daten zur Auswertung übergeben
 			$this->ReadPayload($databuffer, $tag);
-			
 		}
-		elseif ($tag == 'message')
+		
+		if (strpos($databuffer, '</stream:stream>'))
 		{
-			SetValueString($this->GetIDForIdent("BufferIN"), "");
-			//$this->BufferHarmonyIn = "";
-			$bufferdelete = true;
-			//Daten zur Auswertung übergeben
-			$this->ReadPayload($databuffer, $tag);
+			$inSessionVarId = $this->GetIDForIdent("HarmonyInSession");
+			SetValue($inSessionVarId, false);
 		}
-		elseif (strpos($databuffer, 'stream:stream'))
+		
+		//Line Feed trennen
+		$payload = explode("<LF>", $databuffer);
+		foreach ($payload as $content)
+		{
+			if (strpos($content, 'harmony.engine?startActivityFinished')) //Message wenn Activity abgeschlossen
+				{
+				SetValueString($this->GetIDForIdent("BufferIN"), "");
+				//$this->BufferHarmonyIn = "";
+				$bufferdelete = true;
+				//CDATA auslesen
+				$content = $this->XMPP_getPayload($content);
+				$type = $content['type']; // startActivityFinished
+				$CurrentActivity = intval($content['activityId']);
+				$activities = $this->GetAvailableAcitivities();
+				$ActivityName = array_search($CurrentActivity, $activities);
+				IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." finished");
+				SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
+				}
+			elseif (strpos($content, 'connect.stateDigest?notify')) // Notify Message
+				{
+				SetValueString($this->GetIDForIdent("BufferIN"), "");
+				//$this->BufferHarmonyIn = "";
+				$bufferdelete = true;
+				//CDATA auslesen
+				$content = $this->XMPP_getPayload($content);
+				$type = $content['type']; // notify
+				//  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
+				if (isset($content['activityId']))
+					{
+						$CurrentActivity = intval($content['activityId']);
+						$activityStatus = intval($content['activityStatus']);
+						$activities = $this->GetAvailableAcitivities();
+						$ActivityName = array_search($CurrentActivity, $activities);
+						if ($activityStatus == 2)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." is started");
+							SetValueInteger($this->GetIDForIdent("HarmonyActivity"), $CurrentActivity);
+						}
+						elseif ($activityStatus == 1)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Activity ". $ActivityName." is starting");	
+						}
+						elseif ($activityStatus == 0)
+						{
+							IPS_LogMessage("Logitech Harmony Hub", "Hub Status is off");	
+						}
+					}		
+				}
+		}
+		
+		if (strpos($databuffer, 'stream:stream'))
 		{
 			SetValueString($this->GetIDForIdent("BufferIN"), "");
 			//$this->BufferHarmonyIn = "";
@@ -917,6 +967,7 @@ class HarmonyHub extends IPSModule
 	{
 		$token = GetValue($this->GetIDForIdent("HarmonyUserAuthToken"));
 		$tokenString = $token.":name=foo#iOS6.0.1#iPhone"; // "token=".
+		
 		$this->XMPP_Send("<iq type='get' id='3174962747' from='guest'><oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pair'>token=".$tokenString."</oa></iq>");
 	}
 	
@@ -1025,45 +1076,6 @@ class HarmonyHub extends IPSModule
 		$this->XMPP_Send("<iq id='bind_3' type='set'><session xmlns='urn:ietf:params:xml:ns:xmpp-session'/></iq>");
 	}
 
-	
-	/**
-	* Sends XMPP message to XMPP server
-	* If the socket is closed, adds the command to a queue array for subsequent execution.
-	*
-	* @param string $payload
-	*
-	* @return boolean true if success
-	**/
-	protected function XMPP_SendAction($payload)
-	{
-		// ! ÜBERARBEITEN
-		$instanceHarmonySocket = $this->GetParent();
-		// Open the socket if it is disconnected
-		if ($instanceHarmonySocket['InstanceStatus'] != 102)
-			{
-			CSCK_SetOpen($instanceHarmonySocket, true);
-			IPS_ApplyChanges($instanceHarmonySocket);
-			}
-			$result = CSCK_SendText($instanceHarmonySocket, $payload);
-			if ($result) {
-				if ($this->ReadPropertyBoolean('Debug')) {
-					echo "SUCCESS message sent\r\n";
-					return true;
-				}
-			} else {
-				IPS_LogMessage("HARMONY XMPP", "ERROR in XMPP_Send(): Sending XMPP message failed (Socket was connected).");
-				echo "ERROR sending message\r\n";
-				return false;
-			}
-		// Open the socket after the command is sent if it is disconnected
-		if ($instanceHarmonySocket['InstanceStatus'] != 102) {
-			CSCK_SetOpen($instanceHarmonySocket, true);
-			IPS_ApplyChanges($instanceHarmonySocket);
-		}
-		// The Code below is an attempt to implement a command queue in case the socket is not connected - Work in Progress (05/01/2014)
-		// REMOVED
-	}
-
 
 	/**
 	* Extracts CDATA payload from XMPP xml message
@@ -1166,15 +1178,35 @@ class HarmonyHub extends IPSModule
 	**/
 	protected function sendcommand($DeviceID, $Command, $BluetoothDevice)
 	{
-		if($BluetoothDevice == true)
+		$inSessionVarId = $this->GetIDForIdent("HarmonyInSession");
+		$insession = GetValue($inSessionVarId);
+		if($insession == true)
 		{
-			$this->sendcommandAction($DeviceID, $Command);
+			if($BluetoothDevice == true)
+			{
+				$this->sendcommandAction($DeviceID, $Command);
+			}
+			else
+			{
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press</oa></iq>";
+				$this->XMPP_Send($iqString);
+			}	
 		}
-		else
+		else // Open Stream
 		{
-			$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press</oa></iq>";
-			$this->XMPP_Send($iqString);
+			$this->XMPP_OpenStream();
+			IPS_Sleep(500); // wait for auth success
+			if($BluetoothDevice == true)
+			{
+				$this->sendcommandAction($DeviceID, $Command);
+			}
+			else
+			{
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press</oa></iq>";
+				$this->XMPP_Send($iqString);
+			}	
 		}	
+		
 	}
 
 	/**
@@ -1188,18 +1220,19 @@ class HarmonyHub extends IPSModule
 	**/
 	protected function sendcommandAction($deviceID, $command)
 	{
-	   $identityVariableId = IPS_GetVariableIDByName("HarmonyIdentity", $parentID);
+	   $identityVariableId = $this->GetIDForIdent("HarmonyIdentity");
 	   $identity = GetValue($identityVariableId);
 	   if ($identity == "")
 			{
 			   $this->sendSessionTokenRequest();
-			   IPS-SLeep(500);
+			   IPS_Sleep(500);
 			   $identity = GetValue($identityVariableId);
 			} 
 			
 	   $iqString = "<iq id='7725179067' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=press:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=0</oa></iq>";
 	   $this->XMPP_Send($iqString);
-	   $iqString = "<iq id='7725179067' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=release:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=12</oa></iq>";
+	   IPS_Sleep(100);
+	   $iqString = "<iq id='7725179067' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>status=release:action={\"command\"::\"$command\",\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\"}:timestamp=100</oa></iq>";
 	   $this->XMPP_Send($iqString);
 	}
 
@@ -1215,12 +1248,12 @@ class HarmonyHub extends IPSModule
 
 	protected function sendcommandRender($deviceID, $command)
 	{
-	   $identityVariableId = IPS_GetVariableIDByName("HarmonyIdentity", $parentID);
+	   $identityVariableId = $this->GetIDForIdent("HarmonyIdentity");
 	   $identity = GetValue($identityVariableId);
 	   if ($identity == "")
 			{
 			   $this->sendSessionTokenRequest();
-			   IPS-SLeep(500);
+			   IPS_Sleep(500);
 			   $identity = GetValue($identityVariableId);
 			} 
 	   $iqString = "<iq id='4191874917' type='render' from='".$identity."'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$deviceID\",\"command\"::\"$command\"}:status=press</oa></iq>";
@@ -1256,13 +1289,15 @@ class HarmonyHub extends IPSModule
 		$inSessionVarId = $this->GetIDForIdent("HarmonyInSession");
 		$inSession = GetValue($inSessionVarId);
 
-		if ($inSession)
+		if ($inSession) // Stream open auth ok
 			{
 			//XMPP_Auth('guest@x.com', 'guest');
-			$this->XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
-			SetValue($inSessionVarId, false);
+			//$this->XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
+			$this->XMPP_Auth($identity.'@connect.logitech.com', $identity); // Authenticate as session
+			//SetValue($inSessionVarId, false);
+			SetValue($inSessionVarId, true);
 			}
-		else
+		else // Stream open no auth
 			{
 			$identity = GetValue($this->GetIDForIdent("HarmonyIdentity"));
 			if ($identity == "")
@@ -1626,7 +1661,7 @@ class HarmonyHub extends IPSModule
         }
         
     }	
-	
+	//-- Harmony API
 	
 }
 

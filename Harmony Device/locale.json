@@ -1,0 +1,11 @@
+{
+	"translations": {
+		"de": { 
+			"DeviceID": "Geräte ID",
+			"Name": "Gerätename",
+			"configuration valid": "Konfiguration gültig",
+			"Harmony Device is inactive": "Harmony Device ist inaktiv",
+			"creating instance": "Die Instanz wird erstellt"
+		}
+	}
+}
