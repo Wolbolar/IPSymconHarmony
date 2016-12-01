@@ -934,7 +934,14 @@ class HarmonyHub extends IPSModule
 		if(!curl_errno($ch))
 		{
 			// No Error
-			$UserAuthToken = $result->GetUserAuthTokenResult->UserAuthToken;
+			if($result = '{"GetUserAuthTokenResult":null}')
+			{
+				$UserAuthToken = "";
+			}
+			else
+			{
+				$UserAuthToken = $result->GetUserAuthTokenResult->UserAuthToken;
+			}
 			SetValue($userauthtokenid, $UserAuthToken);
 		}
 		else
