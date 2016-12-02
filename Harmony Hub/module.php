@@ -854,7 +854,11 @@ class HarmonyHub extends IPSModule
 		$DeviceID = $datasend->DeviceID;
 		$Command = $datasend->Command;
 		$BluetoothDevice = $datasend->BluetoothDevice;
-		SetValueString($this->GetIDForIdent("CommandOut"), "DeviceID: ".$DeviceID.", Command: ".$Command.", BluetoothDevice: ".$BluetoothDevice);
+		$commandoutobjid = @$this->GetIDForIdent("CommandOut");
+		if($commandoutobjid > 0)
+		{
+			SetValueString($commandoutobjid, "DeviceID: ".$DeviceID.", Command: ".$Command.", BluetoothDevice: ".$BluetoothDevice);
+		}
 		IPS_LogMessage("ForwardData HarmonyHub Splitter", "DeviceID: ".$DeviceID.", Command: ".$Command.", BluetoothDevice: ".$BluetoothDevice);
 	 
 		// Hier würde man den Buffer im Normalfall verarbeiten
@@ -897,7 +901,7 @@ class HarmonyHub extends IPSModule
 			
 	
 	//UserAuthToken abholen falls nicht vorhanden
-	protected function RegisterUser($email, $password, $userauthtokenid)
+	public function RegisterUser($email, $password, $userauthtokenid)
 	{
 		$LOGITECH_AUTH_URL = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json/GetUserAuthToken";
 		$timeout = 30;
@@ -951,6 +955,7 @@ class HarmonyHub extends IPSModule
 		}
 
 		//print_r ($result);
+		return $json_result;
 		
 	}
 	
