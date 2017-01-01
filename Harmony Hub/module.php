@@ -1341,7 +1341,7 @@ class HarmonyHub extends IPSModule
 			//$InsIDListID = 0;
 			foreach ($harmonydevicelist as $harmonydevice)
 			{
-				$InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
+				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
 				$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
 				$deviceID = intval($harmonydevice["id"]); //DeviceID des Geräts
 				if(isset($harmonydevice["BTAddress"]))
@@ -1385,7 +1385,7 @@ class HarmonyHub extends IPSModule
 			$harmonydeviceid = 0;
 			foreach ($harmonydevicelist as $harmonydevice)
 			{
-				$InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
+				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
 				$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
 				
 				$controlGroups = $harmonydevice["controlGroup"];
@@ -1478,7 +1478,7 @@ class HarmonyHub extends IPSModule
 			$harmonydeviceid = 0;
 			foreach ($harmonydevicelist as $harmonydevice)
 			{
-				$InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
+				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
 				$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
 				$controlGroups = $harmonydevice["controlGroup"];
 
@@ -1489,7 +1489,7 @@ class HarmonyHub extends IPSModule
 				if ($MainCatID === false)
 				{
 					$MainCatID = IPS_CreateCategory();
-					IPS_SetName($MainCatID, $harmonydevice["label"]);
+					IPS_SetName($MainCatID, utf8_decode($harmonydevice["label"]));
 					IPS_SetInfo($MainCatID, $harmonydevice["id"]);
 					IPS_SetParent($MainCatID, $CategoryID);
 				}
@@ -1572,8 +1572,11 @@ class HarmonyHub extends IPSModule
 		$jsonrawstring = GetValue($this->GetIDForIdent("HarmonyConfig"));
 		$jsonstart = strpos($jsonrawstring, '![CDATA[');
 		$jsonrawlength = strlen($jsonrawstring);
-		$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
+		//$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
+		$jsonend = strripos($jsonrawstring, "]]></oa></iq><iq/>");
 		$jsonharmony = substr($jsonrawstring, ($jsonstart+8), ($jsonend-$jsonrawlength));
+		$jsonharmony = str_replace("Ã¼", "ü", $jsonharmony);
+		$jsonharmony = str_replace("Ã¤", "ä", $jsonharmony);
 		$json = json_decode($jsonharmony, true);
 		return $json;
 	}
