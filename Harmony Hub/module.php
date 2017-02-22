@@ -1572,8 +1572,11 @@ class HarmonyHub extends IPSModule
 		$jsonrawstring = GetValue($this->GetIDForIdent("HarmonyConfig"));
 		$jsonstart = strpos($jsonrawstring, '![CDATA[');
 		$jsonrawlength = strlen($jsonrawstring);
-		//$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
 		$jsonend = strripos($jsonrawstring, "]]></oa></iq><iq/>");
+		if($jsonend == false)
+		{
+			$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
+		}
 		$jsonharmony = substr($jsonrawstring, ($jsonstart+8), ($jsonend-$jsonrawlength));
 		$jsonharmony = str_replace("Ã¼", "ü", $jsonharmony);
 		$jsonharmony = str_replace("Ã¤", "ä", $jsonharmony);
