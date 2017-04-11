@@ -56,12 +56,12 @@ Danach IP-Symcon 4.x eine Instanz hinzufügen (_**CTRL+1**_).
 
 Hier nun als Hersteller _Logitech_ eingeben und _Logitech Harmony Hub_ auswählen.
 
-![Modulauswahl](Doku/Harmony-Hub-1.png?raw=true "Modulauswahl")
+![Modulauswahl](docs/Harmony-Hub-1.png?raw=true "Modulauswahl")
 
 Im dem sich öffnenden Fenster zunächst bei Erstinstallation folgende Dinge auswählen:
 
-![Modulform 1](Doku/Harmony-Form-1.png?raw=true "Modul Form 1")
-![Modulform 2](Doku/Harmony-Form-2.png?raw=true "Modul Form 2")
+![Modulform 1](docs/Harmony-Form-1.png?raw=true "Modul Form 1")
+![Modulform 2](docs/Harmony-Form-2.png?raw=true "Modul Form 2")
 
 **1.** Haken bei Öffnen setzten. Dies ist notwenig damit der I/O Instanz später aktiv ist.
 
@@ -96,7 +96,7 @@ Nach dem Druck auf Übernehmen wird zunächst der User Auth Token für den Logit
 Abhängig von der optionalen Auswahl 8 und 9 werden nun die Instanzen, Skripte und Variablen angelegt. 
 
 Im Webfront von IP-Symcon sieht das z.B. dann so aus:
-![Webfront](Doku/Harmony-Webfront-1.png?raw=true "Webfront")
+![Webfront](docs/Harmony-Webfront-1.png?raw=true "Webfront")
 
 Es lassen sich über das Webfront oder die Skripte dann Befehle absetzten. Die Aktivität wird im Webfront angezeigt.
 Sobald ein Gerät oder Harmony Fernbedienung eine Harmony Aktivität auslöst wird diese auch in IP-Symcon aktualisiert.
