@@ -19,7 +19,6 @@ class HarmonyHub extends IPSModule
 		$this->RegisterPropertyInteger("Port", 5222);
 		$this->RegisterPropertyInteger("HubID", 0);
         $this->RegisterPropertyBoolean("Open", false);
-		$this->RegisterPropertyString("Token", "");
 		$this->RegisterPropertyString("Email", "");
 		$this->RegisterPropertyString("Password", "");
 		$this->RegisterPropertyInteger("ImportCategoryID", 0);
@@ -541,7 +540,7 @@ class HarmonyHub extends IPSModule
     }
 
 	// Testfunktion Data an Child weitergeben
-	public function SendTest($Text)
+	public function SendTest(string $Text)
 	{	 
 		// Weiterleitung zu allen Gerät-/Device-Instanzen
 		$this->SendDebug("Logitech Harmony Hub","Send :".$Text,0);
@@ -968,71 +967,12 @@ class HarmonyHub extends IPSModule
     }
 	
 	
-	public function Send($payload)
+	public function Send(string $payload)
 		{
 			$this->SendDataToParent(json_encode(Array("DataID" => "{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}", "Buffer" => $payload)));
 		}
 			
-	
-	//UserAuthToken abholen falls nicht vorhanden
-	public function RegisterUser($email, $password, $userauthtokenid)
-	{
-		$LOGITECH_AUTH_URL = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json/GetUserAuthToken";
-		$timeout = 30;
-
-		$credentials = array(
-					'email' => $email,
-					'password' => $password
-					);
-		$json_string = json_encode($credentials);// '{'.$cmd.'}';
-
-		$ch = curl_init($LOGITECH_AUTH_URL);
-
-		$options = array(
-				   CURLOPT_TIMEOUT => $timeout,
-				   CURLOPT_CONNECTTIMEOUT => $timeout,
-				   CURLOPT_VERBOSE => 1,
-				   CURLOPT_SSL_VERIFYPEER => false,
-				   CURLOPT_SSL_VERIFYHOST => 2,
-				   CURLOPT_RETURNTRANSFER => true,
-				   CURLOPT_HTTPHEADER => array('Content-type: application/json; charset=utf-8'),
-				   CURLOPT_POST => true,
-				   CURLOPT_POSTFIELDS => $json_string
-				   );
-
-		// Setting curl options
-		curl_setopt_array( $ch, $options );
-		// Getting results
-		$json_result =  curl_exec($ch);
-		if ($json_result === FALSE) {
-			die(curl_error($ch));
-		}
-		$result = json_decode($json_result);
-
-		if(!curl_errno($ch))
-		{
-			// No Error
-			if($result = '{"GetUserAuthTokenResult":null}')
-			{
-				$UserAuthToken = "";
-			}
-			else
-			{
-				$UserAuthToken = $result->GetUserAuthTokenResult->UserAuthToken;
-			}
-			SetValue($userauthtokenid, $UserAuthToken);
-		}
-		else
-		{
-			$this->SendDebug("Logitech Harmony Hub","Error: Authentification failed",0);
-			$this->SendDebug("Logitech Harmony Hub","Error: Curl failed - " . curl_error($ch),0);
-		}
-
-		//print_r ($result);
-		return $json_result;
 		
-	}
-	
 	public function Ping()
 	{	
 		$iqString = "<iq type='get' id='2320426445' from='guest'>
@@ -1361,7 +1301,7 @@ class HarmonyHub extends IPSModule
 	* timestamp A unix timestamp so the hub can identify the order of incoming activity triggering request
 	* @return none
 	**/
-	public function startActivity(integer $activityID)
+	public function startActivity(int $activityID)
 	{
 	   //$timestamp = time();
 	   //$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=".$activityID.":timestamp=".$timestamp."</oa></iq>";
@@ -1403,7 +1343,64 @@ class HarmonyHub extends IPSModule
 			}
 	}
 
-	
+	//UserAuthToken abholen falls nicht vorhanden
+	public function RegisterUser(string $email, string $password, string $userauthtokenid)
+	{
+		$LOGITECH_AUTH_URL = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json/GetUserAuthToken";
+		$timeout = 30;
+
+		$credentials = array(
+					'email' => $email,
+					'password' => $password
+					);
+		$json_string = json_encode($credentials);// '{'.$cmd.'}';
+
+		$ch = curl_init($LOGITECH_AUTH_URL);
+
+		$options = array(
+				   CURLOPT_TIMEOUT => $timeout,
+				   CURLOPT_CONNECTTIMEOUT => $timeout,
+				   CURLOPT_VERBOSE => 1,
+				   CURLOPT_SSL_VERIFYPEER => false,
+				   CURLOPT_SSL_VERIFYHOST => 2,
+				   CURLOPT_RETURNTRANSFER => true,
+				   CURLOPT_HTTPHEADER => array('Content-type: application/json; charset=utf-8'),
+				   CURLOPT_POST => true,
+				   CURLOPT_POSTFIELDS => $json_string
+				   );
+
+		// Setting curl options
+		curl_setopt_array( $ch, $options );
+		// Getting results
+		$json_result =  curl_exec($ch);
+		if ($json_result === FALSE) {
+			die(curl_error($ch));
+		}
+		$result = json_decode($json_result);
+
+		if(!curl_errno($ch))
+		{
+			// No Error
+			if($result = '{"GetUserAuthTokenResult":null}')
+			{
+				$UserAuthToken = "";
+			}
+			else
+			{
+				$UserAuthToken = $result->GetUserAuthTokenResult->UserAuthToken;
+			}
+			SetValue($userauthtokenid, $UserAuthToken);
+		}
+		else
+		{
+			$this->SendDebug("Logitech Harmony Hub","Error: Authentification failed",0);
+			$this->SendDebug("Logitech Harmony Hub","Error: Curl failed - " . curl_error($ch),0);
+		}
+
+		//print_r ($result);
+		return $json_result;
+		
+	}
 	
 	//Installation Harmony Instanzen
 	protected function SetupHarmonyInstance()
@@ -1703,7 +1700,7 @@ class HarmonyHub extends IPSModule
 	}
 	
 	//Create Harmony Device Instance 
-	protected function HarmonyDeviceCreateInstance(string $InstName, integer $CategoryID, integer $deviceID, boolean $BluetoothDevice)
+	protected function HarmonyDeviceCreateInstance(string $InstName, int $CategoryID, int $deviceID, bool $BluetoothDevice)
 	{
 		
 		//Prüfen ob Instanz schon existiert
@@ -1766,7 +1763,7 @@ class HarmonyHub extends IPSModule
         */
         $this->RegisterProfileIntegerHarmony($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $Stepsize, $Digits);
         
-		//boolean IPS_SetVariableProfileAssociation ( string $ProfilName, float $Wert, string $Name, string $Icon, integer $Farbe )
+		//boolean IPS_SetVariableProfileAssociation ( string $ProfilName, float $Wert, string $Name, string $Icon, int $Farbe )
         foreach($Associations as $Association) {
             IPS_SetVariableProfileAssociation($Name, $Association[0], $Association[1], $Association[2], $Association[3]);
         }
