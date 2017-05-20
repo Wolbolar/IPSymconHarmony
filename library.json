@@ -1,5 +1,8 @@
 {
 	"id": "{8980554A-20A7-4B9B-9FF0-8180D43DB212}",
+	"description": "Logitech Harmony Hub Modul",
+	"tags": "Logitech",
+	"req_ips_version": "4.1",
 	"author": "Fonzo & Zapp",
 	"name": "Harmony Hub",
 	"url": "http://www.logitech.com/de-de/harmony-remotes",

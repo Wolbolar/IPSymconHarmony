@@ -1,5 +1,7 @@
 {
     "id": "{7924719E-124F-44E8-8A50-63282D3BB860}",
+	"title": "Harmony Fake Roku",
+	"description": "Instanz zum Empfangen einzelner Tastendrücke der Logitech Harmony Remote über FHEM",
     "name": "HarmonyfakeRoku",
     "type": 3,
     "vendor": "Logitech",

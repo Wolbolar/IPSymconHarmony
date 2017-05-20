@@ -4,6 +4,8 @@
 			"Open": "Aktiv",
 			"IP adress": "IP Adresse",
 			"HarmonyHub port": "Harmony Hub Port",
+			"MyHarmony Token":"MyHarmony Token",
+			"Token": "Token",
 			"email": "E-Mail",
 			"Password": "Passwort",
 			"category for Logitech Harmony Hub devices": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:",
@@ -15,6 +17,7 @@
 			"Harmony variables": "Harmony Variablen",
 			"create scripts for remote control (alternative or addition for remote control via webfront):": "Skripte zum Schalten anlegen (Alternative oder Ergänzung zum Schalten aus dem Webfront):",
 			"Harmony script": "Harmony Skript",
+			"Register": "Registrieren",
 			"1. Read Logitech Harmony Hub configuration:": "1. Logitech Harmony Hub Konfiguration auslesen:",
 			"Read configuration": "Konfiguration auslesen",
 			"2. Create devices after reading the Logitech Harmony Hub configuration:": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräte anlegen:",
@@ -28,7 +31,10 @@
 			"No valid IP adress.": "Keine gültige IP Adresse.",
 			"connection to the Harmony Hub lost.": "Verbindung zum Harmony Hub verloren.",
 			"field must not be empty.": "Felder dürfen nicht leer sein.",
-			"select category for import.": "Kategorie zum Import auswählen."
+			"select category for import.": "Kategorie zum Import auswählen.",
+			"Alexa Smart Home Skill is available in IP-Symcon": "Alexa SmartHomeSkill ist in IP-Symcon verfügbar",
+			"Would you like to create Scripts for Alexa for Harmony actions and links in the SmartHomeSkill instace?": "Sollen Skripte zum Schalten von Harmony Aktion für Alexa und Links in der SmartHomeSkill Instanz erstellt werden?",
+			"Create Links and Scripts for Amazon Echo / Dot": "Links und Skripte für Amazon Echo /Dot anlegen"
 			
 			
 		}

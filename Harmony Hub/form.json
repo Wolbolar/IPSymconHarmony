@@ -12,11 +12,6 @@
                     "type": "ValidationTextBox",
                     "caption": "IP adress"
                 },
-				{
-                    "name": "Port",
-                    "type": "NumberSpinner",
-                    "caption": "Harmonyhub port"
-                },
 				{ "type": "Label", "label": "MyHarmony Zugangsdaten (Email/Passwort)" },
                 {
                     "name": "Email",
@@ -30,12 +25,6 @@
                 },
 				{ "type": "Label", "label": "category for Logitech Harmony Hub devices" },
 				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub devices" },
-				{ "type": "Label", "label": "IP Symcon messages (debugging)" },
-				{
-                    "name": "Debug",
-                    "type": "CheckBox",
-                    "caption": "Debug"
-                },
 				{ "type": "Label", "label": "Create Harmony devices for remote control:" },
 				{ "type": "Label", "label": "Create variables for webfront (Please note: High numbers of variables)" },
 				{

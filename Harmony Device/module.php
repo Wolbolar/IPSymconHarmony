@@ -15,6 +15,8 @@ class HarmonyDevice extends IPSModule
 		$this->RegisterPropertyString("Name", "");
 		$this->RegisterPropertyInteger("DeviceID", 0);
 		$this->RegisterPropertyBoolean("BluetoothDevice", false);		
+		$this->RegisterPropertyBoolean("VolumeControl", false);
+		$this->RegisterPropertyInteger("MaxStepVolume", 0);
     }
 
 
@@ -38,6 +40,20 @@ class HarmonyDevice extends IPSModule
 		//Type und Zone
 		$Name = $this->ReadPropertyString('Name');
 		$DeviceID = $this->ReadPropertyInteger('DeviceID');
+		$VolumeControl = $this->ReadPropertyBoolean('VolumeControl');
+		$MaxStepVolume = $this->ReadPropertyInteger('MaxStepVolume');
+		if ($VolumeControl)
+		{
+			if($MaxStepVolume == 0)
+			{
+				$this->SetStatus(201);
+			}
+			if($MaxStepVolume > 0)
+			{
+				$this->RegisterVariableFloat("VolumeSlider", "Volume", "~Intensity.1", 1);
+				$this->EnableAction("VolumeSlider");
+			}
+		}
 				
 		//Auswahl Prüfen
 		if ($Name !== "" && $DeviceID !== "")
@@ -49,16 +65,56 @@ class HarmonyDevice extends IPSModule
 		
 	public function RequestAction($Ident, $Value)
     {
-        $ObjID = $this->GetIDForIdent($Ident);
+		$ObjID = $this->GetIDForIdent($Ident);
 		$Object = IPS_GetObject($ObjID);
 		$ObjectInfo = $Object["ObjectInfo"];
 		$commands = json_decode($ObjectInfo, true);
-		$command = $commands[$Value];
-		//$command = GetValueFormatted($ObjID);
+		$command = $commands[$Value];	
+		if($Ident == "VolumeSlider")
+		{
+			$this->SetVolumeSlider($Value);
+		}
+		else
+		{
+			$this->Send($command);
+		}
 		SetValue($ObjID, $Value);
-		$this->Send($command);
     }
+
 	
+	public function SetVolumeSlider(float $Value)
+	{
+		$MaxStepVolume = $this->ReadPropertyInteger('MaxStepVolume');
+		$this->SendDebug("Logitech Hub","Max Step Volume: ".print_r($MaxStepVolume,true),0);
+		$CurrentVolume = GetValue($this->GetIDForIdent("VolumeSlider"));
+		$this->SendDebug("Logitech Hub","Current Volume: ".print_r($CurrentVolume,true),0);
+		$TargetVolume = round($Value*$MaxStepVolume);
+		$this->SendDebug("Logitech Hub","Target Volume: ".print_r($Value,true),0);
+		$this->SendDebug("Logitech Hub","Steps to Target Volume: ".print_r($TargetVolume,true),0);
+		if ($Value > $CurrentVolume)
+		{
+			$command = "VolumeUp";
+			$commandrepeat = $TargetVolume - ($CurrentVolume * $MaxStepVolume);
+		}
+		elseif ($Value < $CurrentVolume)
+		{
+			$command = "VolumeDown";
+			$commandrepeat = ($CurrentVolume * $MaxStepVolume) - $TargetVolume;
+		}
+		$commandrepeat = round($commandrepeat);
+		$this->SendDebug("Logitech Hub","Send Command: ".print_r($command,true),0);
+		$this->SendDebug("Logitech Hub","Repeat Rate: ".print_r($commandrepeat,true),0);
+		$this->VolumeControl($command, $commandrepeat);
+	}
+	
+	public function VolumeControl(string $command, int $commandrepeat = NULL)
+	{
+		for ($i=0; $i <= $commandrepeat; $i++)
+		{
+			$this->Send($command);
+			IPS_Sleep(150);
+		}
+	}
 	
 	
 	protected function GetParent()
@@ -182,6 +238,237 @@ class HarmonyDevice extends IPSModule
 	 
 		// Hier werden die Daten verarbeitet und in Variablen geschrieben
 	 
+	}
+	
+	//Configuration Form
+	public function GetConfigurationForm()
+	{
+		$formhead = $this->FormHead();
+		$formselection = $this->FormSelection();
+		$formactions = $this->FormActions();
+		$formelementsend = '{ "type": "Label", "label": "__________________________________________________________________________________________________" }';
+		$formstatus = $this->FormStatus();
+		
+		return	'{ '.$formhead.$formselection.$formelementsend.'],'.$formactions.$formstatus.' }';	
+	}
+				
+	protected function FormSelection()
+	{			 
+		$AlexaSmartHomeSkill = $this->GetAlexaSmartHomeSkill();
+		$CheckVolumeControl = $this->CheckVolumeControl();
+		if($CheckVolumeControl == false)
+		{
+			$form = '';
+		}
+		else
+		{
+			$form = '{
+                    "name": "VolumeControl",
+                    "type": "CheckBox",
+                    "caption": "Volume Control"
+                },
+				{
+                    "name": "MaxStepVolume",
+                    "type": "NumberSpinner",
+                    "caption": "Steps Volume"
+                },';
+		}
+		if($AlexaSmartHomeSkill == false)
+		{
+			$form = $form;
+		}
+		else
+		{
+			$form .= '{ "type": "Label", "label": "Alexa Smart Home Skill is available in IP-Symcon"},
+				{ "type": "Label", "label": "Would you like to create Scripts for Alexa for Harmony actions and links in the SmartHomeSkill instace?" },
+				{ "type": "CheckBox", "name": "Alexa", "caption": "Create Links and Scripts for Amazon Echo / Dot" },';
+		}	
+		
+		return $form;
+	}
+	
+	protected function CheckVolumeControl()
+	{
+		$CheckVolumeControl = false;
+		$commands = $this->GetCommands();
+
+		foreach ($commands as $key=>$command)
+		{
+			if($command == "VolumeDown")
+			 {
+				$CheckVolumeControl = true;
+			 } 
+		}
+		return $CheckVolumeControl;
+	}
+	
+
+		protected function SetHarmonyInstanceScripts($InsIDList, $HubCategoryID)
+	{
+		$json = $this->GetHarmonyConfigJSON();
+		$activities[] = $json["activity"];
+		$devices[] =  $json["device"];
+
+		foreach ($devices as $harmonydevicelist)
+		{
+			$harmonydeviceid = 0;
+			foreach ($harmonydevicelist as $harmonydevice)
+			{
+				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
+				$controlGroups = $harmonydevice["controlGroup"];
+
+				//Kategorien anlegen
+				$InsID = $InsIDList[$harmonydeviceid];
+				//Prüfen ob Kategorie schon existiert
+				$MainCatID = @IPS_GetCategoryIDByName($InstName, $HubCategoryID);
+				if ($MainCatID === false)
+				{
+					$MainCatID = IPS_CreateCategory();
+					IPS_SetName($MainCatID, utf8_decode($harmonydevice["label"]));
+					IPS_SetInfo($MainCatID, $harmonydevice["id"]);
+					IPS_SetParent($MainCatID, $HubCategoryID);
+				}
+				
+				foreach ($controlGroups as $controlGroup)
+				{
+					$commands = $controlGroup["function"]; //Function Array
+					
+					//Prüfen ob Kategorie schon existiert
+					$CGID = @IPS_GetCategoryIDByName($controlGroup["name"], $MainCatID);
+					if ($CGID === false)
+					{
+					$CGID = IPS_CreateCategory();
+					IPS_SetName($CGID, $controlGroup["name"]);
+					IPS_SetParent($CGID, $MainCatID);
+					}
+
+					$assid = 0;
+					foreach ($commands as $command)
+						{
+							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
+							//Prüfen ob Script schon existiert
+							$Scriptname = $command["label"];
+							$ScriptID = @IPS_GetScriptIDByName($Scriptname, $CGID);
+							if ($ScriptID === false)
+							{
+							   $ScriptID = IPS_CreateScript(0);
+								IPS_SetName($ScriptID, $Scriptname);
+								IPS_SetParent($ScriptID, $CGID);
+								$content = "<? LHD_Send(".$InsID.", \"".$harmonycommand["command"]."\");?>";
+								IPS_SetScriptContent($ScriptID, $content);
+							}
+							$assid++;
+						}
+				}
+				$harmonydeviceid++;
+			}
+		}
+	}
+
+
+
+
+	
+	protected function FormHead()
+	{
+		$form = '"elements":
+            [
+                { "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
+				{
+                    "name": "Name",
+                    "type": "ValidationTextBox",
+                    "caption": "Name"
+                },
+				{
+                    "name": "DeviceID",
+                    "type": "NumberSpinner",
+                    "caption": "DeviceID"
+                },';
+			
+		return $form;
+	}
+		
+	protected function FormActions()
+	{
+		$zapchannel = false;
+		$form = '';
+		if($zapchannel)
+		{
+			$form = '"actions":
+			[
+				{ "type": "Label", "label": "1. Read Logitech Harmony Hub configuration:" },
+				{ "type": "Button", "label": "Read configuration", "onClick": "HarmonyHub_getConfig($id);" },
+				{ "type": "Label", "label": "2. Create devices after reading the Logitech Harmony Hub configuration:" },
+				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
+				{ "type": "Label", "label": "reload firmware version and Logitech Harmony Hub name:" },
+				{ "type": "Button", "label": "update Harmony info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
+			],';
+		}
+		return  $form;
+	}	
+		
+	protected function FormStatus()
+	{
+		$form = '"status":
+            [
+                {
+                    "code": 101,
+                    "icon": "inactive",
+                    "caption": "Creating instance."
+                },
+				{
+                    "code": 102,
+                    "icon": "active",
+                    "caption": "configuration valid"
+                },
+                {
+                    "code": 104,
+                    "icon": "inactive",
+                    "caption": "Harmony Device is inactive"
+                },
+				{
+                    "code": 201,
+                    "icon": "error",
+                    "caption": "Volume step can not be zero."
+                },
+                {
+                    "code": 202,
+                    "icon": "error",
+                    "caption": "Harmony Hub IP adress must not empty."
+                },
+				{
+                    "code": 203,
+                    "icon": "error",
+                    "caption": "No valid IP adress."
+                },
+                {
+                    "code": 204,
+                    "icon": "error",
+                    "caption": "connection to the Harmony Hub lost."
+                },
+				{
+                    "code": 205,
+                    "icon": "error",
+                    "caption": "field must not be empty."
+                },
+				{
+                    "code": 206,
+                    "icon": "error",
+                    "caption": "select category for import."
+                }
+            ]';
+		return $form;
+	}
+	
+	protected function GetAlexaSmartHomeSkill()
+	{
+		$InstanzenListe = IPS_GetInstanceListByModuleID("{3F0154A4-AC42-464A-9E9A-6818D775EFC4}"); // IQL4SmartHome
+		$IQL4SmartHomeID = @$InstanzenListe[0];
+		if(!$IQL4SmartHomeID > 0)
+		{
+			$IQL4SmartHomeID = false;
+		}
+		return $IQL4SmartHomeID;
 	}
 	
 }

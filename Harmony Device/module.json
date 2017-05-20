@@ -1,5 +1,7 @@
 {
     "id": "{B0B4D0C2-192E-4669-A624-5D5E72DBB555}",
+	"title": "Harmony Device",
+	"description": "Harmony Geräte Instanz des Logitech Harmony Hub",
     "name": "HarmonyDevice",
     "type": 3,
     "vendor": "Logitech",
