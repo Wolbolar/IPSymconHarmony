@@ -17,8 +17,7 @@ class HarmonyHub extends IPSModule
 
         $this->RegisterPropertyString("Host", "");
 		$this->RegisterPropertyInteger("Port", 5222);
-		$this->RegisterPropertyInteger("HubID", 0);
-        $this->RegisterPropertyBoolean("Open", false);
+		$this->RegisterPropertyBoolean("Open", false);
 		$this->RegisterPropertyString("Email", "");
 		$this->RegisterPropertyString("Password", "");
 		$this->RegisterPropertyInteger("ImportCategoryID", 0);
@@ -164,28 +163,16 @@ class HarmonyHub extends IPSModule
 			}	
 		}
 		*/		
-		//umgestellt auf IPS Var
-				
-		//Datei überprüfen	
-		/*
-		if (!file_exists($this->configFilePath()))
+		
+		// Alexa Link anlegen
+		if($this->ReadPropertyBoolean('Alexa'))
 			{
-				//Harmony_Config.txt erstellen
-				$data = "";
-				$configFileHandle = fopen($this->configFilePath(), "w");
-				fwrite($configFileHandle, $data);
-				fclose($configFileHandle);	
+				$this->CreateAlexaLinks();
 			}
-		*/	
-		//Konfig prüfen
-		/*
-		$filesize = filesize($this->configFilePath());
-		if ($filesize == 0 && $change == true) //wenn kein Inhalt Konfig abrufen
-		{
-			$this->lockgetConfig = true;
-			$this->getConfig();
-		}
-		*/	
+		else
+			{
+				$this->DeleteAlexaLinks();
+			}
 	}
 	
 	protected function configFilePath()
@@ -325,11 +312,11 @@ class HarmonyHub extends IPSModule
 	
 	protected function SetupActivityScripts($HubCategoryID, $hubname)
 	{
-		$HubID = $this->ReadPropertyInteger('HubID');
-				
+		$hubip = $this->ReadPropertyString('Host');
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 		
 		$activities = $this->GetAvailableAcitivities();
 		//Prüfen ob Kategorie schon existiert
-		$MainCatID = @IPS_GetObjectIDByIdent("LogitechActivitiesScripts", $HubCategoryID);
+		$MainCatID = @IPS_GetObjectIDByIdent("LogitechActivitiesScripts_".$hubipident, $HubCategoryID);
 		if ($MainCatID === false)
 			{
 			$MainCatID = IPS_CreateCategory();
@@ -338,30 +325,61 @@ class HarmonyHub extends IPSModule
 			//IPS_SetIcon($NeueInstance, $Quellobjekt['ObjectIcon']);
 			//IPS_SetPosition($NeueInstance, $Quellobjekt['ObjectPosition']);
 			//IPS_SetHidden($NeueInstance, $Quellobjekt['ObjectIsHidden']);
-			IPS_SetIdent($MainCatID, "LogitechActivitiesScripts");
+			IPS_SetIdent($MainCatID, "LogitechActivitiesScripts_".$hubipident);
 			IPS_SetParent($MainCatID, $HubCategoryID);
 			}
 			
 		foreach ($activities as $activityname => $activity)
 			{
 				//Prüfen ob Script schon existiert
-				$ScriptID = $this->CreateActivityScript($activityname, $MainCatID, $HubID, $activity);									
+				$ScriptID = $this->CreateActivityScript($activityname, $MainCatID, $hubip, $activity);									
 			}	
 	}
 		
-	protected function CreateActivityScript($Scriptname, $MainCatID, $HubID, $activity)
+	protected function CreateActivityScript($Scriptname, $MainCatID, $hubip, $activity)
 	{
 		$Scriptname = $this->ReplaceSpecialCharacters($Scriptname);
 		$Ident = $this->CreateIdent($Scriptname);
-		$ScriptID = @IPS_GetObjectIDByIdent($Ident, $MainCatID);
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
+		$Ident = "Script_Hub_".$hubipident."_".$activity;
+		$scriptident = $this->CreateIdent($Ident);
+		$ScriptID = @IPS_GetObjectIDByIdent($scriptident, $MainCatID);
 								
 		if ($ScriptID === false)
 			{
 				$ScriptID = IPS_CreateScript(0);
 				IPS_SetName($ScriptID, $Scriptname);
 				IPS_SetParent($ScriptID, $MainCatID);
-				IPS_SetIdent($ScriptID, $Ident);
-				$content = "<? HarmonyHub_startActivity(".$this->InstanceID.", ".$activity."); ?>";
+				IPS_SetIdent($ScriptID, $scriptident);
+				$content = '<?
+Switch ($_IPS[\'SENDER\']) 
+    { 
+    Default: 
+    Case "RunScript": 
+		HarmonyHub_startActivity('.$this->InstanceID.', '.$activity.');
+    Case "Execute": 
+        HarmonyHub_startActivity('.$this->InstanceID.', '.$activity.');
+    Case "TimerEvent": 
+        break; 
+
+    Case "Variable": 
+    Case "AlexaSmartHome": // Schalten durch den Alexa SmartHomeSkill
+           
+    if ($_IPS[\'VALUE\'] == True) 
+        { 
+            // einschalten
+            HarmonyHub_startActivity('.$this->InstanceID.', '.$activity.');   
+        } 
+    else 
+        { 
+            //ausschalten
+            HarmonyHub_startActivity('.$this->InstanceID.', -1);
+        } 
+       break;
+    Case "WebFront":        // Zum schalten im Webfront 
+        HarmonyHub_startActivity('.$this->InstanceID.', '.$activity.');   
+    }  
+?>';
 				IPS_SetScriptContent($ScriptID, $content);
 			}
 		return $ScriptID;
@@ -384,7 +402,7 @@ class HarmonyHub extends IPSModule
 					"^^", ":|", ":-/", "(", ")", "[", "]", 
 					"<", ">", "!", "\"", "§", "$", "%", "&", 
 					"/", "(", ")", "=", "?", "`", "´", "*", "'", 
-					"_", ":", ";", "²", "³", "{", "}", 
+					"-", ":", ";", "²", "³", "{", "}", 
 					"\\", "~", "#", "+", ".", ",", 
 					"=", ":", "=)");
 	$replace = array("ae", "oe", "ue", "ss", "Ae", "Oe", 
@@ -1405,21 +1423,21 @@ class HarmonyHub extends IPSModule
 	//Installation Harmony Instanzen
 	protected function SetupHarmonyInstance()
 	{
-  		$hubid = $this->ReadPropertyInteger('HubID');
-
+  		$hubip = $this->ReadPropertyString('Host');
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
 		$json = $this->GetHarmonyConfigJSON();
 		$activities[] = $json["activity"];
 		$devices[] =  $json["device"];
 		$hubname = GetValue($this->GetIDForIdent("HarmonyHubName"));
 		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
 		//Prüfen ob Kategorie schon existiert
-		$HubCategoryID = @IPS_GetCategoryIDByName("Logitech ".$hubname, $CategoryID);
+		$HubCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHub_".$hubipident, $CategoryID);
 		if ($HubCategoryID === false)
 			{
 				$HubCategoryID = IPS_CreateCategory();
-				IPS_SetName($HubCategoryID, "Logitech ".$hubname);
-				IPS_SetIdent($HubCategoryID, "CatLogitechHub_".$hubid); // Ident muss eindeutig sein
-				IPS_SetInfo($HubCategoryID, $hubid);
+				IPS_SetName($HubCategoryID, "Logitech ".$hubname." (".$hubip.")");
+				IPS_SetIdent($HubCategoryID, "CatLogitechHub_".$hubipident); // Ident muss eindeutig sein
+				IPS_SetInfo($HubCategoryID, $hubip);
 				IPS_SetParent($HubCategoryID, $CategoryID);
 			}		
 		foreach ($devices as $harmonydevicelist)
@@ -1568,12 +1586,13 @@ class HarmonyHub extends IPSModule
 				//Kategorien anlegen
 				$InsID = $InsIDList[$harmonydeviceid];
 				//Prüfen ob Kategorie schon existiert
-				$MainCatID = @IPS_GetCategoryIDByName($InstName, $HubCategoryID);
+				$MainCatID = @IPS_GetObjectIDByIdent("Logitech_Device_Cat".$harmonydevice["id"], $HubCategoryID);
 				if ($MainCatID === false)
 				{
 					$MainCatID = IPS_CreateCategory();
 					IPS_SetName($MainCatID, utf8_decode($harmonydevice["label"]));
 					IPS_SetInfo($MainCatID, $harmonydevice["id"]);
+					IPS_SetIdent($MainCatID, "Logitech_Device_Cat".$harmonydevice["id"]);
 					IPS_SetParent($MainCatID, $HubCategoryID);
 				}
 				
@@ -1582,11 +1601,12 @@ class HarmonyHub extends IPSModule
 					$commands = $controlGroup["function"]; //Function Array
 					
 					//Prüfen ob Kategorie schon existiert
-					$CGID = @IPS_GetCategoryIDByName($controlGroup["name"], $MainCatID);
+					$CGID = @IPS_GetObjectIDByIdent("Logitech_Device_".$harmonydevice["id"]."_Controllgroup_".$controlGroup["name"], $MainCatID);
 					if ($CGID === false)
 					{
 					$CGID = IPS_CreateCategory();
 					IPS_SetName($CGID, $controlGroup["name"]);
+					IPS_SetIdent($CGID, "Logitech_Device_".$harmonydevice["id"]."_Controllgroup_".$controlGroup["name"]);
 					IPS_SetParent($CGID, $MainCatID);
 					}
 
@@ -1596,12 +1616,14 @@ class HarmonyHub extends IPSModule
 							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
 							//Prüfen ob Script schon existiert
 							$Scriptname = $command["label"];
-							$ScriptID = @IPS_GetScriptIDByName($Scriptname, $CGID);
+							$controllgroupident = $this->CreateIdent("Logitech_Device_".$harmonydevice["id"]."_Command_".$harmonycommand["command"]);
+							$ScriptID = @IPS_GetObjectIDByIdent($controllgroupident, $CGID);
 							if ($ScriptID === false)
 							{
 							   $ScriptID = IPS_CreateScript(0);
 								IPS_SetName($ScriptID, $Scriptname);
 								IPS_SetParent($ScriptID, $CGID);
+								IPS_SetIdent($ScriptID, $controllgroupident);
 								$content = "<? LHD_Send(".$InsID.", \"".$harmonycommand["command"]."\");?>";
 								IPS_SetScriptContent($ScriptID, $content);
 							}
@@ -1671,24 +1693,26 @@ class HarmonyHub extends IPSModule
 	public function CreateAktivityLink()
 	{
 		$hubname = GetValue($this->GetIDForIdent("HarmonyHubName"));
-		$hubid = $this->ReadPropertyInteger('HubID');
+		$hubip = $this->ReadPropertyString('Host');
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
 		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
 		//Prüfen ob Kategorie schon existiert
-		$HubCategoryID = @IPS_GetCategoryIDByName("Logitech ".$hubname, $CategoryID);
+		$HubCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHub_".$hubipident, $CategoryID);
 		if ($HubCategoryID === false)
 			{
 				$HubCategoryID = IPS_CreateCategory();
-				IPS_SetName($HubCategoryID, "Logitech ".$hubname);
-				IPS_SetIdent($HubCategoryID, "CatLogitech_".$hubid);
-				IPS_SetInfo($HubCategoryID, $hubid);
+				IPS_SetName($HubCategoryID, "Logitech".$hubname);
+				IPS_SetIdent($HubCategoryID, "CatLogitechHub_".$hubipident);
+				IPS_SetInfo($HubCategoryID, $hubip);
 				IPS_SetParent($HubCategoryID, $CategoryID);
 			}	
 		//Prüfen ob Instanz schon vorhanden
-		$InstanzID = @IPS_GetInstanceIDByName("Logitech Harmony Hub", $HubCategoryID);
+		$InstanzID = @IPS_GetObjectIDByIdent("Logitech_Harmony_Hub_".$hubipident, $HubCategoryID);
 		if ($InstanzID === false)
 			{
 				$InsID = IPS_CreateInstance("{485D0419-BE97-4548-AA9C-C083EB82E61E}");
 				IPS_SetName($InsID, "Logitech Harmony Hub"); // Instanz benennen
+				IPS_SetIdent($InsID, "Logitech_Harmony_Hub_".$hubipident);
 				IPS_SetParent($InsID, $HubCategoryID); // Instanz einsortieren unter dem Objekt mit der ID "$HubCategoryID"
 
 				// Anlegen eines neuen Links für Harmony Aktivity
@@ -1704,7 +1728,7 @@ class HarmonyHub extends IPSModule
 	{
 		
 		//Prüfen ob Instanz schon existiert
-		$InstanzID = @IPS_GetInstanceIDByName($InstName, $CategoryID);
+		$InstanzID = @IPS_GetObjectIDByIdent("Device_".$deviceID, $CategoryID);
 		if ($InstanzID === false)
 			{
 				//Neue Instanz anlegen
@@ -1801,8 +1825,8 @@ class HarmonyHub extends IPSModule
 		else
 		{
 			$form = '{ "type": "Label", "label": "Alexa Smart Home Skill is available in IP-Symcon"},
-				{ "type": "Label", "label": "Would you like to create Scripts for Alexa for Harmony actions and links in the SmartHomeSkill instace?" },
-				{ "type": "CheckBox", "name": "Alexa", "caption": "Create Links and Scripts for Amazon Echo / Dot" },';
+				{ "type": "Label", "label": "Would you like to create links to the Harmony actions scripts for Alexa in the SmartHomeSkill (IQL4SmartHome) instance?" },
+				{ "type": "CheckBox", "name": "Alexa", "caption": "Create links for Amazon Echo / Dot" },';
 		}	
 		
 		return $form;
@@ -1925,7 +1949,112 @@ class HarmonyHub extends IPSModule
 		}
 		return $IQL4SmartHomeID;
 	}
+
+	protected function CreateAlexaLinks()
+		{
+			$hubip = $this->ReadPropertyString('Host');
+			$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
+			$IQL4SmartHomeID = $this->GetAlexaSmartHomeSkill();
+			//Prüfen ob Kategorie schon existiert
+			$AlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony", $IQL4SmartHomeID);
+			if ($AlexaCategoryID === false)
+				{
+					$AlexaCategoryID = IPS_CreateCategory();
+					IPS_SetName($AlexaCategoryID, "Logitech Harmony Hub");
+					IPS_SetIdent($AlexaCategoryID, "AlexaLogitechHarmony");
+					IPS_SetInfo($AlexaCategoryID, "Aktivitäten des Logitech Harmony Hubs schalten");
+					IPS_SetParent($AlexaCategoryID, $IQL4SmartHomeID);
+				}
+			//Prüfen ob Unterkategorie schon existiert
+			$SubAlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony_Hub_".$hubipident, $AlexaCategoryID);
+			if ($SubAlexaCategoryID === false)
+				{
+					$SubAlexaCategoryID = IPS_CreateCategory();
+					IPS_SetName($SubAlexaCategoryID, "Logitech Harmony Hub (".$hubip.")");
+					IPS_SetIdent($SubAlexaCategoryID, "AlexaLogitechHarmony_Hub_".$hubipident);
+					IPS_SetInfo($SubAlexaCategoryID, "Aktivitäten des Logitech Harmony Hubs (".$hubip.") schalten");
+					IPS_SetParent($SubAlexaCategoryID, $AlexaCategoryID);
+				}
+			//Prüfen ob Link schon vorhanden
+			$linkobjids = $this->GetLinkObjIDs();
+			
+			foreach ($linkobjids as $linkobjid)
+			{
+				$objectinfo = IPS_GetObject($linkobjid);
+				$ident = $objectinfo["ObjectIdent"];
+				$name = $objectinfo["ObjectName"];
+				$LinkID = @IPS_GetObjectIDByIdent("AlexaLink_".$ident, $SubAlexaCategoryID);
+				if ($LinkID === false)
+				{
+					// Anlegen eines neuen Links für die Aktivität
+					$LinkID = IPS_CreateLink();             // Link anlegen
+					IPS_SetIdent($LinkID, "AlexaLink_".$ident); //ident
+					IPS_SetLinkTargetID($LinkID, $linkobjid);    // Link verknüpfen
+					IPS_SetInfo($LinkID, "Harmony Hub Aktivität ".$name);
+					IPS_SetParent($LinkID, $SubAlexaCategoryID); // Link einsortieren
+					IPS_SetName($LinkID, $name); // Link benennen					
+				}	
+			
+			}
+		}
+			
+	protected function DeleteAlexaLinks()
+		{
+			$hubip = $this->ReadPropertyString('Host');
+			$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
+			$IQL4SmartHomeID = $this->GetAlexaSmartHomeSkill();
+			$AlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony", $IQL4SmartHomeID);
+			$SubAlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony_Hub_".$hubipident, $AlexaCategoryID);
+			$linkobjids = $this->GetLinkObjIDs();
+			
+			foreach ($linkobjids as $linkobjid)
+			{
+				$objectinfo = IPS_GetObject($linkobjid);
+				$ident = $objectinfo["ObjectIdent"];
+				$name = $objectinfo["ObjectName"];
+				$LinkID = @IPS_GetObjectIDByIdent("AlexaLink_".$ident, $SubAlexaCategoryID);
+				if($LinkID > 0)
+				{
+					IPS_DeleteLink($LinkID);
+				}
+			}
+						
+			
+			if($SubAlexaCategoryID > 0)
+			{
+				$catempty = $this->ScreenCategory($SubAlexaCategoryID);
+				if($catempty == true)
+				{
+					IPS_DeleteCategory($SubAlexaCategoryID);
+				}
+			}
+		}
 	
+	protected function GetLinkObjIDs()
+	{
+		$linkobjids = false;
+		$hubip = $this->ReadPropertyString('Host');
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
+		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
+		$HubCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHub_".$hubipident, $CategoryID);
+		$MainCatID = @IPS_GetObjectIDByIdent("LogitechActivitiesScripts_".$hubipident, $HubCategoryID);
+		$linkobjids = IPS_GetChildrenIDs($MainCatID);
+		return $linkobjids;
+	}
+	
+	protected function ScreenCategory($CategoryID)
+	{
+		$catempty = IPS_GetChildrenIDs($CategoryID);
+		if(empty($catempty))
+		{
+			$catempty = true;
+		}
+		else
+		{
+			$catempty = false;
+		}	
+		return $catempty;
+	}		
 	
 	
 }
