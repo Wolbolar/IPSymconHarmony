@@ -2028,6 +2028,15 @@ Switch ($_IPS[\'SENDER\'])
 					IPS_DeleteCategory($SubAlexaCategoryID);
 				}
 			}
+			
+			if($AlexaCategoryID > 0)
+			{
+				$catempty = $this->ScreenCategory($AlexaCategoryID);
+				if($catempty == true)
+				{
+					IPS_DeleteCategory($AlexaCategoryID);
+				}
+			}
 		}
 	
 	protected function GetLinkObjIDs()
