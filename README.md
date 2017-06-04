@@ -46,9 +46,11 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
 
 ### a. Laden des Moduls
 
-Über das 'Modul Control' in IP-Symcon (Ver. 4.x) folgende URL hinzufügen:
+Die Instanz 'Modules' unterhalb von Kerninstanzen im Objektbaum von IP-Symcon (>=Ver. 4.x) öffnen und den Button _Hinzufügen_ drücken. Im Feld die folgende URL eintragen und mit _OK_ bestätigen:
 	
     `git://github.com/Wolbolar/IPSymconHarmony.git`  
+	
+![Modules](docs/Modules.png?raw=true "Modulinstallation")	
 
 ### b. Einrichtung in IPS
 
