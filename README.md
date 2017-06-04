@@ -54,6 +54,8 @@ Die Instanz 'Modules' unterhalb von Kerninstanzen im Objektbaum von IP-Symcon (>
 
 ### b. Einrichtung in IPS
 
+Zunächst legen wir eine Kategorie im Objektbaum an (_**CTRL+0**_) diesen geben wir einen beliebigen Namen wie z.B. _**Harmony Geräte**_. Unter dieser Kategorie werden später alle Geräte und Aktionen des Logitech Harmony Hub angelegt werden.
+
 Danach IP-Symcon 4.x eine Instanz hinzufügen (_**CTRL+1**_).
 
 Hier nun als Hersteller _Logitech_ eingeben und _Logitech Harmony Hub_ auswählen.
@@ -75,7 +77,7 @@ Im dem sich öffnenden Fenster zunächst bei Erstinstallation folgende Dinge aus
 
 **5.** Passwort für MyHarmony
 
-**6.** Vorher ist in IP Symcon eine Kategorie anlegen. Diese ist hier auszuwählen. Unter dieser Kategorie werden die Geräte Instanzen angelegt.
+**6.** Hier wählen wir die Kategorie aus die wir zuvor anlegt haben. Im dem Beispiel oben hatten wir diese _**Harmony Geräte**_ genannt, also wählen wir die passende Kategorie im Objektbaum aus. Unter dieser Kategorie werden die Geräte Instanzen angelegt.
 
 **7.** Hier einen Haken setzten. Wird in einer späteren Version entfernt. Die Variablen CommandOut und IOIN zeigen die ein- und ausgehenden Daten an.
 
