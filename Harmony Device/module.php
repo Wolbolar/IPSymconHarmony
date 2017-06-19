@@ -9,7 +9,7 @@ class HarmonyDevice extends IPSModule
         //Never delete this line!
         parent::Create();
 
-        // 1. Verfügbarer HarmonySplitter wird verbunden oder neu erzeugt, wenn nicht vorhanden.
+        // 1. VerfÃ¼gbarer HarmonySplitter wird verbunden oder neu erzeugt, wenn nicht vorhanden.
         $this->ConnectParent("{03B162DB-7A3A-41AE-A676-2444F16EBEDF}");
 		
 		$this->RegisterPropertyString("Name", "");
@@ -31,8 +31,8 @@ class HarmonyDevice extends IPSModule
 	}
 		
 	/**
-    * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
-    * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur Verfügung gestellt:
+    * Die folgenden Funktionen stehen automatisch zur VerfÃ¼gung, wenn das Modul Ã¼ber die "Module Control" eingefÃ¼gt wurden.
+    * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur VerfÃ¼gung gestellt:
     *
     */
 	private function ValidateConfiguration()
@@ -55,7 +55,7 @@ class HarmonyDevice extends IPSModule
 			}
 		}
 				
-		//Auswahl Prüfen
+		//Auswahl PrÃ¼fen
 		if ($Name !== "" && $DeviceID !== "")
 			{
 				$this->SetStatus(102);	
@@ -63,7 +63,7 @@ class HarmonyDevice extends IPSModule
 	}
 	
 		
-	public function RequestAction($Ident, $Value)
+	public function RequestAction(string $Ident, $Value)
     {
 		$ObjID = $this->GetIDForIdent($Ident);
 		$Object = IPS_GetObject($ObjID);
@@ -91,6 +91,8 @@ class HarmonyDevice extends IPSModule
 		$TargetVolume = round($Value*$MaxStepVolume);
 		$this->SendDebug("Logitech Hub","Target Volume: ".print_r($Value,true),0);
 		$this->SendDebug("Logitech Hub","Steps to Target Volume: ".print_r($TargetVolume,true),0);
+        $commandrepeat = 0;
+        $command = "Unknown";
 		if ($Value > $CurrentVolume)
 		{
 			$command = "VolumeUp";
@@ -127,7 +129,7 @@ class HarmonyDevice extends IPSModule
 	//IP Harmony Hub 
 	protected function GetIPHarmonyHub(){
 		$ParentID = $this->GetParent();
-		$IPDenon = IPS_GetProperty($ParentID, 'Host');
+		$IPHarmonyHub = IPS_GetProperty($ParentID, 'Host');
 		return $IPHarmonyHub;
 	}
 	
@@ -160,7 +162,7 @@ class HarmonyDevice extends IPSModule
             $MaxValue = $Associations[sizeof($Associations)-1][0];
         }
         
-        $this->RegisterProfileIntegerHarmony($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, 0);
+        $this->RegisterProfileIntegerHarmony($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, 0, $Nachkommastellen);
         
         foreach($Associations as $Association) {
             IPS_SetVariableProfileAssociation($Name, $Association[0], $Association[1], $Association[2], $Association[3]);
@@ -193,18 +195,19 @@ class HarmonyDevice extends IPSModule
 			$this->SendDataToParent(json_encode(Array("DataID" => "{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}", "Buffer" => $payload))); //Harmony Device Interface GUI
 		}
 	
-	//Verfügbare Commands für Instanz ausgeben
+	//VerfÃ¼gbare Commands fÃ¼r Instanz ausgeben
 	public function GetCommands()
 		{
 			$currentdeviceid = $this->ReadPropertyInteger('DeviceID');
 			$parentID = $this->GetParent();
 			$json = HarmonyHub_GetHarmonyConfigJSON($parentID);
+            $commandlist = false;
 			$devices[] =  $json["device"];
 			foreach ($devices as $harmonydevicelist)
 			{
 				foreach ($harmonydevicelist as $harmonydevice)
 				{
-					$InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
+					// $InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
 					$DeviceID = $harmonydevice["id"]; // Harmony Device ID
 					if($DeviceID == $currentdeviceid)
 					{
@@ -227,14 +230,14 @@ class HarmonyDevice extends IPSModule
 		}	
 	
 	// Daten vom Splitter Instanz
-	public function ReceiveData($JSONString)
+	public function ReceiveData(string $JSONString)
 	{
 	 
 		// Empfangene Daten vom Splitter
 		$data = json_decode($JSONString);
 		$datasplitter = $data->Buffer;
 		//SetValueString($this->GetIDForIdent("BufferIN"), $datasplitter);
-		IPS_LogMessage("ReceiveData Harmony Device", utf8_decode($data->Buffer));
+		IPS_LogMessage("ReceiveData Harmony Device", utf8_decode($datasplitter));
 	 
 		// Hier werden die Daten verarbeitet und in Variablen geschrieben
 	 
@@ -275,7 +278,7 @@ class HarmonyDevice extends IPSModule
 		}
 		if($AlexaSmartHomeSkill == false)
 		{
-			$form = $form;
+			$form .= $form;
 		}
 		else
 		{
@@ -291,21 +294,24 @@ class HarmonyDevice extends IPSModule
 	{
 		$CheckVolumeControl = false;
 		$commands = $this->GetCommands();
-
-		foreach ($commands as $key=>$command)
-		{
-			if($command == "VolumeDown")
-			 {
-				$CheckVolumeControl = true;
-			 } 
-		}
+		if($commands)
+        {
+            foreach ($commands as $key=>$command)
+            {
+                if($command == "VolumeDown")
+                {
+                    $CheckVolumeControl = true;
+                }
+            }
+        }
 		return $CheckVolumeControl;
 	}
 	
 
 		protected function SetHarmonyInstanceScripts($InsIDList, $HubCategoryID)
 	{
-		$json = $this->GetHarmonyConfigJSON();
+        $parentID = $this->GetParent();
+        $json = HarmonyHub_GetHarmonyConfigJSON($parentID);
 		$activities[] = $json["activity"];
 		$devices[] =  $json["device"];
 
@@ -319,7 +325,7 @@ class HarmonyDevice extends IPSModule
 
 				//Kategorien anlegen
 				$InsID = $InsIDList[$harmonydeviceid];
-				//Prüfen ob Kategorie schon existiert
+				//PrÃ¼fen ob Kategorie schon existiert
 				$MainCatID = @IPS_GetCategoryIDByName($InstName, $HubCategoryID);
 				if ($MainCatID === false)
 				{
@@ -333,7 +339,7 @@ class HarmonyDevice extends IPSModule
 				{
 					$commands = $controlGroup["function"]; //Function Array
 					
-					//Prüfen ob Kategorie schon existiert
+					//PrÃ¼fen ob Kategorie schon existiert
 					$CGID = @IPS_GetCategoryIDByName($controlGroup["name"], $MainCatID);
 					if ($CGID === false)
 					{
@@ -346,7 +352,7 @@ class HarmonyDevice extends IPSModule
 					foreach ($commands as $command)
 						{
 							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-							//Prüfen ob Script schon existiert
+							//PrÃ¼fen ob Script schon existiert
 							$Scriptname = $command["label"];
 							$ScriptID = @IPS_GetScriptIDByName($Scriptname, $CGID);
 							if ($ScriptID === false)
@@ -373,7 +379,7 @@ class HarmonyDevice extends IPSModule
 	{
 		$form = '"elements":
             [
-                { "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
+                { "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drÃ¼cken"},
 				{
                     "name": "Name",
                     "type": "ValidationTextBox",
