@@ -953,7 +953,7 @@ Switch ($_IPS[\'SENDER\'])
 	 
 	}
 	
-	public function RequestAction(string $Ident, $Value)
+	public function RequestAction($Ident, $Value)
     {
         if($Ident == "HarmonyActivity")
 		{

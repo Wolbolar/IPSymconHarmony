@@ -63,7 +63,7 @@ class HarmonyDevice extends IPSModule
 	}
 	
 		
-	public function RequestAction(string $Ident, $Value)
+	public function RequestAction($Ident, $Value)
     {
 		$ObjID = $this->GetIDForIdent($Ident);
 		$Object = IPS_GetObject($ObjID);
@@ -230,7 +230,7 @@ class HarmonyDevice extends IPSModule
 		}	
 	
 	// Daten vom Splitter Instanz
-	public function ReceiveData(string $JSONString)
+	public function ReceiveData($JSONString)
 	{
 	 
 		// Empfangene Daten vom Splitter
