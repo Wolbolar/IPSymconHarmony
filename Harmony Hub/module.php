@@ -857,7 +857,7 @@ Switch ($_IPS[\'SENDER\'])
 						preg_match('/<jid>(.*)<\/jid>/', $xml, $jid);
 						$this->SendDebug("Logitech Harmony Hub","RECV: IQ Stanza resource binding result - JID: ".$jid[1],0); 
 						// Replace 2 lines below by a proper function to get the User Auth Token Value (IPS Tools Library)
-						$tokenVariableId = @GetIDForIdent("HarmonyUserAuthToken");
+						$tokenVariableId = @$this->GetIDForIdent("HarmonyUserAuthToken");
 						if ($tokenVariableId === false)
 							{
 							$this->SendDebug("Logitech Harmony Hub","ERROR in processIQ(): User Auth Token not defined (after binding reponse).",0); 
@@ -865,9 +865,9 @@ Switch ($_IPS[\'SENDER\'])
 						else
 							{
 							$this->SendDebug("Logitech Harmony Hub","SEND: Sending Session Request",0); 
-							XMPP_Session(); // Test: Request session
+							$this->XMPP_Session(); // Test: Request session
 							IPS_Sleep(200);
-							$inSessionVarId = @GetIDForIdent("HarmonyInSession");
+							$inSessionVarId = @$this->GetIDForIdent("HarmonyInSession");
 							if ($inSessionVarId === false)
 								{
 								$this->SendDebug("Logitech Harmony Hub","ERROR in processIQ(): Session Auth Variable not found (before requesting Session token)",0); 
@@ -914,7 +914,7 @@ Switch ($_IPS[\'SENDER\'])
 	################## DATAPOINT RECEIVE FROM CHILD
 	
 
-	public function ForwardData(string $JSONString)
+	public function ForwardData($JSONString)
 	{
 	 
 		// Empfangene Daten von der Device Instanz

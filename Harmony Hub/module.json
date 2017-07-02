@@ -1,7 +1,5 @@
 {
     "id": "{03B162DB-7A3A-41AE-A676-2444F16EBEDF}",
-	"title": "Logitech Harmony Hub",
-	"description": "Logitech Harmony Hub, für jeden Logitech Hub existiert eine eigene Instanz",
     "name": "HarmonyHub",
     "type": 2,
     "vendor": "Logitech",
