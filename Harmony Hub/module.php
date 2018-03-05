@@ -1206,10 +1206,11 @@ Switch ($_IPS[\'SENDER\'])
 
 		if (!curl_errno($ch)) {
 			// No Error
-			if ($result == '{"GetUserAuthTokenResult":null}') {
+			if (empty($result->GetUserAuthTokenResult)) {
 				$UserAuthToken = "";
+				$this->SendDebug("Logitech Harmony Hub", "No token transmitted", 0);
 			} else {
-				$UserAuthToken = $result->GetUserAuthTokenResult->UserAuthToken;
+				$UserAuthToken = $result->GetUserAuthTokenResult;
 			}
 			SetValue($userauthtokenid, $UserAuthToken);
 		} else {
