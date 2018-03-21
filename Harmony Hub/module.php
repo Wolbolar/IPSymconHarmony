@@ -468,7 +468,7 @@ Switch ($_IPS[\'SENDER\'])
 
 		// Empfangene Daten vom I/O
 		$data = json_decode($JSONString);
-		$dataio = $data->Buffer;
+		$dataio = utf8_decode($data->Buffer);
 		//$dataiomessage = json_encode($dataio);
 		$this->SendDebug("Logitech Harmony Hub", "IO In: " . $dataio, 0);
 
