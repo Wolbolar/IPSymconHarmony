@@ -1,10 +1,12 @@
 {
   "translations": {
     "de": {
-      "This instance is for getting keystrokes from the Harmony remote via fakeRoku": "Diese Instanz dient dazu Tastendrücke der Harmony von FHEM fakeRoku übermittelt zu bekommen",
+      "command": "Befehl",
+      "This instance is for getting keystrokes from the Harmony remote via Roku Emulator": "Diese Instanz dient dazu Tastendrücke der Harmony über Roku Emulator übermittelt zu bekommen",
       "Please select the Harmony Hub for configuration:": "Bitte den Harmony Hub für die Konfiguration auswählen",
       "Select activity": "Aktivität auswählen",
       "Roku Emulator Keys": "Roku Emulator Tasten",
+      "Please select port to use for the Roku emulator:": "Bitte den Port für den Roku Emulator auswählen",
       "harmony activity": "Harmony Aktivität",
       "configuration valid": "Konfiguration gültig",
       "Harmony Device is inactive": "Harmony Device ist inaktiv",

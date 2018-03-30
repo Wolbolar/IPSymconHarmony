@@ -1,17 +1,22 @@
 <?
+include_once(__DIR__ . "/../libs/SSDPTraits.php");
 
-class HarmonyfakeRoku extends IPSModule
+class HarmonyRokuEmulator extends IPSModule
 {
 	// helper properties
 	private $position = 0;
+	private $MySerial = "";
 
 	public function Create()
 	{
 		//Never delete this line!
 		parent::Create();
-		$this->RegisterPropertyInteger('HarmonyHubObjID', -1);
-		$this->RegisterPropertyInteger('HarmonyHubActivity', -2);
+		$this->RequireParent("{8062CF2B-600E-41D6-AD4B-1BA66C32D6ED}"); // Server Socket
+		$this->RegisterPropertyInteger('ServerSocketPort', 42450);
+		$this->RegisterPropertyInteger('HarmonyHubObjID', -2);
+		$this->RegisterPropertyInteger('HarmonyHubActivity', 0);
 		$this->CreateActivityProperties();
+		$this->MySerial = md5(openssl_random_pseudo_bytes(10));
 	}
 
 
@@ -19,8 +24,9 @@ class HarmonyfakeRoku extends IPSModule
 	{
 		//Never delete this line!
 		parent::ApplyChanges();
+		//  register profiles
 		$this->RegisterProfileAssociation(
-			'LogitechHarmony.FakeRoku',
+			'LogitechHarmony.FakeRokuIPS',
 			'Keyboard',
 			'',
 			'',
@@ -46,7 +52,7 @@ class HarmonyfakeRoku extends IPSModule
 			]
 		);
 
-		$this->RegisterVariableInteger("KeyFakeRoku", "Roku Emulator", "LogitechHarmony.FakeRoku", $this->_getPosition());
+		$this->RegisterVariableInteger("KeyFakeRoku", "Roku Emulator", "LogitechHarmony.FakeRokuIPS", $this->_getPosition());
 		$this->EnableAction("KeyFakeRoku");
 		$LastKeystrokeFakeRokuID = $this->RegisterVariableString("LastKeystrokeFakeRoku", "Letzter Tastendruck", "", $this->_getPosition());
 		IPS_SetIcon($LastKeystrokeFakeRokuID, "Keyboard");
@@ -61,205 +67,57 @@ class HarmonyfakeRoku extends IPSModule
 	 */
 	private function ValidateConfiguration()
 	{
-		$ipsversion = $this->GetIPSVersion();
-		if ($ipsversion == 0) {
-			//prüfen ob Script existent
-			$SkriptID = @($this->GetIDForIdent('FHEMIPSInterface'));
-			if ($SkriptID === false) {
-				$ID = $this->RegisterScript("FHEMIPSInterface", "FHEM IPS Interface", $this->CreateWebHookScript(), 5);
-				IPS_SetHidden($ID, true);
-				$this->RegisterHookOLD('/hook/fhem/fakeRoku', $ID);
-			} else {
-				//echo "Die Skript-ID lautet: ". $SkriptID;
-			}
-		} else {
-			$SkriptID = @($this->GetIDForIdent('FHEMIPSInterface'));
-			if ($SkriptID > 0) {
-				$this->UnregisterHook("/hook/fhem/fakeRoku");
-				$this->UnregisterScript("FHEMIPSInterface");
-			}
-			$this->RegisterHook("/hook/fhem/fakeRoku");
-		}
-
 		$this->SetStatus(102);
-
-	}
-
-
-	public function RequestAction($Ident, $Value)
-	{
-		$this->SetValue($Ident, $Value);
-	}
-
-	private function RegisterHookOLD($WebHook, $TargetID)
-	{
-		$ids = IPS_GetInstanceListByModuleID("{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}");
-		if (sizeof($ids) > 0) {
-			$hooks = json_decode(IPS_GetProperty($ids[0], "Hooks"), true);
-			$found = false;
-			foreach ($hooks as $index => $hook) {
-				if ($hook['Hook'] == $WebHook) {
-					if ($hook['TargetID'] == $TargetID)
-						return;
-					$hooks[$index]['TargetID'] = $TargetID;
-					$found = true;
-				}
-			}
-			if (!$found) {
-				$hooks[] = Array("Hook" => $WebHook, "TargetID" => $TargetID);
-			}
-			IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
-			IPS_ApplyChanges($ids[0]);
-		}
-	}
-
-	private function RegisterHook($WebHook)
-	{
-		$ids = IPS_GetInstanceListByModuleID("{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}");
-		if (sizeof($ids) > 0) {
-			$hooks = json_decode(IPS_GetProperty($ids[0], "Hooks"), true);
-			$found = false;
-			foreach ($hooks as $index => $hook) {
-				if ($hook['Hook'] == $WebHook) {
-					if ($hook['TargetID'] == $this->InstanceID)
-						return;
-					$hooks[$index]['TargetID'] = $this->InstanceID;
-					$found = true;
-				}
-			}
-			if (!$found) {
-				$hooks[] = Array("Hook" => $WebHook, "TargetID" => $this->InstanceID);
-			}
-			IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
-			IPS_ApplyChanges($ids[0]);
-		}
 	}
 
 	/**
-	 * Löscht einen WebHook, wenn vorhanden.
-	 *
-	 * @access private
-	 * @param string $WebHook URI des WebHook.
+	 * checks, if configuration is complete
+	 * @return bool
 	 */
-	protected function UnregisterHook($WebHook)
+	private function CheckConfiguration()
 	{
-		$ids = IPS_GetInstanceListByModuleID("{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}");
-		if (sizeof($ids) > 0) {
-			$hooks = json_decode(IPS_GetProperty($ids[0], "Hooks"), true);
-			$found = false;
-			foreach ($hooks as $index => $hook) {
-				if ($hook['Hook'] == $WebHook) {
-					$found = $index;
-					break;
-				}
-			}
-			if ($found !== false) {
-				array_splice($hooks, $index, 1);
-				IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
-				IPS_ApplyChanges($ids[0]);
-			}
+		$ServerSocketPort = $this->ReadPropertyInteger('ServerSocketPort');
+		if ($ServerSocketPort > 0) {
+			return true;
 		}
-	}
 
-	/**
-	 * Löscht eine Script, sofern vorhanden.
-	 *
-	 * @access private
-	 * @param int $Ident Ident der Variable.
-	 */
-	protected function UnregisterScript($Ident)
-	{
-		$sid = @IPS_GetObjectIDByIdent($Ident, $this->InstanceID);
-		if ($sid === false)
-			return;
-		if (!IPS_ScriptExists($sid))
-			return; //bail out
-		IPS_DeleteScript($sid, true);
-	}
-
-	private function CreateWebHookScript()
-	{
-		$Script = '<?
-//Do not delete or modify.
-LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');		
-?>';
-
-		return $Script;
-	}
-
-	public function ProcessHookDataOLD()
-	{
-		//workaround for bug
-		if (!isset($_IPS))
-			global $_IPS;
-		if ($_IPS['SENDER'] == "Execute") {
-			echo "This script cannot be used this way.";
-			return;
+		if ($ServerSocketPort == 0) {
+			$this->_debug('Roku Emulator', 'Please select a port');
+			$this->SetStatus(202);
+			return false;
 		}
-		//Auswerten von Events von FHEM fakeRoku
-		// FHEM nutzt GET
-		if (isset($_GET["fhemevent"])) {
-			$data = $_GET["fhemevent"];
-			$this->SendDebug("Logitech Roku", "Roku Command: " . $data, 0);
-			$this->WriteValues($data);
-		}
+		return true;
 	}
 
-	protected function StartRokuKeyscript($command)
+	public function GetConfigurationForParent()
 	{
-		$activity = $this->GetCurrentActivity();
-		$activityname = $activity["activityname"];
-		$activityid = $activity["activityid"];
-		$this->SendDebug("Logitech Roku", "Current activity: " . $activityname, 0);
-		$this->SendDebug("Logitech Roku", "Current activity id: " . $activityid, 0);
-		$harmonyid = $this->ReadPropertyInteger("HarmonyHubObjID");
-		$this->SendDebug("Logitech Roku", "Harmony hub object ID: " . $harmonyid, 0);
-		$list_json = $this->ReadPropertyString("rokukeys_" . $harmonyid . '_' . abs($activityid));
-		$this->SendDebug("Logitech Roku", "Property: " . "rokukeys_" . $harmonyid . '_' . abs($activityid), 0);
-		$this->SendDebug("Logitech Roku", "List Roku Command: " . $list_json, 0);
-		$list = json_decode($list_json, true);
-		foreach ($list as $rokucommand) {
-			if ($command == $rokucommand["command"]) {
-				if (!empty($rokucommand["rokuscript"])) {
-					$this->SendDebug("Logitech Roku", "Roku starts script: " . utf8_decode(IPS_GetName($rokucommand["rokuscript"])) . " (" . $rokucommand["rokuscript"] . ")", 0);
-					$this->SendDebug("Logitech Roku", "Command " . $command . " for activity " . $activityname, 0);
-					IPS_RunScriptEx($rokucommand["rokuscript"], Array("Command" => $command, "Activity" => $activityname));
-				} else {
-					$this->SendDebug("Logitech Roku", "no script to lauch selected", 0);
-					$this->SendDebug("Logitech Roku", "Command " . $command . " for activity " . $activityname, 0);
-				}
-			}
-		}
+		$Config['Port'] = $this->ReadPropertyInteger("ServerSocketPort"); // Server Socket Port
+		return json_encode($Config);
 	}
 
-	protected function GetCurrentActivity()
+	public function ReceiveData($JSONString)
 	{
-		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
-		$activityname = GetValueFormatted(IPS_GetObjectIDByIdent("HarmonyActivity", $HarmonyHubObjID));
-		$activityid = GetValue(IPS_GetObjectIDByIdent("HarmonyActivity", $HarmonyHubObjID));
-		$activity = array("activityname" => $activityname, "activityid" => $activityid);
-		return $activity;
-	}
-
-	/**
-	 * This function will be called by the hook control. Visibility should be protected!
-	 */
-
-	protected function ProcessHookData()
-	{
-		//workaround for bug
-		if (!isset($_IPS))
-			global $_IPS;
-		if ($_IPS['SENDER'] == "Execute") {
-			echo "This script cannot be used this way.";
-			return;
+		// Empfangene Daten vom I/O
+		$data = json_decode($JSONString);
+		//$dataio = json_encode($data->Buffer);
+		$dataio = $data->Buffer;
+		$this->SendDebug("ReceiveData:", $dataio, 0);
+		// "GET \/ HTTP\/1.1\r\nHost: 192.168.55.10:42450\r\nConnection: close\r\n\r\n"
+		$Host = $data->ClientIP;
+		$this->SendDebug("ReceiveData:", "IP: " . $Host, 0);
+		$Port = $data->ClientPort;
+		$this->SendDebug("ReceiveData:", "Port: " . $Port, 0);
+		$pos = strpos($dataio, "GET");
+		if ($pos == 0) {
+			$this->RokuResponse($Host, $Port);
 		}
-		//Auswerten von Events von FHEM fakeRoku
-		// FHEM nutzt GET
-		if (isset($_GET["fhemevent"])) {
-			$data = $_GET["fhemevent"];
+		$pos = strpos($dataio, "POST");
+		if ($pos == 0) {
+			// cut off data
+			$data = "Up";
 			$this->SendDebug("Logitech Harmony Hub", "Roku Command: " . $data, 0);
 			$this->WriteValues($data);
+
 		}
 	}
 
@@ -317,6 +175,198 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 			$this->SetValue("KeyFakeRoku", 12);
 			$this->SetValue("LastKeystrokeFakeRoku", "InstantReplay");
 			$this->StartRokuKeyscript("InstantReplay");
+		}
+	}
+
+	protected function StartRokuKeyscript($command)
+	{
+		$activity = $this->GetCurrentActivity();
+		$activityname = $activity["activityname"];
+		$activityid = $activity["activityid"];
+		$this->SendDebug("Logitech Roku", "Current activity: " . $activityname, 0);
+		$this->SendDebug("Logitech Roku", "Current activity id: " . $activityid, 0);
+		$harmonyid = $this->ReadPropertyInteger("HarmonyHubObjID");
+		$this->SendDebug("Logitech Roku", "Harmony hub object ID: " . $harmonyid, 0);
+		$list_json = $this->ReadPropertyString("rokukeys_" . $harmonyid . '_' . abs($activityid));
+		$this->SendDebug("Logitech Roku", "Property: " . "rokukeys_" . $harmonyid . '_' . abs($activityid), 0);
+		$this->SendDebug("Logitech Roku", "List Roku Command: " . $list_json, 0);
+		$list = json_decode($list_json, true);
+		foreach ($list as $rokucommand) {
+			if ($command == $rokucommand["command"]) {
+				if (!empty($rokucommand["rokuscript"])) {
+					$this->SendDebug("Logitech Roku", "Roku starts script: " . utf8_decode(IPS_GetName($rokucommand["rokuscript"])) . " (" . $rokucommand["rokuscript"] . ")", 0);
+					$this->SendDebug("Logitech Roku", "Command " . $command . " for activity " . $activityname, 0);
+					IPS_RunScriptEx($rokucommand["rokuscript"], Array("Command" => $command, "Activity" => $activityname));
+				} else {
+					$this->SendDebug("Logitech Roku", "no script to lauch selected", 0);
+					$this->SendDebug("Logitech Roku", "Command " . $command . " for activity " . $activityname, 0);
+				}
+			}
+		}
+	}
+
+	protected function GetCurrentActivity()
+	{
+		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
+		$activityname = GetValueFormatted(IPS_GetObjectIDByIdent("HarmonyActivity", $HarmonyHubObjID));
+		$activityid = GetValue(IPS_GetObjectIDByIdent("HarmonyActivity", $HarmonyHubObjID));
+		$activity = array("activityname" => $activityname, "activityid" => $activityid);
+		return $activity;
+	}
+
+	protected function RokuResponse($Host, $Port)
+	{
+		$rokuresponse = '<root xmlns="urn:schemas-upnp-org:device-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<device>
+<deviceType>urn:roku-com:device:player:1-0</deviceType>
+<friendlyName>IP-Symcon (Roku Device)</friendlyName>
+<manufacturer>IPSymconHarmony</manufacturer>
+<manufacturerURL>https://github.com/Wolbolar/IPSymconHarmony</manufacturerURL>
+<modelDescription>Roku Emulator IP-Symcon</modelDescription>
+<modelName>IPS5</modelName>
+<modelNumber>4200X</modelNumber>
+<modelURL>https://github.com/Wolbolar/IPSymconHarmony</modelURL>
+<serialNumber>' . $this->MySerial . '</serialNumber>
+<UDN>uuid:roku:ecp:' . $this->MySerial . '</UDN>
+<serviceList>
+<service>
+<serviceType>urn:roku-com:service:ecp:1</serviceType>
+<serviceId>urn:roku-com:serviceId:ecp1-0</serviceId>
+<controlURL/>
+<eventSubURL/>
+<SCPDURL>ecp_SCPD.xml</SCPDURL>
+</service>
+</serviceList>
+</device>
+</root>
+';
+		$Header[] = "HTTP/1.1 200 OK";
+		// $Header[] = "LOCATION: http://" . $this->GetIP() . ":".$this->ReadPropertyInteger("ServerSocketPort");
+		// $Header[] = "Content-Type: application/xml; charset=utf-8";
+		// $Header[] = "ST: roku:ecp";
+		// $Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
+		// $Header[] = "SERVER: Roku/1.0 UPnP/1.1";
+		$Header[] = "Content-Type: text/xml; charset=utf-8";
+		$Header[] = "Content-Length: " . strlen($rokuresponse);
+		$Header[] = "Connection: Close";
+		$Header[] = "\r\n";
+		$Payload = implode("\r\n", $Header);
+		$Payload .= '<?xml version="1.0" encoding="utf-8" ?>' . $rokuresponse;
+
+		$result = $this->SendToSocket($Host, $Port, $Payload);
+		return $result;
+	}
+
+	protected function SendToSocket($Host, $Port, $payload)
+	{
+		$SendData = Array("DataID" => "{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}", "Buffer" => utf8_encode($payload), "ClientIP" => $Host, "ClientPort" => $Port); // Server Socket
+		$this->SendDataToParent(json_encode($SendData));
+		$this->SendDebug("SendData:", $payload, 0);
+	}
+
+	protected function GetIP()
+	{
+		$ssdpid = IPS_GetInstanceListByModuleID("{058CE601-4353-F473-EA14-A2B7B94628A0}")[0]; // SSDP;
+		$instance = IPS_GetInstance($ssdpid);
+		$parentssdp = $instance['ConnectionID'];
+		$myIP = IPS_GetProperty($parentssdp, 'BindIP');
+		return $myIP;
+	}
+
+	protected function GetHarmonyHubs()
+	{
+		$harmonyhubs = IPS_GetInstanceListByModuleID("{03B162DB-7A3A-41AE-A676-2444F16EBEDF}"); // Harmony Hub;
+		return $harmonyhubs;
+	}
+
+	protected function GetHarmonyHubList()
+	{
+		$harmonyhubs = $this->GetHarmonyHubs();
+		$options = [
+			[
+				'label' => 'Please choose',
+				'value' => -1
+			]
+		];
+		foreach ($harmonyhubs as $harmonyhub) {
+			$options[] = [
+				'label' => IPS_GetName($harmonyhub),
+				'value' => $harmonyhub
+			];
+		}
+		return $options;
+	}
+
+	protected function GetHubActivities($HubID)
+	{
+		$activities = HarmonyHub_GetAvailableAcitivities($HubID);
+		return $activities;
+	}
+
+	protected function GetHubActivitiesList($HubID)
+	{
+		$options = [
+			[
+				'label' => 'Please choose',
+				'value' => 0
+			]
+		];
+		if (strlen($HubID) == 5) {
+			$activities = $this->GetHubActivities($HubID);
+			foreach ($activities as $key => $activity) {
+				$options[] = [
+					'label' => $key,
+					'value' => $activity
+				];
+			}
+		}
+		return $options;
+	}
+
+	protected function CreateActivityProperties()
+	{
+		$harmonyhubs = $this->GetHarmonyHubs();
+		foreach ($harmonyhubs as $harmonyhub) {
+			$activities = $this->GetHubActivities($harmonyhub);
+			foreach ($activities as $key => $activity) {
+				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '');
+			}
+		}
+	}
+
+	protected function GetListName($HarmonyHubObjID, $HarmonyHubActivity)
+	{
+		$name = 'rokukeys_' . $HarmonyHubObjID . '_' . abs($HarmonyHubActivity);
+		return $name;
+	}
+
+	public function RequestAction($Ident, $Value)
+	{
+		$ObjID = $this->GetIDForIdent($Ident);
+		$lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
+		SetValue($ObjID, $Value);
+		//SetValue($lastkeyid, $keyval);
+	}
+
+	private function SetKeystrokeEvent($IDKeystroke)
+	{
+		//prüfen ob Event existent
+		$ParentID = $IDKeystroke;
+
+		$EreignisID = @($this->GetIDForIdent('EventKeystrokeFakeRoku'));
+		if ($EreignisID === false) {
+			$EreignisID = IPS_CreateEvent(0);
+			IPS_SetName($EreignisID, "Keystroke FakeRoku");
+			IPS_SetIdent($EreignisID, "EventKeystrokeFakeRoku");
+			IPS_SetEventTrigger($EreignisID, 0, $this->GetIDForIdent('LastKeystrokeFakeRoku'));   //bei Variablenaktualisierung
+			IPS_SetParent($EreignisID, $ParentID);
+			IPS_SetEventActive($EreignisID, true);             //Ereignis aktivieren
+		} else {
+			$this->_debug('FakeRoku', 'event found with objectid ' . $EreignisID);
 		}
 	}
 
@@ -392,72 +442,6 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 		return $variablenID;
 	}
 
-	protected function GetHarmonyHubs()
-	{
-		$harmonyhubs = IPS_GetInstanceListByModuleID("{03B162DB-7A3A-41AE-A676-2444F16EBEDF}"); // Harmony Hub;
-		return $harmonyhubs;
-	}
-
-	protected function GetHarmonyHubList()
-	{
-		$harmonyhubs = $this->GetHarmonyHubs();
-		$options = [
-			[
-				'label' => 'Please choose',
-				'value' => -1
-			]
-		];
-		foreach ($harmonyhubs as $harmonyhub) {
-			$options[] = [
-				'label' => IPS_GetName($harmonyhub),
-				'value' => $harmonyhub
-			];
-		}
-		return $options;
-	}
-
-	protected function GetHubActivities($HubID)
-	{
-		$activities = HarmonyHub_GetAvailableAcitivities($HubID);
-		return $activities;
-	}
-
-	protected function GetHubActivitiesList($HubID)
-	{
-		$options = [
-			[
-				'label' => 'Please choose',
-				'value' => 0
-			]
-		];
-		if (strlen($HubID) == 5) {
-			$activities = $this->GetHubActivities($HubID);
-			foreach ($activities as $key => $activity) {
-				$options[] = [
-					'label' => $key,
-					'value' => $activity
-				];
-			}
-		}
-		return $options;
-	}
-
-	protected function CreateActivityProperties()
-	{
-		$harmonyhubs = $this->GetHarmonyHubs();
-		foreach ($harmonyhubs as $harmonyhub) {
-			$activities = $this->GetHubActivities($harmonyhub);
-			foreach ($activities as $key => $activity) {
-				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '');
-			}
-		}
-	}
-
-	protected function GetListName($HarmonyHubObjID, $HarmonyHubActivity)
-	{
-		$name = 'rokukeys_' . $HarmonyHubObjID . '_' . abs($HarmonyHubActivity);
-		return $name;
-	}
 
 	/***********************************************************
 	 * Configuration Form
@@ -469,6 +453,11 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 	 */
 	public function GetConfigurationForm()
 	{
+		// update status, when configuration is not complete
+		if (!$this->CheckConfiguration()) {
+			$this->SetStatus(201);
+		}
+
 		// return current form
 		return json_encode([
 			'elements' => $this->FormHead(),
@@ -487,6 +476,15 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 			[
 				'type' => 'Label',
 				'label' => 'Roku Emulator IP-Symcon'
+			],
+			[
+				'type' => 'Label',
+				'label' => 'Please select port to use for the Roku emulator:'
+			],
+			[
+				'name' => 'ServerSocketPort',
+				'type' => 'NumberSpinner',
+				'caption' => 'Port'
 			],
 			[
 				'type' => 'Label',
@@ -704,32 +702,6 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 		return $this->position;
 	}
 
-	protected function GetIPSVersion()
-	{
-		$ipsversion = floatval(IPS_GetKernelVersion());
-		if ($ipsversion < 4.1) // 4.0
-		{
-			$ipsversion = 0;
-		} elseif ($ipsversion >= 4.1 && $ipsversion < 4.2) // 4.1
-		{
-			$ipsversion = 1;
-		} elseif ($ipsversion >= 4.2 && $ipsversion < 4.3) // 4.2
-		{
-			$ipsversion = 2;
-		} elseif ($ipsversion >= 4.3 && $ipsversion < 4.4) // 4.3
-		{
-			$ipsversion = 3;
-		} elseif ($ipsversion >= 4.4 && $ipsversion < 5) // 4.4
-		{
-			$ipsversion = 4;
-		} else   // 5
-		{
-			$ipsversion = 5;
-		}
-
-		return $ipsversion;
-	}
-
 	/***********************************************************
 	 * Migrations
 	 ***********************************************************/
@@ -748,5 +720,3 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 		}
 	}
 }
-
-?>

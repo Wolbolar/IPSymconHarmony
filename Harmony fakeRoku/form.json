@@ -1,17 +1,7 @@
 {
     "elements":
             [
-				{ "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
-				{
-                    "name": "Name",
-                    "type": "ValidationTextBox",
-                    "caption": "Name"
-                },
-				{
-                    "name": "DeviceID",
-                    "type": "NumberSpinner",
-                    "caption": "DeviceID"
-                }
+				{ "type": "Label", "label": "This instance is for getting keystrokes from the Harmony remote via Roku Emulator"}
             ],
     "status":
             [
