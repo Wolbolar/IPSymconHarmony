@@ -13,7 +13,7 @@ class HarmonyRokuEmulator extends IPSModule
 		parent::Create();
 		$this->RequireParent("{8062CF2B-600E-41D6-AD4B-1BA66C32D6ED}"); // Server Socket
 		$this->RegisterPropertyInteger('ServerSocketPort', 42450);
-		$this->RegisterPropertyInteger('HarmonyHubObjID', -2);
+		$this->RegisterPropertyInteger('HarmonyHubObjID', 0);
 		$this->RegisterPropertyInteger('HarmonyHubActivity', 0);
 		$this->CreateActivityProperties();
 		$this->MySerial = md5(openssl_random_pseudo_bytes(10));
@@ -289,7 +289,7 @@ class HarmonyRokuEmulator extends IPSModule
 		$options = [
 			[
 				'label' => 'Please choose',
-				'value' => -1
+				'value' => 0
 			]
 		];
 		foreach ($harmonyhubs as $harmonyhub) {
@@ -350,24 +350,6 @@ class HarmonyRokuEmulator extends IPSModule
 		$lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
 		SetValue($ObjID, $Value);
 		//SetValue($lastkeyid, $keyval);
-	}
-
-	private function SetKeystrokeEvent($IDKeystroke)
-	{
-		//prüfen ob Event existent
-		$ParentID = $IDKeystroke;
-
-		$EreignisID = @($this->GetIDForIdent('EventKeystrokeFakeRoku'));
-		if ($EreignisID === false) {
-			$EreignisID = IPS_CreateEvent(0);
-			IPS_SetName($EreignisID, "Keystroke FakeRoku");
-			IPS_SetIdent($EreignisID, "EventKeystrokeFakeRoku");
-			IPS_SetEventTrigger($EreignisID, 0, $this->GetIDForIdent('LastKeystrokeFakeRoku'));   //bei Variablenaktualisierung
-			IPS_SetParent($EreignisID, $ParentID);
-			IPS_SetEventActive($EreignisID, true);             //Ereignis aktivieren
-		} else {
-			$this->_debug('FakeRoku', 'event found with objectid ' . $EreignisID);
-		}
 	}
 
 	/**
@@ -498,7 +480,7 @@ class HarmonyRokuEmulator extends IPSModule
 			]
 		];
 		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
-		if ($HarmonyHubObjID > -1) {
+		if ($HarmonyHubObjID > 0) {
 			$form = array_merge_recursive(
 				$form,
 				[
@@ -516,7 +498,7 @@ class HarmonyRokuEmulator extends IPSModule
 			);
 		}
 		$HarmonyHubActivity = $this->ReadPropertyInteger("HarmonyHubActivity");
-		if ($HarmonyHubActivity > -2 && $HarmonyHubObjID > -1) {
+		if ($HarmonyHubActivity != 0 && $HarmonyHubObjID > 0) {
 			// show list
 			$form = array_merge_recursive(
 				$form,

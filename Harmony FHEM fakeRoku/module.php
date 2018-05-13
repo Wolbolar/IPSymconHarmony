@@ -9,8 +9,8 @@ class HarmonyfakeRoku extends IPSModule
 	{
 		//Never delete this line!
 		parent::Create();
-		$this->RegisterPropertyInteger('HarmonyHubObjID', -1);
-		$this->RegisterPropertyInteger('HarmonyHubActivity', -2);
+		$this->RegisterPropertyInteger('HarmonyHubObjID', 0);
+		$this->RegisterPropertyInteger('HarmonyHubActivity', 0);
 		$this->CreateActivityProperties();
 	}
 
@@ -404,7 +404,7 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 		$options = [
 			[
 				'label' => 'Please choose',
-				'value' => -1
+				'value' => 0
 			]
 		];
 		foreach ($harmonyhubs as $harmonyhub) {
@@ -500,7 +500,7 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 			]
 		];
 		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
-		if ($HarmonyHubObjID > -1) {
+		if ($HarmonyHubObjID > 0) {
 			$form = array_merge_recursive(
 				$form,
 				[
@@ -518,7 +518,7 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 			);
 		}
 		$HarmonyHubActivity = $this->ReadPropertyInteger("HarmonyHubActivity");
-		if ($HarmonyHubActivity > -2 && $HarmonyHubObjID > -1) {
+		if ($HarmonyHubActivity != 0 && $HarmonyHubObjID > 0) {
 			// show list
 			$form = array_merge_recursive(
 				$form,
