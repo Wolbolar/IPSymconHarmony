@@ -1,0 +1,34 @@
+{
+  "translations": {
+    "de": {
+      "device name": "Geräte Name",
+      "manufacturer": "Hersteller",
+      "type": "Typ",
+      "device id": "Geräte ID",
+      "devices": "Geräte",
+      "category harmony scripts": "Kategorie Harmony Skripte",
+      "harmony devices": "Harmony Geräte",
+      "harmony activities": "Harmony Aktivitäten",
+      "category for Logitech Harmony Hub devices": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:",
+      "Harmony Hub devices": "Harmony Hub Geräte",
+      "Create Harmony devices for remote control:": "Harmony Devices zum Schalten anlegen:",
+      "Create variables for webfront (Please note: High numbers of variables)": "Variablen zum Schalten im Webfront anlegen (Achtung! Hohe Variabenanzahl)",
+      "Harmony variables": "Harmony Variablen",
+      "create scripts for remote control (alternative or addition for remote control via webfront):": "Skripte zum Schalten anlegen (Alternative oder Ergänzung zum Schalten aus dem Webfront):",
+      "Harmony script": "Harmony Skript",
+      "volume control": "Lautstärke Regelung",
+      "volume steps": "Lautstärke Schritte",
+      "Refresh list": "Liste aktualisieren",
+      "Read configuration": "Konfiguration auslesen",
+      "1. Read Logitech Harmony Hub configuration:": "1. Logitech Harmony Hub Konfiguration auslesen:",
+      "2. Get device list:": "2. Wenn Logitech Harmony Hub Konfiguration ausgelesen wurde Geräteliste anlegen:",
+      "3. Setup Harmony activity scripts:": "3. Setup Harmony Aktivitäten Skripte:",
+      "Creating instance.": "Instanz erstellen.",
+      "Harmony configurator created.": "Harmony Konfigurator erstellt.",
+      "interface closed.": "Interface geschlossen.",
+      "Please follow the instructions.": "Bitte den Anleitung folgen.",
+      "no category selected.": "keine Kategorie ausgewählt."
+
+    }
+  }
+}

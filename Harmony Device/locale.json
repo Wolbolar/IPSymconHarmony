@@ -1,11 +1,14 @@
 {
-	"translations": {
-		"de": { 
-			"DeviceID": "Ger‰te ID",
-			"Name": "Ger‰tename",
-			"configuration valid": "Konfiguration g¸ltig",
-			"Harmony Device is inactive": "Harmony Device ist inaktiv",
-			"creating instance": "Die Instanz wird erstellt"
-		}
-	}
+  "translations": {
+    "de": {
+      "Please create instance or harmony scripts with the harmony configurator": "Bitte Instanz oder die Harmony Skripte √ºber den Harmony Konfigurator anlegen",
+      "Create Variables": "Variablen anlegen",
+      "Harmony variables": "Harmony Variablen",
+      "DeviceID": "Ger√§te ID",
+      "Name": "Ger√§tename",
+      "configuration valid": "Konfiguration g√ºltig",
+      "Harmony Device is inactive": "Harmony Device ist inaktiv",
+      "creating instance": "Die Instanz wird erstellt"
+    }
+  }
 }

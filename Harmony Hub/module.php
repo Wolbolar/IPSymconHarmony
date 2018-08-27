@@ -166,7 +166,6 @@ class HarmonyHub extends IPSModule
 		$this->RegisterPropertyBoolean("Open", false);
 		$this->RegisterPropertyString("Email", "");
 		$this->RegisterPropertyString("Password", "");
-		$this->RegisterPropertyInteger("ImportCategoryID", 0);
 		$this->RegisterPropertyBoolean("HarmonyVars", false);
 		$this->RegisterPropertyBoolean("HarmonyScript", false);
 		$this->RegisterPropertyBoolean("Alexa", false);
@@ -248,62 +247,8 @@ class HarmonyHub extends IPSModule
 
 		}
 
-		//Import Kategorie für HarmonyHub Geräte
-		$ImportCategoryID = $this->ReadPropertyInteger('ImportCategoryID');
-		if ($ImportCategoryID === 0) {
-			// Status Error Kategorie zum Import auswählen
-			$this->SetStatus(206);
-		} elseif ($ImportCategoryID != 0) {
-			// Status Aktiv
-			$this->SetStatus(102);
-		}
-
-		//Konfig prüfen
-		/*
-		$HarmonyConfig = GetValue($this->GetIDForIdent("HarmonyConfig"));
-		if($HarmonyConfig == "" && $change == true) //Config und IP vergeben
-		{
-			$timestamp = time();
-			$this->lockgetConfig = true;
-			$this->getConfig();
-			$i = 0;
-			do
-			{
-			IPS_Sleep(10);
-			$updatetimestamp = IPS_GetVariable($this->GetIDForIdent("HarmonyConfig"))["VariableUpdated"];
-
-			//echo $i."\n";
-			$i++;
-			}
-			while($updatetimestamp <= $timestamp);
-			//Aktivity Anlegen
-			//Activity Profil anlegen
-			
-			$HarmonyActivityID = @$this->GetIDForIdent("HarmonyActivity");
-			if ($HarmonyActivityID == false)
-			{
-				$this->SetHarmonyActivityProfile();
-			}
-			else
-			{
-				$HarmonyActivity = GetValue($this->GetIDForIdent("HarmonyActivity"));
-
-				if ($HarmonyActivity == 0)
-				{
-					SetValue($this->GetIDForIdent("HarmonyActivity"), -1);
-				}
-			}	
-		}
-		*/
-
-		// Alexa Link anlegen
-		/*
-		if ($this->ReadPropertyBoolean('Alexa')) {
-			$this->CreateAlexaLinks();
-		} else {
-			$this->DeleteAlexaLinks();
-		}
-		*/
+		// Status Aktiv
+		$this->SetStatus(102);
 	}
 
 	protected function configFilePath()
@@ -416,12 +361,6 @@ class HarmonyHub extends IPSModule
 		}
 		//Activity Profil anlegen
 		$this->SetHarmonyActivityProfile();
-
-		//Harmony Devices anlegen
-		$this->SetupHarmonyInstance();
-
-		//Harmony Aktivity Link setzten
-		$this->CreateAktivityLink();
 
 		//Harmony Firmware und Name auslesen
 		$this->getDiscoveryInfo();
@@ -538,8 +477,6 @@ Switch ($_IPS[\'SENDER\'])
 
 	protected function SetHarmonyActivityProfile()
 	{
-
-		//IPS Var
 		$json = $this->GetHarmonyConfigJSON();
 		$activities[] = $json["activity"];
 		$devices[] = $json["device"];
@@ -548,22 +485,32 @@ Switch ($_IPS[\'SENDER\'])
 		foreach ($activities as $activitieslist) {
 			foreach ($activitieslist as $activity) {
 				$label = $activity["label"];
-				// $suggestedDisplay = $activity["suggestedDisplay"];
+				$suggestedDisplay = $activity["suggestedDisplay"];
+				$this->SendDebug("Harmony Activity", "suggested display " . $suggestedDisplay , 0);
 				$id = $activity["id"];
-				// $activityTypeDisplayName  = $activity["activityTypeDisplayName"];
-				// $controlGroup  = $activity["controlGroup"];
+				$activityTypeDisplayName  = $activity["activityTypeDisplayName"];
+				$this->SendDebug("Harmony Activity", "activity type display name " . $activityTypeDisplayName, 0);
+				$controlGroup  = $activity["controlGroup"];
+				$this->SendDebug("Harmony Activity", "control group " . json_encode($controlGroup), 0);
 				if (isset($activity["isTuningDefault"])) {
-					// $isTuningDefault  = $activity["isTuningDefault"];
+					$isTuningDefault  = $activity["isTuningDefault"];
+					$this->SendDebug("Harmony Activity", "is tuning default " . json_encode($isTuningDefault), 0);
 				}
-				// $sequences  = $activity["sequences"];
+				$sequences  = $activity["sequences"];
+				$this->SendDebug("Harmony Activity", "sequences " . json_encode($sequences), 0);
 				if (isset($activity["activityOrder"])) {
-					// $activityOrder  = $activity["activityOrder"];
+					$activityOrder  = $activity["activityOrder"];
+					$this->SendDebug("Harmony Activity", "activity order " . json_encode($activityOrder), 0);
 				}
-				// $fixit  = $activity["fixit"];
-				// $type  = $activity["type"];
-				// $icon  = $activity["icon"];
+				$fixit  = $activity["fixit"];
+				$this->SendDebug("Harmony Activity", "fixit " . json_encode($fixit), 0);
+				$type  = $activity["type"];
+				$this->SendDebug("Harmony Activity", "type " . $type, 0);
+				$icon  = $activity["icon"];
+				$this->SendDebug("Harmony Activity", "icon " . $icon, 0);
 				if (isset($activity["baseImageUri"])) {
-					// $baseImageUri  = $activity["baseImageUri"];
+					$baseImageUri  = $activity["baseImageUri"];
+					$this->SendDebug("Harmony Activity", "base image uri " . $baseImageUri, 0);
 				}
 				if ($label == "PowerOff") {
 					$ProfileAssActivities[$assid] = Array($id, "Power Off", "", 0xFA5858);
@@ -578,7 +525,6 @@ Switch ($_IPS[\'SENDER\'])
 		$this->RegisterVariableInteger("HarmonyActivity", "Harmony Activity", "LogitechHarmony.Activity", 12);
 		$this->EnableAction("HarmonyActivity");
 		SetValueInteger($this->GetIDForIdent("HarmonyActivity"), -1);
-		//IPS_SetVariableCustomProfile($this->GetIDForIdent("HarmonyActivity"), "LogitechHarmony.Activity");
 	}
 
 
@@ -925,40 +871,46 @@ Switch ($_IPS[\'SENDER\'])
 	//public function ForwardData(string $JSONString)
 	public function ForwardData($JSONString)
 	{
-
+		$this->SendDebug("Forward data", $JSONString, 0);
 		// Empfangene Daten von der Device Instanz
 		$data = json_decode($JSONString);
 		$datasend = $data->Buffer;
-		$DeviceID = $datasend->DeviceID;
-		$Command = $datasend->Command;
-		$BluetoothDevice = $datasend->BluetoothDevice;
-		$commandoutobjid = @$this->GetIDForIdent("CommandOut");
-		if ($commandoutobjid > 0) {
-			SetValueString($commandoutobjid, "DeviceID: " . $DeviceID . ", Command: " . $Command . ", BluetoothDevice: " . $BluetoothDevice);
-		}
-		$this->SendDebug("Logitech Harmony Hub", "ForwardData HarmonyHub Splitter: DeviceID: " . $DeviceID . ", Command: " . $Command . ", BluetoothDevice: " . $BluetoothDevice, 0);
-
-		// Hier würde man den Buffer im Normalfall verarbeiten
-		// z.B. CRC prüfen, in Einzelteile zerlegen
-		/*
-		try
+		if(property_exists($datasend, 'Method'))
 		{
-			//
+			$this->SendDebug("Forward data", "Method: " . $datasend->Method, 0);
+			if($datasend->Method == "GetHarmonyConfigJSON")
+			{
+				$devices_json = $this->GetHarmonyConfig();
+				$this->SendDebug("Logitech Harmony Hub", "Get Harmony Config", 0);
+				return $devices_json;
+			}
+			if($datasend->Method == "getConfig")
+			{
+				$this->getConfig();
+			}
+			if($datasend->Method == "GetAvailableAcitivities")
+			{
+				$currentactivities = $this->GetAvailableAcitivities();
+				$currentactivities_json = json_encode($currentactivities);
+				$this->SendDebug("Forward data", "Send: " . $currentactivities_json, 0);
+				return $currentactivities_json;
+			}
 		}
-		catch (Exception $ex)
+
+		if(property_exists($datasend, 'DeviceID'))
 		{
-			echo $ex->getMessage();
-			echo ' in '.$ex->getFile().' line: '.$ex->getLine().'.';
+			$DeviceID = $datasend->DeviceID;
+			$Command = $datasend->Command;
+			$BluetoothDevice = $datasend->BluetoothDevice;
+			$commandoutobjid = @$this->GetIDForIdent("CommandOut");
+			if ($commandoutobjid > 0) {
+				SetValueString($commandoutobjid, "DeviceID: " . $DeviceID . ", Command: " . $Command . ", BluetoothDevice: " . $BluetoothDevice);
+			}
+			$this->SendDebug("Logitech Harmony Hub", "ForwardData HarmonyHub Splitter: DeviceID: " . $DeviceID . ", Command: " . $Command . ", BluetoothDevice: " . $BluetoothDevice, 0);
+			$this->sendcommand($DeviceID, $Command, $BluetoothDevice);
+			return true;
 		}
-		*/
-		// Weiterleiten zur I/O Instanz
-		//$resultat = $this->SendDataToParent(json_encode(Array("DataID" => "{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}", "Buffer" => $data->Buffer))); //TX GUID
-
-		// Weiterverarbeiten und durchreichen
-		//return $resultat;
-
-		$this->sendcommand($DeviceID, $Command, $BluetoothDevice);
-
+		return false;
 	}
 
 	/**
@@ -1370,61 +1322,9 @@ Switch ($_IPS[\'SENDER\'])
 
 	}
 
-	//Installation Harmony Instanzen
-	protected function SetupHarmonyInstance()
-	{
-		$hubip = $this->ReadPropertyString('Host');
-		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline. 
-		$json = $this->GetHarmonyConfigJSON();
-		$activities[] = $json["activity"];
-		$devices[] = $json["device"];
-		$hubname = GetValue($this->GetIDForIdent("HarmonyHubName"));
-		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
-		//Prüfen ob Kategorie schon existiert
-		$HubCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHub_" . $hubipident, $CategoryID);
-		if ($HubCategoryID === false) {
-			$HubCategoryID = IPS_CreateCategory();
-			IPS_SetName($HubCategoryID, "Logitech " . $hubname . " (" . $hubip . ")");
-			IPS_SetIdent($HubCategoryID, "CatLogitechHub_" . $hubipident); // Ident muss eindeutig sein
-			IPS_SetInfo($HubCategoryID, $hubip);
-			IPS_SetParent($HubCategoryID, $CategoryID);
-		}
-		foreach ($devices as $harmonydevicelist) {
-			$InsIDList = array();
-			//$InsIDListID = 0;
-			foreach ($harmonydevicelist as $harmonydevice) {
-				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
-				$deviceID = intval($harmonydevice["id"]); //DeviceID des Geräts
-				if (isset($harmonydevice["BTAddress"])) {
-					$BluetoothDevice = true;
-				} else {
-					$BluetoothDevice = false;
-				}
-
-				$InsID = $this->HarmonyDeviceCreateInstance($InstName, $HubCategoryID, $deviceID, $BluetoothDevice);
-				$InsIDList[] = $InsID;
-			}
-
-		}
-		//Variablen oder Skripte installieren
-		$HarmonyVars = $this->ReadPropertyBoolean('HarmonyVars');
-		$HarmonyScript = $this->ReadPropertyBoolean('HarmonyScript');
-		if ($HarmonyVars == true) {
-			$this->SetHarmonyInstanceVars($InsIDList, $HubCategoryID);
-		}
-		if ($HarmonyScript == true) {
-			$this->SetHarmonyInstanceScripts($InsIDList, $HubCategoryID);
-		}
-
-		//Harmony Aktivity Skripte setzten
-		$this->SetupActivityScripts($HubCategoryID, $hubname);
-
-	}
-
 	protected function SetHarmonyInstanceVars($InsIDList, $HubCategoryID)
 	{
 		$json = $this->GetHarmonyConfigJSON();
-		$activities[] = $json["activity"];
 		$devices[] = $json["device"];
 
 		foreach ($devices as $harmonydevicelist) {
@@ -1498,65 +1398,6 @@ Switch ($_IPS[\'SENDER\'])
 		}
 	}
 
-	protected function SetHarmonyInstanceScripts($InsIDList, $HubCategoryID)
-	{
-		$json = $this->GetHarmonyConfigJSON();
-		$activities[] = $json["activity"];
-		$devices[] = $json["device"];
-
-		foreach ($devices as $harmonydevicelist) {
-			$harmonydeviceid = 0;
-			foreach ($harmonydevicelist as $harmonydevice) {
-				// $InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
-				$controlGroups = $harmonydevice["controlGroup"];
-
-				//Kategorien anlegen
-				$InsID = $InsIDList[$harmonydeviceid];
-				//Prüfen ob Kategorie schon existiert
-				$MainCatID = @IPS_GetObjectIDByIdent("Logitech_Device_Cat" . $harmonydevice["id"], $HubCategoryID);
-				if ($MainCatID === false) {
-					$MainCatID = IPS_CreateCategory();
-					IPS_SetName($MainCatID, utf8_decode($harmonydevice["label"]));
-					IPS_SetInfo($MainCatID, $harmonydevice["id"]);
-					IPS_SetIdent($MainCatID, "Logitech_Device_Cat" . $harmonydevice["id"]);
-					IPS_SetParent($MainCatID, $HubCategoryID);
-				}
-
-				foreach ($controlGroups as $controlGroup) {
-					$commands = $controlGroup["function"]; //Function Array
-
-					//Prüfen ob Kategorie schon existiert
-					$CGID = @IPS_GetObjectIDByIdent("Logitech_Device_" . $harmonydevice["id"] . "_Controllgroup_" . $controlGroup["name"], $MainCatID);
-					if ($CGID === false) {
-						$CGID = IPS_CreateCategory();
-						IPS_SetName($CGID, $controlGroup["name"]);
-						IPS_SetIdent($CGID, "Logitech_Device_" . $harmonydevice["id"] . "_Controllgroup_" . $controlGroup["name"]);
-						IPS_SetParent($CGID, $MainCatID);
-					}
-
-					$assid = 0;
-					foreach ($commands as $command) {
-						$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-						//Prüfen ob Script schon existiert
-						$Scriptname = $command["label"];
-						$controllgroupident = $this->CreateIdent("Logitech_Device_" . $harmonydevice["id"] . "_Command_" . $harmonycommand["command"]);
-						$ScriptID = @IPS_GetObjectIDByIdent($controllgroupident, $CGID);
-						if ($ScriptID === false) {
-							$ScriptID = IPS_CreateScript(0);
-							IPS_SetName($ScriptID, $Scriptname);
-							IPS_SetParent($ScriptID, $CGID);
-							IPS_SetIdent($ScriptID, $controllgroupident);
-							$content = "<? LHD_Send(" . $InsID . ", \"" . $harmonycommand["command"] . "\");?>";
-							IPS_SetScriptContent($ScriptID, $content);
-						}
-						$assid++;
-					}
-				}
-				$harmonydeviceid++;
-			}
-		}
-	}
-
 	//DeviceIDs auslesen
 	public function GetHarmonyDeviceIDs()
 	{
@@ -1592,6 +1433,13 @@ Switch ($_IPS[\'SENDER\'])
 	//Get JSON from Harmony Config
 	public function GetHarmonyConfigJSON()
 	{
+		$json = $this->GetHarmonyConfig();
+		$devices = json_decode($json, true);
+		return $devices;
+	}
+
+	protected function GetHarmonyConfig()
+	{
 		$jsonrawstring = GetValue($this->GetIDForIdent("HarmonyConfig"));
 		$jsonstart = strpos($jsonrawstring, '![CDATA[');
 		$jsonrawlength = strlen($jsonrawstring);
@@ -1600,9 +1448,7 @@ Switch ($_IPS[\'SENDER\'])
 			$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
 		}
 		$jsonharmony = substr($jsonrawstring, ($jsonstart + 8), ($jsonend - $jsonrawlength));
-		$jsonharmony = str_replace("Ã¼", "ü", $jsonharmony);
-		//$jsonharmony = str_replace("ä", "ä", $jsonharmony);
-		$json = json_decode($jsonharmony, true);
+		$json = utf8_decode($jsonharmony);
 		return $json;
 	}
 
@@ -1638,32 +1484,6 @@ Switch ($_IPS[\'SENDER\'])
 		}
 	}
 
-	//Create Harmony Device Instance 
-	protected function HarmonyDeviceCreateInstance(string $InstName, int $CategoryID, int $deviceID, bool $BluetoothDevice)
-	{
-
-		//Prüfen ob Instanz schon existiert
-		$InstanzID = @IPS_GetObjectIDByIdent("Device_" . $deviceID, $CategoryID);
-		if ($InstanzID === false) {
-			//Neue Instanz anlegen
-			$InsID = IPS_CreateInstance("{B0B4D0C2-192E-4669-A624-5D5E72DBB555}");
-			$InstName = (string)$InstName;
-			IPS_SetName($InsID, $InstName); // Instanz benennen
-			IPS_SetIdent($InsID, "Device_" . $deviceID);
-			IPS_SetParent($InsID, $CategoryID); // Instanz einsortieren unter dem Objekt mit der ID "$CategoryID"
-			//$DeviceID setzten
-			IPS_SetProperty($InsID, "Name", $InstName); //Name setzten.
-			IPS_SetProperty($InsID, "DeviceID", $deviceID); //DeviceID setzten.
-			IPS_SetProperty($InsID, "BluetoothDevice", $BluetoothDevice); //Bluetooth Device setzten.
-			IPS_ApplyChanges($InsID); //Neue Konfiguration übernehmen
-			$this->SendDebug("Logitech Harmony Hub", "Logitech Instanz Name: " . $InstName . " erstellt", 0);
-			return $InsID;
-		} else {
-			return $InstanzID;
-		}
-
-	}
-
 	//Profile
 	protected function RegisterProfileIntegerHarmony($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $StepSize, $Digits)
 	{
@@ -1673,7 +1493,9 @@ Switch ($_IPS[\'SENDER\'])
 		} else {
 			$profile = IPS_GetVariableProfile($Name);
 			if ($profile['ProfileType'] != 1)
-				throw new Exception("Variable profile type does not match for profile " . $Name);
+			{
+				$this->SendDebug("Harmony Hub", "Variable profile type does not match for profile " . $Name, 0);
+			}
 		}
 
 		IPS_SetVariableProfileIcon($Name, $Icon);
@@ -1706,35 +1528,26 @@ Switch ($_IPS[\'SENDER\'])
 	}
 	//-- Harmony API
 
+	/**
+	 * Interne Funktion des SDK.
+	 * Wird von der Console aufgerufen, wenn 'unser' IO-Parent geöffnet wird.
+	 * Außerdem nutzen wir sie in Applychanges, da wir dort die Daten zum konfigurieren nutzen.
+	 * @access public
+	 */
+	public function GetConfigurationForParent()
+	{
+		$Config['Port'] = 5222; // Harmony Port
+		return json_encode($Config);
+	}
+
 	//Configuration Form
 	public function GetConfigurationForm()
 	{
-		$alexashsobjid = $this->GetAlexaSmartHomeSkill();
 		$formhead = $this->FormHead();
-		$formselection = $this->FormSelection();
 		$formactions = $this->FormActions();
 		$formelementsend = '{ "type": "Label", "label": "__________________________________________________________________________________________________" }';
 		$formstatus = $this->FormStatus();
-
-		if ($alexashsobjid > 0) {
-			return '{ ' . $formhead . $formselection . $formelementsend . '],' . $formactions . $formstatus . ' }';
-		} else {
-			return '{ ' . $formhead . $formelementsend . '],' . $formactions . $formstatus . ' }';
-		}
-	}
-
-	protected function FormSelection()
-	{
-		$AlexaSmartHomeSkill = $this->GetAlexaSmartHomeSkill();
-		if ($AlexaSmartHomeSkill == false) {
-			$form = '';
-		} else {
-			$form = '{ "type": "Label", "label": "Alexa Smart Home Skill is available in IP-Symcon"},
-				{ "type": "Label", "label": "Would you like to create links to the Harmony actions scripts for Alexa in the SmartHomeSkill (IQL4SmartHome) instance?" },
-				{ "type": "CheckBox", "name": "Alexa", "caption": "Create links for Amazon Echo / Dot" },';
-		}
-
-		return $form;
+		return '{ ' . $formhead . $formelementsend . '],' . $formactions . $formstatus . ' }';
 	}
 
 	protected function FormHead()
@@ -1762,21 +1575,6 @@ Switch ($_IPS[\'SENDER\'])
                     "name": "Password",
                     "type": "PasswordTextBox",
                     "caption": "Password"
-                },
-				{ "type": "Label", "label": "category for Logitech Harmony Hub devices" },
-				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub devices" },
-				{ "type": "Label", "label": "Create Harmony devices for remote control:" },
-				{ "type": "Label", "label": "Create variables for webfront (Please note: High numbers of variables)" },
-				{
-                    "name": "HarmonyVars",
-                    "type": "CheckBox",
-                    "caption": "Harmony variables"
-                },
-				{ "type": "Label", "label": "create scripts for remote control (alternative or addition for remote control via webfront):" },
-				{
-                    "name": "HarmonyScript",
-                    "type": "CheckBox",
-                    "caption": "Harmony script"
                 },';
 
 		return $form;
@@ -1788,8 +1586,9 @@ Switch ($_IPS[\'SENDER\'])
 			[
 				{ "type": "Label", "label": "1. Read Logitech Harmony Hub configuration:" },
 				{ "type": "Button", "label": "Read configuration", "onClick": "HarmonyHub_getConfig($id);" },
-				{ "type": "Label", "label": "2. Create devices after reading the Logitech Harmony Hub configuration:" },
+				{ "type": "Label", "label": "2. Setup Harmony Activities:" },
 				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
+				{ "type": "Label", "label": "3. close this instance and open the Harmony configurator for setup of the devices." },
 				{ "type": "Label", "label": "reload firmware version and Logitech Harmony Hub name:" },
 				{ "type": "Button", "label": "update Harmony info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
 			],';
@@ -1842,95 +1641,6 @@ Switch ($_IPS[\'SENDER\'])
                 }
             ]';
 		return $form;
-	}
-
-	protected function GetAlexaSmartHomeSkill()
-	{
-		$InstanzenListe = IPS_GetInstanceListByModuleID("{3F0154A4-AC42-464A-9E9A-6818D775EFC4}"); // IQL4SmartHome
-		$IQL4SmartHomeID = @$InstanzenListe[0];
-		if (!$IQL4SmartHomeID > 0) {
-			$IQL4SmartHomeID = false;
-		}
-		return $IQL4SmartHomeID;
-	}
-
-	protected function CreateAlexaLinks()
-	{
-		$hubip = $this->ReadPropertyString('Host');
-		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-		$IQL4SmartHomeID = $this->GetAlexaSmartHomeSkill();
-		//Prüfen ob Kategorie schon existiert
-		$AlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony", $IQL4SmartHomeID);
-		if ($AlexaCategoryID === false) {
-			$AlexaCategoryID = IPS_CreateCategory();
-			IPS_SetName($AlexaCategoryID, "Logitech Harmony Hub");
-			IPS_SetIdent($AlexaCategoryID, "AlexaLogitechHarmony");
-			IPS_SetInfo($AlexaCategoryID, "Aktivitäten des Logitech Harmony Hubs schalten");
-			IPS_SetParent($AlexaCategoryID, $IQL4SmartHomeID);
-		}
-		//Prüfen ob Unterkategorie schon existiert
-		$SubAlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony_Hub_" . $hubipident, $AlexaCategoryID);
-		if ($SubAlexaCategoryID === false) {
-			$SubAlexaCategoryID = IPS_CreateCategory();
-			IPS_SetName($SubAlexaCategoryID, "Logitech Harmony Hub (" . $hubip . ")");
-			IPS_SetIdent($SubAlexaCategoryID, "AlexaLogitechHarmony_Hub_" . $hubipident);
-			IPS_SetInfo($SubAlexaCategoryID, "Aktivitäten des Logitech Harmony Hubs (" . $hubip . ") schalten");
-			IPS_SetParent($SubAlexaCategoryID, $AlexaCategoryID);
-		}
-		//Prüfen ob Link schon vorhanden
-		$linkobjids = $this->GetLinkObjIDs();
-
-		foreach ($linkobjids as $linkobjid) {
-			$objectinfo = IPS_GetObject($linkobjid);
-			$ident = $objectinfo["ObjectIdent"];
-			$name = $objectinfo["ObjectName"];
-			$LinkID = @IPS_GetObjectIDByIdent("AlexaLink_" . $ident, $SubAlexaCategoryID);
-			if ($LinkID === false) {
-				// Anlegen eines neuen Links für die Aktivität
-				$LinkID = IPS_CreateLink();             // Link anlegen
-				IPS_SetIdent($LinkID, "AlexaLink_" . $ident); //ident
-				IPS_SetLinkTargetID($LinkID, $linkobjid);    // Link verknüpfen
-				IPS_SetInfo($LinkID, "Harmony Hub Aktivität " . $name);
-				IPS_SetParent($LinkID, $SubAlexaCategoryID); // Link einsortieren
-				IPS_SetName($LinkID, $name); // Link benennen
-			}
-
-		}
-	}
-
-	protected function DeleteAlexaLinks()
-	{
-		$hubip = $this->ReadPropertyString('Host');
-		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-		$IQL4SmartHomeID = $this->GetAlexaSmartHomeSkill();
-		$AlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony", $IQL4SmartHomeID);
-		$SubAlexaCategoryID = @IPS_GetObjectIDByIdent("AlexaLogitechHarmony_Hub_" . $hubipident, $AlexaCategoryID);
-		$linkobjids = $this->GetLinkObjIDs();
-
-		foreach ($linkobjids as $linkobjid) {
-			$objectinfo = IPS_GetObject($linkobjid);
-			$ident = $objectinfo["ObjectIdent"];
-			//$name = $objectinfo["ObjectName"];
-			$LinkID = @IPS_GetObjectIDByIdent("AlexaLink_" . $ident, $SubAlexaCategoryID);
-			if ($LinkID > 0) {
-				IPS_DeleteLink($LinkID);
-			}
-		}
-
-
-		if ($SubAlexaCategoryID > 0) {
-			$catempty = $this->ScreenCategory($SubAlexaCategoryID);
-			if ($catempty == true) {
-				IPS_DeleteCategory($SubAlexaCategoryID);
-			}
-		}
-
-		if ($AlexaCategoryID > 0) {
-			$catempty = $this->ScreenCategory($AlexaCategoryID);
-			if ($catempty == true) {
-				IPS_DeleteCategory($AlexaCategoryID);
-			}
-		}
 	}
 
 	protected function GetLinkObjIDs()

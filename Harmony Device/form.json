@@ -1,34 +1,35 @@
 {
-    "elements":
-            [
-				{ "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
-				{
-                    "name": "Name",
-                    "type": "ValidationTextBox",
-                    "caption": "Name"
-                },
-				{
-                    "name": "DeviceID",
-                    "type": "NumberSpinner",
-                    "caption": "DeviceID"
-                }
-            ],
-    "status":
-            [
-                {
-                    "code": 101,
-                    "icon": "inactive",
-                    "caption": "creating instance"
-                },
-				{
-                    "code": 102,
-                    "icon": "active",
-                    "caption": "configuration valid"
-                },
-                {
-                    "code": 104,
-                    "icon": "inactive",
-                    "caption": "Harmony Device is inactive"
-                }
-            ]
+  "elements": [
+    {
+      "type": "Label",
+      "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"
+    },
+    {
+      "name": "devicename",
+      "type": "ValidationTextBox",
+      "caption": "Name"
+    },
+    {
+      "name": "DeviceID",
+      "type": "NumberSpinner",
+      "caption": "DeviceID"
+    }
+  ],
+  "status": [
+    {
+      "code": 101,
+      "icon": "inactive",
+      "caption": "creating instance"
+    },
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "configuration valid"
+    },
+    {
+      "code": 104,
+      "icon": "inactive",
+      "caption": "Harmony Device is inactive"
+    }
+  ]
 }

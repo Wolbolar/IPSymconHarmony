@@ -1,94 +1,134 @@
 {
-    "elements":
-            [
-                {
-                    "name": "Open",
-                    "type": "CheckBox",
-                    "caption": "Open"
-                },
-				{ "type": "Label", "label": "IP Adresse des Harmony Hub" },
-                {
-                    "name": "Host",
-                    "type": "ValidationTextBox",
-                    "caption": "IP adress"
-                },
-				{ "type": "Label", "label": "MyHarmony Zugangsdaten (Email/Passwort)" },
-                {
-                    "name": "Email",
-                    "type": "ValidationTextBox",
-                    "caption": "Email"
-                },
-				{
-                    "name": "Password",
-                    "type": "PasswordTextBox",
-                    "caption": "Password"
-                },
-				{ "type": "Label", "label": "category for Logitech Harmony Hub devices" },
-				{ "type": "SelectCategory", "name": "ImportCategoryID", "caption": "Harmony Hub devices" },
-				{ "type": "Label", "label": "Create Harmony devices for remote control:" },
-				{ "type": "Label", "label": "Create variables for webfront (Please note: High numbers of variables)" },
-				{
-                    "name": "HarmonyVars",
-                    "type": "CheckBox",
-                    "caption": "Harmony variables"
-                },
-				{ "type": "Label", "label": "create scripts for remote control (alternative or addition for remote control via webfront):" },
-				{
-                    "name": "HarmonyScript",
-                    "type": "CheckBox",
-                    "caption": "Harmony script"
-                }
-            ],
-	"actions":
-			[
-				{ "type": "Label", "label": "1. Read Logitech Harmony Hub configuration:" },
-				{ "type": "Button", "label": "Read configuration", "onClick": "HarmonyHub_getConfig($id);" },
-				{ "type": "Label", "label": "2. Create devices after reading the Logitech Harmony Hub configuration:" },
-				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
-				{ "type": "Label", "label": "reload firmware version and Logitech Harmony Hub name:" },
-				{ "type": "Button", "label": "update Harmony info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
-			],		
-    "status":
-            [
-                {
-                    "code": 101,
-                    "icon": "inactive",
-                    "caption": "Creating instance."
-                },
-				{
-                    "code": 102,
-                    "icon": "active",
-                    "caption": "Harmony Hub accessible."
-                },
-                {
-                    "code": 104,
-                    "icon": "inactive",
-                    "caption": "interface closed."
-                },
-                {
-                    "code": 202,
-                    "icon": "error",
-                    "caption": "Harmony Hub IP adress must not empty."
-                },
-				{
-                    "code": 203,
-                    "icon": "error",
-                    "caption": "No valid IP adress."
-                },
-                {
-                    "code": 204,
-                    "icon": "error",
-                    "caption": "connection to the Harmony Hub lost."
-                },
-				{
-                    "code": 205,
-                    "icon": "error",
-                    "caption": "field must not be empty."
-                },
-				{
-                    "code": 206,
-                    "icon": "error",
-                    "caption": "select category for import."
-                }
-            ]
+  "elements": [
+    {
+      "name": "Open",
+      "type": "CheckBox",
+      "caption": "Open"
+    },
+    {
+      "type": "Label",
+      "label": "IP Adresse des Harmony Hub"
+    },
+    {
+      "name": "Host",
+      "type": "ValidationTextBox",
+      "caption": "IP adress"
+    },
+    {
+      "type": "Label",
+      "label": "MyHarmony Zugangsdaten (Email/Passwort)"
+    },
+    {
+      "name": "Email",
+      "type": "ValidationTextBox",
+      "caption": "Email"
+    },
+    {
+      "name": "Password",
+      "type": "PasswordTextBox",
+      "caption": "Password"
+    },
+    {
+      "type": "Label",
+      "label": "category for Logitech Harmony Hub devices"
+    },
+    {
+      "type": "SelectCategory",
+      "name": "ImportCategoryID",
+      "caption": "Harmony Hub devices"
+    },
+    {
+      "type": "Label",
+      "label": "Create Harmony devices for remote control:"
+    },
+    {
+      "type": "Label",
+      "label": "Create variables for webfront (Please note: High numbers of variables)"
+    },
+    {
+      "name": "HarmonyVars",
+      "type": "CheckBox",
+      "caption": "Harmony variables"
+    },
+    {
+      "type": "Label",
+      "label": "create scripts for remote control (alternative or addition for remote control via webfront):"
+    },
+    {
+      "name": "HarmonyScript",
+      "type": "CheckBox",
+      "caption": "Harmony script"
+    }
+  ],
+  "actions": [
+    {
+      "type": "Label",
+      "label": "1. Read Logitech Harmony Hub configuration:"
+    },
+    {
+      "type": "Button",
+      "label": "Read configuration",
+      "onClick": "HarmonyHub_getConfig($id);"
+    },
+    {
+      "type": "Label",
+      "label": "2. Create devices after reading the Logitech Harmony Hub configuration:"
+    },
+    {
+      "type": "Button",
+      "label": "Setup Harmony",
+      "onClick": "HarmonyHub_SetupHarmony($id);"
+    },
+    {
+      "type": "Label",
+      "label": "reload firmware version and Logitech Harmony Hub name:"
+    },
+    {
+      "type": "Button",
+      "label": "update Harmony info",
+      "onClick": "HarmonyHub_getDiscoveryInfo($id);"
+    }
+  ],
+  "status": [
+    {
+      "code": 101,
+      "icon": "inactive",
+      "caption": "Creating instance."
+    },
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "Harmony Hub accessible."
+    },
+    {
+      "code": 104,
+      "icon": "inactive",
+      "caption": "interface closed."
+    },
+    {
+      "code": 202,
+      "icon": "error",
+      "caption": "Harmony Hub IP adress must not empty."
+    },
+    {
+      "code": 203,
+      "icon": "error",
+      "caption": "No valid IP adress."
+    },
+    {
+      "code": 204,
+      "icon": "error",
+      "caption": "connection to the Harmony Hub lost."
+    },
+    {
+      "code": 205,
+      "icon": "error",
+      "caption": "field must not be empty."
+    },
+    {
+      "code": 206,
+      "icon": "error",
+      "caption": "select category for import."
+    }
+  ]
 }

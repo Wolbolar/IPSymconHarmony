@@ -1,0 +1,44 @@
+{
+  "actions": [
+    {
+      "type": "Configurator",
+      "name": "HarmonyConfiguration",
+      "rowCount": 20,
+      "add": false,
+      "delete": true,
+      "sort": {
+        "column": "name",
+        "direction": "ascending"
+      },
+      "columns": [
+        {
+          "label": "ID",
+          "name": "id",
+          "width": "200px",
+          "visible": false
+        },
+        {
+          "label": "device name",
+          "name": "name",
+          "width": "auto"
+        },
+        {
+          "label": "manufacturer",
+          "name": "manufacturer",
+          "width": "250px"
+        },
+        {
+          "label": "type",
+          "name": "deviceTypeDisplayName",
+          "width": "250px"
+        },
+        {
+          "label": "device id",
+          "name": "deviceid",
+          "width": "200px"
+        }
+      ],
+      "values": []
+    }
+  ]
+}

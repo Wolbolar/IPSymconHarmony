@@ -2,7 +2,8 @@
 
 class HarmonyDevice extends IPSModule
 {
-
+	// helper properties
+	private $position = 0;
 
 	public function Create()
 	{
@@ -12,11 +13,18 @@ class HarmonyDevice extends IPSModule
 		// 1. Verfügbarer HarmonySplitter wird verbunden oder neu erzeugt, wenn nicht vorhanden.
 		$this->ConnectParent("{03B162DB-7A3A-41AE-A676-2444F16EBEDF}");
 
-		$this->RegisterPropertyString("Name", "");
+		$this->RegisterPropertyString("devicename", "");
 		$this->RegisterPropertyInteger("DeviceID", 0);
 		$this->RegisterPropertyBoolean("BluetoothDevice", false);
 		$this->RegisterPropertyBoolean("VolumeControl", false);
 		$this->RegisterPropertyInteger("MaxStepVolume", 0);
+		$this->RegisterPropertyString("Manufacturer", "");
+		$this->RegisterPropertyBoolean("IsKeyboardAssociated", false);
+		$this->RegisterPropertyString("model", "");
+		$this->RegisterPropertyString("commandset", "");
+		$this->RegisterPropertyString("deviceTypeDisplayName", "");
+		$this->RegisterPropertyBoolean("HarmonyVars", false);
+		$this->RegisterPropertyBoolean("HarmonyScript", false);
 	}
 
 
@@ -27,7 +35,6 @@ class HarmonyDevice extends IPSModule
 		//$this->RegisterVariableString("BufferIN", "BufferIN", "", 1);
 
 		$this->ValidateConfiguration();
-
 	}
 
 	/**
@@ -38,7 +45,7 @@ class HarmonyDevice extends IPSModule
 	private function ValidateConfiguration()
 	{
 		//Type und Zone
-		$Name = $this->ReadPropertyString('Name');
+		$devicename = $this->ReadPropertyString('devicename');
 		$DeviceID = $this->ReadPropertyInteger('DeviceID');
 		$VolumeControl = $this->ReadPropertyBoolean('VolumeControl');
 		$MaxStepVolume = $this->ReadPropertyInteger('MaxStepVolume');
@@ -51,13 +58,17 @@ class HarmonyDevice extends IPSModule
 				$this->EnableAction("VolumeSlider");
 			}
 		}
+		$HarmonyVars = $this->ReadPropertyBoolean("HarmonyVars");
+		if($HarmonyVars && $devicename !== "" && $DeviceID !== "")
+		{
+			$this->SetHarmonyInstanceVars();
+		}
 
 		//Auswahl Prüfen
-		if ($Name !== "" && $DeviceID !== "") {
+		if ($devicename !== "" && $DeviceID !== "") {
 			$this->SetStatus(102);
 		}
 	}
-
 
 	public function RequestAction($Ident, $Value)
 	{
@@ -123,13 +134,7 @@ class HarmonyDevice extends IPSModule
 		return $IPHarmonyHub;
 	}
 
-	//Variablen anlegen
-	public function SetupVariable(string $VarIdent, string $VarName, string $VarProfile)
-	{
-		$variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, $VarProfile);
-		$this->EnableAction($VarIdent);
-		return $variablenID;
-	}
+
 
 
 	//Test zum Senden
@@ -144,6 +149,8 @@ class HarmonyDevice extends IPSModule
 	{
 		$DeviceID = $this->ReadPropertyInteger('DeviceID');
 		$payload = array("DeviceID" => $DeviceID, "Command" => $Command, "BluetoothDevice" => $this->ReadPropertyBoolean('BluetoothDevice'));
+		$this->SendDebug('Harmony device id:', $DeviceID, 0);
+		$this->SendDebug('Command:', $Command, 0);
 		$this->SendDataToParent(json_encode(Array("DataID" => "{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}", "Buffer" => $payload))); //Harmony Device Interface GUI
 	}
 
@@ -151,26 +158,28 @@ class HarmonyDevice extends IPSModule
 	public function GetCommands()
 	{
 		$currentdeviceid = $this->ReadPropertyInteger('DeviceID');
-		$parentID = $this->GetParent();
-		$json = HarmonyHub_GetHarmonyConfigJSON($parentID);
 		$commandlist = false;
-		$devices[] = $json["device"];
-		foreach ($devices as $harmonydevicelist) {
-			foreach ($harmonydevicelist as $harmonydevice) {
-				// $InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
-				$DeviceID = $harmonydevice["id"]; // Harmony Device ID
-				if ($DeviceID == $currentdeviceid) {
-					$controlGroups = $harmonydevice["controlGroup"];
-					$commandlist = array();
-					foreach ($controlGroups as $controlGroup) {
-						$commands = $controlGroup["function"]; //Function Array
-						foreach ($commands as $command) {
-							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-							$commandlist[] = $harmonycommand["command"];
+		$config = $this->SendData('GetHarmonyConfigJSON');
+		if(!empty($config)) {
+			$data = json_decode($config, true);
+			$devices[] = $data["device"];
+			foreach ($devices as $harmonydevicelist) {
+				foreach ($harmonydevicelist as $harmonydevice) {
+					// $InstName = $harmonydevice["label"]; //Bezeichnung Harmony Device
+					$DeviceID = $harmonydevice["id"]; // Harmony Device ID
+					if ($DeviceID == $currentdeviceid) {
+						$controlGroups = $harmonydevice["controlGroup"];
+						$commandlist = array();
+						foreach ($controlGroups as $controlGroup) {
+							$commands = $controlGroup["function"]; //Function Array
+							foreach ($commands as $command) {
+								$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
+								$commandlist[] = $harmonycommand["command"];
+							}
 						}
 					}
-				}
 
+				}
 			}
 		}
 		return $commandlist;
@@ -236,71 +245,164 @@ class HarmonyDevice extends IPSModule
 		return $CheckVolumeControl;
 	}
 
-
-	protected function SetHarmonyInstanceScripts($InsIDList, $HubCategoryID)
+	//Variablen anlegen
+	protected function SetupVariable(string $VarIdent, string $VarName, string $VarProfile, $profilemin, $profilemax, $ProfileAssActivities)
 	{
-		$parentID = $this->GetParent();
-		$json = HarmonyHub_GetHarmonyConfigJSON($parentID);
-		$activities[] = $json["activity"];
-		$devices[] = $json["device"];
+		$this->RegisterProfileAssociation(
+			'LogitechHarmony.' .$VarProfile,
+			'Execute',
+			'',
+			'',
+			$profilemin,
+			$profilemax,
+			0,
+			0,
+			1,
+			$ProfileAssActivities
+		);
+		$variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, "LogitechHarmony." . $VarProfile, $this->_getPosition());
+		$this->SendDebug("Logitech Device", "Register Variable: " . $VarName. " (".$VarIdent.") with profile ".$VarProfile. " and ID: ".$variablenID , 0);
+		$this->EnableAction($VarIdent);
+		return $variablenID;
+	}
 
-		foreach ($devices as $harmonydevicelist) {
-			$harmonydeviceid = 0;
-			foreach ($harmonydevicelist as $harmonydevice) {
-				$InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
-				$controlGroups = $harmonydevice["controlGroup"];
+	protected function SetHarmonyInstanceVars()
+	{
+		$devicename = $this->ReadPropertyString("devicename");
+		$commands_json = $this->ReadPropertyString("commandset");
+		$controlGroups = json_decode($commands_json);
+		foreach ($controlGroups as $controlGroup) {
+			$name = $controlGroup->name;
+			$commands = $controlGroup->function; //Function Array
+			$profilemax = (count($commands)) - 1;
+			$ProfileAssActivities = array();
 
-				//Kategorien anlegen
-				$InsID = $InsIDList[$harmonydeviceid];
-				//Prüfen ob Kategorie schon existiert
-				$MainCatID = @IPS_GetCategoryIDByName($InstName, $HubCategoryID);
-				if ($MainCatID === false) {
-					$MainCatID = IPS_CreateCategory();
-					IPS_SetName($MainCatID, utf8_decode($harmonydevice["label"]));
-					IPS_SetInfo($MainCatID, $harmonydevice["id"]);
-					IPS_SetParent($MainCatID, $HubCategoryID);
+			$assid = 0;
+			$description = array();
+			foreach ($commands as $command) {
+				$this->SendDebug("Device " . $devicename , $name . ": " . $command->action , 0);
+				$harmonycommand = json_decode($command->action); // command, type, deviceId
+				//Wert , Name, Icon , Farbe
+				$ProfileAssActivities[] = Array($assid, $harmonycommand->command, "", -1);
+			$description[$assid] = $harmonycommand->command;
+			$assid++;
+			}
+			$descriptionjson = json_encode($description);
+			$profiledevicename = str_replace(" ", "", $devicename);
+			$profiledevicename = preg_replace('/[^A-Za-z0-9\-]/', '', $profiledevicename); // Removes special chars.
+			$profiledevicename = str_replace("-", "_", $profiledevicename);
+			$profilegroupname = str_replace(" ", "", $name);
+			$profilegroupname = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
+			$profilegroupname = str_replace("-", "_", $profilegroupname);
+			//Variablenprofil anlegen
+			$NumberAss = count($ProfileAssActivities);
+			$VarIdent = str_replace(" ", "_", $name);//Command Group Name
+			$VarName = $name;//Command Group Name
+			if ($NumberAss >= 32)//wenn mehr als 32 Assoziationen splitten
+			{
+				$splitProfileAssActivities = array_chunk($ProfileAssActivities, 32);
+				$splitdescription = array_chunk($description, 32);
+				//2. Array neu setzten
+				$id = 0;
+				$SecondProfileAssActivities = array();
+				$seconddescription = array();
+				foreach ($splitProfileAssActivities[1] as $Activity) {
+					$SecondProfileAssActivities[] = Array($id, $Activity[1], "", -1);
+					$seconddescription[] = $Activity[1];
+					$id++;
 				}
 
-				foreach ($controlGroups as $controlGroup) {
-					$commands = $controlGroup["function"]; //Function Array
+				//Association 1
+				$varid = $this->SetupVariable($VarIdent, $VarName, $profiledevicename . "." . $profilegroupname, 0, 31, $splitProfileAssActivities[0]); //32 Associationen
 
-					//Prüfen ob Kategorie schon existiert
-					$CGID = @IPS_GetCategoryIDByName($controlGroup["name"], $MainCatID);
-					if ($CGID === false) {
-						$CGID = IPS_CreateCategory();
-						IPS_SetName($CGID, $controlGroup["name"]);
-						IPS_SetParent($CGID, $MainCatID);
-					}
-
-					$assid = 0;
-					foreach ($commands as $command) {
-						$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-						//Prüfen ob Script schon existiert
-						$Scriptname = $command["label"];
-						$ScriptID = @IPS_GetScriptIDByName($Scriptname, $CGID);
-						if ($ScriptID === false) {
-							$ScriptID = IPS_CreateScript(0);
-							IPS_SetName($ScriptID, $Scriptname);
-							IPS_SetParent($ScriptID, $CGID);
-							$content = "<? LHD_Send(" . $InsID . ", \"" . $harmonycommand["command"] . "\");?>";
-							IPS_SetScriptContent($ScriptID, $content);
-						}
-						$assid++;
-					}
-				}
-				$harmonydeviceid++;
+				//Association 2
+				$VarIdent1 = str_replace(" ", "_", $commands->name) . "1";//Command Group Name
+				$VarName1 = $commands->name . "1";//Command Group Name
+				$seconddescriptionjson = json_encode($seconddescription);
+				$varid1 = $this->SetupVariable($VarIdent1, $VarName1, $profiledevicename . "." . $profilegroupname . "1", 0, ($profilemax - 32), $SecondProfileAssActivities);
+				IPS_SetInfo($varid1, $seconddescriptionjson);
+				$firstdescriptionjson = json_encode($splitdescription[0]);
+				IPS_SetInfo($varid, $firstdescriptionjson);
+			} else {
+				$varid = $this->SetupVariable($VarIdent, $VarName, $profiledevicename . "." . $profilegroupname, 0, $profilemax, $ProfileAssActivities);
+				IPS_SetInfo($varid, $descriptionjson);
 			}
 		}
 	}
 
 
+	//Profile
+	/**
+	 * register profiles
+	 * @param $Name
+	 * @param $Icon
+	 * @param $Prefix
+	 * @param $Suffix
+	 * @param $MinValue
+	 * @param $MaxValue
+	 * @param $StepSize
+	 * @param $Digits
+	 * @param $Vartype
+	 */
+	protected function RegisterProfile($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $StepSize, $Digits, $Vartype)
+	{
+
+		if (!IPS_VariableProfileExists($Name)) {
+			IPS_CreateVariableProfile($Name, $Vartype); // 0 boolean, 1 int, 2 float, 3 string,
+		} else {
+			$profile = IPS_GetVariableProfile($Name);
+			if ($profile['ProfileType'] != $Vartype) {
+				$this->_debug('profile', 'Variable profile type does not match for profile ' . $Name);
+			}
+		}
+
+		IPS_SetVariableProfileIcon($Name, $Icon);
+		IPS_SetVariableProfileText($Name, $Prefix, $Suffix);
+		IPS_SetVariableProfileDigits($Name, $Digits); //  Nachkommastellen
+		IPS_SetVariableProfileValues($Name, $MinValue, $MaxValue, $StepSize); // string $ProfilName, float $Minimalwert, float $Maximalwert, float $Schrittweite
+	}
+
+	/**
+	 * register profile association
+	 * @param $Name
+	 * @param $Icon
+	 * @param $Prefix
+	 * @param $Suffix
+	 * @param $MinValue
+	 * @param $MaxValue
+	 * @param $Stepsize
+	 * @param $Digits
+	 * @param $Vartype
+	 * @param $Associations
+	 */
+	protected function RegisterProfileAssociation($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $Stepsize, $Digits, $Vartype, $Associations)
+	{
+		if (is_array($Associations) && sizeof($Associations) === 0) {
+			$MinValue = 0;
+			$MaxValue = 0;
+		}
+		$this->RegisterProfile($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $Stepsize, $Digits, $Vartype);
+
+		if (is_array($Associations)) {
+			foreach ($Associations AS $Association) {
+				IPS_SetVariableProfileAssociation($Name, $Association[0], $Association[1], $Association[2], $Association[3]);
+			}
+		} else {
+			$Associations = $this->$Associations;
+			foreach ($Associations AS $code => $association) {
+				IPS_SetVariableProfileAssociation($Name, $code, $this->Translate($association), $Icon, -1);
+			}
+		}
+
+	}
+
 	protected function FormHead()
 	{
 		$form = '"elements":
             [
-                { "type": "Label", "label": "Bitte Instanz Harmony Hub konfigurieren und dort Setup Harmony drücken"},
+                { "type": "Label", "label": "Please create instance or harmony scripts with the harmony configurator"},
 				{
-                    "name": "Name",
+                    "name": "devicename",
                     "type": "ValidationTextBox",
                     "caption": "Name"
                 },
@@ -308,6 +410,12 @@ class HarmonyDevice extends IPSModule
                     "name": "DeviceID",
                     "type": "NumberSpinner",
                     "caption": "DeviceID"
+                },
+                { "type": "Label", "label": "Create Variables"},
+                {
+                    "name": "HarmonyVars",
+                    "type": "CheckBox",
+                    "caption": "Harmony variables"
                 },';
 
 		return $form;
@@ -320,12 +428,7 @@ class HarmonyDevice extends IPSModule
 		if ($zapchannel) {
 			$form = '"actions":
 			[
-				{ "type": "Label", "label": "1. Read Logitech Harmony Hub configuration:" },
-				{ "type": "Button", "label": "Read configuration", "onClick": "HarmonyHub_getConfig($id);" },
-				{ "type": "Label", "label": "2. Create devices after reading the Logitech Harmony Hub configuration:" },
-				{ "type": "Button", "label": "Setup Harmony", "onClick": "HarmonyHub_SetupHarmony($id);" },
-				{ "type": "Label", "label": "reload firmware version and Logitech Harmony Hub name:" },
-				{ "type": "Button", "label": "update Harmony info", "onClick": "HarmonyHub_getDiscoveryInfo($id);" }
+				
 			],';
 		}
 		return $form;
@@ -383,6 +486,38 @@ class HarmonyDevice extends IPSModule
             ]';
 		return $form;
 	}
-}
 
-?>
+	/**
+	 * send debug log
+	 * @param string $notification
+	 * @param string $message
+	 * @param int $format 0 = Text, 1 = Hex
+	 */
+	private function _debug(string $notification = NULL, string $message = NULL, $format = 0)
+	{
+		$this->SendDebug($notification, $message, $format);
+	}
+
+	/**
+	 * return incremented position
+	 * @return int
+	 */
+	private function _getPosition()
+	{
+		$this->position++;
+		return $this->position;
+	}
+
+	/** Eine Anfrage an den IO und liefert die Antwort.
+	 * @param string $Method
+	 * @return string
+	 */
+	private function SendData(string $Method)
+	{
+		$Data['DataID'] = '{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}';
+		$Data['Buffer'] = ['Method' => $Method];
+		$this->SendDebug('Method:', $Method, 0);
+		$devices = @$this->SendDataToParent(json_encode($Data));
+		return $devices;
+	}
+}

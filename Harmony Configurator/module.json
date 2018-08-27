@@ -1,0 +1,13 @@
+{
+    "id": "{E1FB3491-F78D-457A-89EC-18C832F4E6D9}",
+    "name": "HarmonyConfigurator",
+    "type": 4,
+    "vendor": "Logitech",
+    "aliases": ["Harmony Konfigurator"],
+    "parentRequirements": ["{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}"],
+    "childRequirements": [],
+  "implemented": [
+    "{7924862A-0EEA-46B9-B431-97A3108BA380}"
+  ],
+    "prefix": "HarmonyConfig"
+}
