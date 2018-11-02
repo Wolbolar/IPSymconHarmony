@@ -477,6 +477,8 @@ Switch ($_IPS[\'SENDER\'])
 
 	protected function SetHarmonyActivityProfile()
 	{
+		$hubip = $this->ReadPropertyString('Host');
+		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
 		$json = $this->GetHarmonyConfigJSON();
 		$activities[] = $json["activity"];
 		$devices[] = $json["device"];
@@ -521,8 +523,8 @@ Switch ($_IPS[\'SENDER\'])
 			}
 		}
 		$profilemax = count($ProfileAssActivities);
-		$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony.Activity", "Popcorn", "", "", -1, ($profilemax + 1), 0, 0, $ProfileAssActivities);
-		$this->RegisterVariableInteger("HarmonyActivity", "Harmony Activity", "LogitechHarmony.Activity", 12);
+		$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony.Activity".$hubipident, "Popcorn", "", "", -1, ($profilemax + 1), 0, 0, $ProfileAssActivities);
+		$this->RegisterVariableInteger("HarmonyActivity", "Harmony Activity", "LogitechHarmony.Activity".$hubipident, 12);
 		$this->EnableAction("HarmonyActivity");
 		SetValueInteger($this->GetIDForIdent("HarmonyActivity"), -1);
 	}
