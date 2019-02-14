@@ -422,25 +422,117 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 		return $activities;
 	}
 
-	protected function GetHubActivitiesList($HubID)
+	protected function GetHubActivitiesExpansionPanels($HubID, $form)
 	{
-		$options = [
-			[
-				'label' => 'Please choose',
-				'value' => 0
-			]
-		];
 		if (strlen($HubID) == 5) {
 			$activities = $this->GetHubActivities($HubID);
 			foreach ($activities as $key => $activity) {
-				$options[] = [
-					'label' => $key,
-					'value' => $activity
-				];
+				$form = array_merge_recursive(
+					$form,
+					[
+						[
+							'type' => 'ExpansionPanel',
+							'caption' => $key,
+							'items' => [
+								[
+									'type' => 'List',
+									'name' => $this->GetListName($HubID, $activity),
+									'caption' => 'Roku Emulator Keys',
+									'rowCount' => 13,
+									'add' => false,
+									'delete' => false,
+									'sort' => [
+										'column' => 'command',
+										'direction' => 'ascending'
+									],
+									'columns' => [
+										[
+											'name' => 'command',
+											'label' => 'command',
+											'width' => '200px',
+											'save' => true,
+											'visible' => true
+										],
+										[
+											'name' => 'rokuscript',
+											'label' => 'script',
+											'width' => 'auto',
+											'save' => true,
+											'edit' => [
+												'type' => 'SelectScript'
+											]
+										],
+										[
+											'name' => 'key_id',
+											'label' => 'Key ID',
+											'width' => 'auto',
+											'save' => true,
+											'visible' => false
+										]
+									],
+									'values' => [
+										[
+											'command' => "Up",
+											'key_id' => 0
+										],
+										[
+											'command' => "Down",
+											'key_id' => 1
+										],
+										[
+											'command' => "Left",
+											'key_id' => 2
+										],
+										[
+											'command' => "Right",
+											'key_id' => 3
+										],
+										[
+											'command' => "Select",
+											'key_id' => 4
+										],
+										[
+											'command' => "Back",
+											'key_id' => 5
+										],
+										[
+											'command' => "Play",
+											'key_id' => 6
+										],
+										[
+											'command' => "Reverse",
+											'key_id' => 7
+										],
+										[
+											'command' => "Forward",
+											'key_id' => 8
+										],
+										[
+											'command' => "Search",
+											'key_id' => 9
+										],
+										[
+											'command' => "Info",
+											'key_id' => 10
+										],
+										[
+											'command' => "Home",
+											'key_id' => 11
+										],
+										[
+											'command' => "Instant Replay",
+											'key_id' => 12
+										]]
+								]
+							]
+						]
+				]
+			);
 			}
 		}
-		return $options;
+		return $form;
 	}
+
 
 	protected function CreateActivityProperties()
 	{
@@ -499,6 +591,7 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 				'options' => $this->GetHarmonyHubList()
 			]
 		];
+
 		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
 		if ($HarmonyHubObjID > 0) {
 			$form = array_merge_recursive(
@@ -506,117 +599,12 @@ LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');
 				[
 					[
 						'type' => 'Label',
-						'label' => 'Select activity'
-					],
-					[
-						'name' => 'HarmonyHubActivity',
-						'type' => 'Select',
-						'caption' => 'harmony activity',
-						'options' => $this->GetHubActivitiesList($HarmonyHubObjID)
+						'label' => 'configure activities'
 					]
 				]
 			);
+			$form = $this->GetHubActivitiesExpansionPanels($HarmonyHubObjID, $form);
 		}
-		$HarmonyHubActivity = $this->ReadPropertyInteger("HarmonyHubActivity");
-		if ($HarmonyHubActivity != 0 && $HarmonyHubObjID > 0) {
-			// show list
-			$form = array_merge_recursive(
-				$form,
-				[
-					[
-						'type' => 'List',
-						'name' => $this->GetListName($HarmonyHubObjID, $HarmonyHubActivity),
-						'caption' => 'Roku Emulator Keys',
-						'rowCount' => 13,
-						'add' => false,
-						'delete' => false,
-						'sort' => [
-							'column' => 'command',
-							'direction' => 'ascending'
-						],
-						'columns' => [
-							[
-								'name' => 'command',
-								'label' => 'command',
-								'width' => '200px',
-								'save' => true,
-								'visible' => true
-							],
-							[
-								'name' => 'rokuscript',
-								'label' => 'script',
-								'width' => 'auto',
-								'save' => true,
-								'edit' => [
-									'type' => 'SelectScript'
-								]
-							],
-							[
-								'name' => 'key_id',
-								'label' => 'Key ID',
-								'width' => 'auto',
-								'save' => true,
-								'visible' => false
-							]
-						],
-						'values' => [
-							[
-								'command' => "Up",
-								'key_id' => 0
-							],
-							[
-								'command' => "Down",
-								'key_id' => 1
-							],
-							[
-								'command' => "Left",
-								'key_id' => 2
-							],
-							[
-								'command' => "Right",
-								'key_id' => 3
-							],
-							[
-								'command' => "Select",
-								'key_id' => 4
-							],
-							[
-								'command' => "Back",
-								'key_id' => 5
-							],
-							[
-								'command' => "Play",
-								'key_id' => 6
-							],
-							[
-								'command' => "Reverse",
-								'key_id' => 7
-							],
-							[
-								'command' => "Forward",
-								'key_id' => 8
-							],
-							[
-								'command' => "Search",
-								'key_id' => 9
-							],
-							[
-								'command' => "Info",
-								'key_id' => 10
-							],
-							[
-								'command' => "Home",
-								'key_id' => 11
-							],
-							[
-								'command' => "Instant Replay",
-								'key_id' => 12
-							]]
-					]
-				]
-			);
-		}
-
 		return $form;
 	}
 

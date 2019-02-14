@@ -8,6 +8,8 @@
       "Token": "Token",
       "email": "E-Mail",
       "Password": "Passwort",
+      "MyHarmony access data (email / password)": "MyHarmony Zugangsdaten (Email/Passwort)",
+      "IP Adresse des Harmony Hub": "IP adress Harmony Hub",
       "category for Logitech Harmony Hub devices": "Kategorie zum Anlegen der Logitech Harmony Hub Geräte:",
       "Harmony Hub devices": "Harmony Hub Geräte",
       "IP Symcon messages (debugging)": "Erweiterte IP-Symcon Meldungen (Debug)",

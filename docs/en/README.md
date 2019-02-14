@@ -48,15 +48,35 @@ Harmony activities can be started from IP-Symcon. When the Harmony Hub performs 
 
 ### a. Loading the module
 
-Open the IP Console's web console with _http: // <IP-Symcon IP>: 3777 / console / _.
+Open the IP Console's web console with _http://<IP-Symcon IP>:3777/console/_.
 
-Then the object tree _Open_.
+Then click on the module store (IP-Symcon > 5.1) icon in the upper right corner.
 
-![Objektbaum](img/objektbaum.png?raw=true "Objektbaum")	
+![Store](img/store_icon.png?raw=true "open store")
+
+In the search field type
+
+```
+Logitech Harmony
+```  
+
+
+![Store](img/module_store_search_en.png?raw=true "module search")
+
+Then select the module and click _Install_
+
+![Store](img/install_en.png?raw=true "install")
+
+
+#### Install alternative via Modules instance
+
+_Open_ the object tree.
+
+![Objektbaum](img/object_tree.png?raw=true "object tree")	
 
 Open the instance _'Modules'_ below core instances in the object tree of IP-Symcon (>= Ver 5.x) with a double-click and press the _Plus_ button.
 
-![Modules](img/Modules.png?raw=true "Modules")	
+![Modules](img/modules.png?raw=true "modules")	
 
 ![Plus](img/plus.png?raw=true "Plus")	
 
@@ -66,12 +86,24 @@ Enter the following URL in the field and confirm with _OK_:
 
 
 ```	
-https://github.com/Wolbolar/IPSymconNEEO  
+https://github.com/Wolbolar/IPSymconHarmony 
 ```
     
 and confirm with _OK_.    
     
 Then an entry for the module appears in the list of the instance _Modules_
+
+By default, the branch _master_ is loaded, which contains current changes and adjustments.
+Only the _master_ branch is kept current.
+
+![Master](img/master.png?raw=true "master") 
+
+If an older version of IP-Symcon smaller than version 5.1 (min 4.3) is used, click on the gear on the right side of the list.
+It opens another window,
+
+![SelectBranch](img/select_branch_en.png?raw=true "select branch") 
+
+here you can switch to another branch, for older versions smaller than 5.1 (min 4.3) select _Old-Version_ .
 
 ### b. Configuration in IPS
 
@@ -80,11 +112,11 @@ Later, all scripts for devices of the Logitech Harmony Hub will be created under
 
 Then add an instance in IP-Symcon 5.x under splitter.
 
-![Add_Splitter](img/add_splitter.png?raw=true "Add Splitter")
+![Add_Splitter](img/add_splitter_en.png?raw=true "Add Splitter")
 
 Here as manufacturer enter _Logitech_ and select _Logitech Harmony Hub_.
 
-![Add Logitech Hub](img/add_splitter_1.png?raw=true "Add Logitech Hub")
+![Add Logitech Hub](img/add_splitter_en_1.png?raw=true "Add Logitech Hub")
 
 
 In the window that opens, first select the following items during initial installation:
@@ -100,11 +132,11 @@ In the window that opens, first select the following items during initial instal
 
 **5.** MyHarmony password
 
-**6.** Then press _ÄNDERUNGEN ÜBERNEHMEN_ .
+**6.** Then press _APPLY CHANGES_ .
 
-![Accept Changes](img/Accept_Changes.png?raw=true "Accept Changes")
+![Accept Changes](img/apply_changes_en.png?raw=true "Accept Changes")
 
-**7.** Select _Konfiguration auslesen_ and wait a few seconds.
+**7.** Select _Read Configuration_ and wait a few seconds.
 
 ![Logitech Hub 2](img/logitech_hub_2.png?raw=true "Logitech Hub 2")
 
@@ -112,28 +144,28 @@ In the window that opens, first select the following items during initial instal
 
 Then a configurator is created.
 
-![Konfigurator 1](img/konfigurator_1.png?raw=true "Konfigurator 1")
+![Konfigurator 1](img/configurator.png?raw=true "Configurator 1")
 
-![Konfigurator 2](img/konfigurator_2.png?raw=true "Konfigurator 2")
+![Konfigurator 2](img/configurator_2.png?raw=true "Configurator 2")
 
 The configurator now offers the following options:
 
-![Konfigurator 3](img/konfigurator_3.png?raw=true "Konfigurator 3")
+![Konfigurator 3](img/configurator_3.png?raw=true "Configurator 3")
 
 
-- _Kategorie Harmony Skripte_ is the category under which scripts are created
-- _Harmony Variablen_ if not active only the instance is created, but scripts can still be used. Activate to switch over variables in the web front. _Attention! Many devices can consume many variables_.
+- _category harmony scripts_ is the category under which scripts are created
+- _Harmony variables_ if not active only the instance is created, but scripts can still be used. Activate to switch over variables in the web front. _Attention! Many devices can consume many variables_.
   _Optional_ If this option is selected, a variable for switching from the web front will be created for each command group of a Logitech Harmony device. **CAUTION:** This option should **only be selected if there are still enough variables available in IP-Symcon** or the number of variables is unlimited, as a large number of variables can be consumed depending on the devices learned in the Harmony Hub. Every Harmony Hub device creates a variable for switching in the web front for each Controllgroup stored in the Harmony Hub. Depending on the number of devices configured in the Harmony Hub, a large number of variables may be generated here.
   The option is intended for IP Symcon users who still have enough variables available and want to drop commands from the web front.	
-- _Harmony Skript_ If this is activated, the associated scripts will be created for each already created instance with _Setup Harmony_.
+- _Harmony script_ If this is activated, the associated scripts will be created for each already created instance with _Setup Harmony_.
   _Optional_ This option can be chosen as an alternative or addition to variables. A subcategory with scripts is created for each Controllgroup stored in the Harmony Hub.
   The single script then sends the respective command (script name) to the Logitech Harmony Hub.
 
-If something has been changed in the configuration in the Harmony Hub, press _Konfiguration auslesen_ and press _Liste aktualisieren_.
+If something has been changed in the configuration in the Harmony Hub, press _Read Configuration_ and press _Refresh List_.
 Individual devices can now be selected in the configurator and _Create_ creates the device in IP-Symcon.
 
 
-![Konfigurator 4](img/konfigurator_4.png?raw=true "Konfigurator 4")
+![Konfigurator 4](img/configurator_4.png?raw=true "Configurator 4")
 
 Mit _Setup Harmony_ , scripts are created for each device created in IP Symcon, depending on the settings (see above), and scripts are generated for the activities.
 

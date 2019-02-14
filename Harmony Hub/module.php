@@ -1561,13 +1561,13 @@ Switch ($_IPS[\'SENDER\'])
                     "type": "CheckBox",
                     "caption": "Open"
                 },
-				{ "type": "Label", "label": "IP Adresse des Harmony Hub" },
+				{ "type": "Label", "label": "IP adress Harmony Hub" },
                 {
                     "name": "Host",
                     "type": "ValidationTextBox",
                     "caption": "IP adress"
                 },
-				{ "type": "Label", "label": "MyHarmony Zugangsdaten (Email/Passwort)" },
+				{ "type": "Label", "label": "MyHarmony access data (email / password)" },
                 {
                     "name": "Email",
                     "type": "ValidationTextBox",
