@@ -208,8 +208,8 @@ class SSDPRoku extends IPSModule
 		$Header[] = "CACHE-CONTROL: max-age=300";
 		$Header[] = "ST: roku:ecp";
 		$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
-		$Header[] = "SERVER: Roku/1.0 UPnP/1.1";
-		$Header[] = "Content_Length: 0";
+		//$Header[] = "SERVER: Roku/1.0 UPnP/1.1";
+		//$Header[] = "Content_Length: 0";
 		$Header[] = "";
 		$Header[] = "";
 		$Payload = implode("\r\n", $Header);

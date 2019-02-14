@@ -416,6 +416,11 @@ class HarmonyDevice extends IPSModule
                     "name": "HarmonyVars",
                     "type": "CheckBox",
                     "caption": "Harmony variables"
+                },
+                {
+                    "name": "HarmonyScript",
+                    "type": "CheckBox",
+                    "caption": "Harmony scripts"
                 },';
 
 		return $form;

@@ -49,7 +49,31 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
 
 Die Webconsole von IP-Symcon mit _http://<IP-Symcon IP>:3777/console/_ öffnen. 
 
-Anschließend den Objektbaum _Öffnen_.
+
+Anschließend oben rechts auf das Symbol für den Modulstore (IP-Symcon > 5.1) klicken
+
+![Store](img/store_icon.png?raw=true "open store")
+
+Im Suchfeld nun
+
+```
+Logitech Harmony
+```  
+
+eingeben
+
+![Store](img/module_store_search.png?raw=true "module search")
+
+und schließend das Modul auswählen und auf _Installieren_
+
+![Store](img/install.png?raw=true "install")
+
+drücken.
+
+
+#### Alternatives Installieren über Modules Instanz
+
+Den Objektbaum _Öffnen_.
 
 ![Objektbaum](img/objektbaum.png?raw=true "Objektbaum")	
 
@@ -64,9 +88,23 @@ Die Instanz _'Modules'_ unterhalb von Kerninstanzen im Objektbaum von IP-Symcon 
 Im Feld die folgende URL eintragen und mit _OK_ bestätigen:
 
 ```
-git://github.com/Wolbolar/IPSymconHarmony.git 
+https://github.com/Wolbolar/IPSymconHarmony 
 ```  
 	
+Anschließend erscheint ein Eintrag für das Modul in der Liste der Instanz _Modules_    
+
+Es wird im Standard der Zweig (Branch) _master_ geladen, dieser enthält aktuelle Änderungen und Anpassungen.
+Nur der Zweig _master_ wird aktuell gehalten.
+
+![Master](img/master.png?raw=true "master") 
+
+Sollte eine ältere Version von IP-Symcon die kleiner ist als Version 5.1 (min 4.3) eingesetzt werden, ist auf das Zahnrad rechts in der Liste zu klicken.
+Es öffnet sich ein weiteres Fenster,
+
+![SelectBranch](img/select_branch.png?raw=true "select branch") 
+
+hier kann man auf einen anderen Zweig wechseln, für ältere Versionen kleiner als 5.1 (min 4.3) ist hier
+_Old-Version_ auszuwählen. 
 
 ### b. Einrichtung in IPS
 

@@ -4,6 +4,7 @@
       "This instance is for getting keystrokes from the Harmony remote via fakeRoku": "Diese Instanz dient dazu Tastendrücke der Harmony von FHEM fakeRoku übermittelt zu bekommen",
       "Please select the Harmony Hub for configuration:": "Bitte den Harmony Hub für die Konfiguration auswählen",
       "Select activity": "Aktivität auswählen",
+      "configure activities": "Aktivitäten konfigurieren",
       "Roku Emulator Keys": "Roku Emulator Tasten",
       "harmony activity": "Harmony Aktivität",
       "configuration valid": "Konfiguration gültig",
