@@ -39,14 +39,14 @@ class HarmonyConfigurator extends IPSModule
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
 		$HubCategoryID = $this->CreateHarmonyHubCategory();
 		//Konfig prüfen
-		$HarmonyConfig = IPS_GetObjectIDByIdent("HarmonyConfig", $MyParent);
+		$HarmonyConfig = $this->SendData('GetHarmonyConfigJSON');
 		if ($HarmonyConfig == "") {
 			$timestamp = time();
 			$this->SendData('getConfig');
 			$i = 0;
 			do {
 				IPS_Sleep(10);
-				$updatetimestamp = IPS_GetVariable($this->GetIDForIdent("HarmonyConfig"))["VariableUpdated"];
+				$updatetimestamp = $this->SendData('GetHarmonyConfigTimestamp');
 
 				//echo $i."\n";
 				$i++;
@@ -70,7 +70,7 @@ class HarmonyConfigurator extends IPSModule
 	protected function CreateHarmonyHubCategory()
 	{
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
-		$hubip = IPS_GetProperty($MyParent, "Host");
+		$hubip = $this->SendData('GetHubIP');
 		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
 		$hubname = GetValue(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
 		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
@@ -167,7 +167,7 @@ class HarmonyConfigurator extends IPSModule
 	public function SetupActivityScripts($HubCategoryID)
 	{
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
-		$hubip = IPS_GetProperty($MyParent, "Host");
+		$hubip = $this->SendData('GetHubIP');
 		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
 		$hubname = GetValue(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
 		$activities_json = $this->SendData('GetAvailableAcitivities');
@@ -287,7 +287,7 @@ Switch ($_IPS[\'SENDER\'])
 	public function CreateAktivityLink()
 	{
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
-		$hubip = IPS_GetProperty($MyParent, "Host");
+		$hubip = $this->SendData('GetHubIP');
 		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
 		$hubname = GetValue(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
 		$HubCategoryID = $this->CreateHarmonyHubCategory();
@@ -366,10 +366,11 @@ Switch ($_IPS[\'SENDER\'])
 		$config_list = [];
 		$HarmonyInstanceIDList = IPS_GetInstanceListByModuleID('{B0B4D0C2-192E-4669-A624-5D5E72DBB555}'); // Harmony Devices
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
-		$hostname = IPS_GetName(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
-		$hubip = IPS_GetProperty($MyParent, "Host");
+		$this->SendDebug('Harmony Config', 'Configurator ConnectionID: '.$MyParent , 0);
+		$hostname = GetValue(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
+		$hubip = $this->SendData('GetHubIP');
 		$config = $this->SendData('GetHarmonyConfigJSON');
-		$this->SendDebug('NEEO Config', $config, 0);
+		$this->SendDebug('Harmony Config', $config, 0);
 		if(!empty($config))
 		{
 			$data = json_decode($config);
@@ -377,7 +378,7 @@ Switch ($_IPS[\'SENDER\'])
 			foreach ($devices as $harmonydevice) {
 				$instanceID = 0;
 				$harmony_device_name = $harmonydevice->label; //Bezeichnung Harmony Device
-				$this->SendDebug('Harmony Config', 'device name: '.$harmony_device_name, 0);
+				$this->SendDebug('Harmony Config', 'device name: '.utf8_decode($harmony_device_name), 0);
 				$manufacturer = $harmonydevice->manufacturer; // manufacturer
 				$this->SendDebug('Harmony Config', 'manufacturer: '.$manufacturer, 0);
 				$commandset = $harmonydevice->controlGroup;
@@ -388,6 +389,9 @@ Switch ($_IPS[\'SENDER\'])
 				$deviceTypeDisplayName = $harmonydevice->deviceTypeDisplayName;
 				foreach ($HarmonyInstanceIDList as $HarmonyInstanceID) {
 					if (IPS_GetInstance($HarmonyInstanceID)['ConnectionID'] == $MyParent && $device_id == IPS_GetProperty($HarmonyInstanceID, 'DeviceID')) {
+						// $this->SendDebug('Harmony Config', 'Configurator ConnectionID: '.IPS_GetInstance($HarmonyInstanceID)['ConnectionID'] , 0);
+						$harmony_device_name = IPS_GetName($HarmonyInstanceID);
+						$this->SendDebug('Harmony Config', 'device found: '.utf8_decode($harmony_device_name).' ('.$HarmonyInstanceID.')' , 0);
 						$instanceID = $HarmonyInstanceID;
 					}
 				}
@@ -395,10 +399,10 @@ Switch ($_IPS[\'SENDER\'])
 				{
 					$BluetoothDevice = true;
 					// $blutooth_address = $harmonydevice->BTAddress;
-					$this->SendDebug('Harmony Config', 'device name: '.$harmony_device_name.' use bluetooth' , 0);
+					$this->SendDebug('Harmony Config', 'device name: '.utf8_decode($harmony_device_name).' use bluetooth' , 0);
 				}else {
 					$BluetoothDevice = false;
-					$this->SendDebug('Harmony Config', 'device name: '.$harmony_device_name.' does not use bluethooth' , 0);
+					$this->SendDebug('Harmony Config', 'device name: '.utf8_decode($harmony_device_name).' does not use bluethooth' , 0);
 				}
 				$config_list[] = ["instanceID" => $instanceID,
 					"id" => $device_id,
@@ -415,6 +419,7 @@ Switch ($_IPS[\'SENDER\'])
 							"configuration" =>  [
 								"devicename" => $harmony_device_name,
 								"DeviceID" => $device_id,
+								"ConnectionID" => $MyParent,
 								"BluetoothDevice" => $BluetoothDevice,
 								"VolumeControl" => false,
 								"MaxStepVolume" => 0,
