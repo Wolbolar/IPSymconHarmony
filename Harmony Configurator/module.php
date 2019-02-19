@@ -179,8 +179,8 @@ class HarmonyConfigurator extends IPSModule
 			$MainCatID = @IPS_GetObjectIDByIdent("LogitechActivitiesScripts_" . $hubipident, $HubCategoryID);
 			if ($MainCatID === false) {
 				$MainCatID = IPS_CreateCategory();
-				IPS_SetName($MainCatID, $hubname . " Aktivitäten");
-				IPS_SetInfo($MainCatID, $hubname . " Aktivitäten");
+				IPS_SetName($MainCatID, $hubname . $this->Translate(" Activities"));
+				IPS_SetInfo($MainCatID, $hubname . $this->Translate(" Activities"));
 				//IPS_SetIcon($NeueInstance, $Quellobjekt['ObjectIcon']);
 				//IPS_SetPosition($NeueInstance, $Quellobjekt['ObjectPosition']);
 				//IPS_SetHidden($NeueInstance, $Quellobjekt['ObjectIsHidden']);
@@ -414,7 +414,7 @@ Switch ($_IPS[\'SENDER\'])
 						$this->Translate('devices'), $this->Translate('harmony devices'), $hostname . " (" . $hubip . ")"
 					],
 					"create" => [
-						[
+
 							"moduleID" => "{B0B4D0C2-192E-4669-A624-5D5E72DBB555}",
 							"configuration" =>  [
 								"devicename" => $harmony_device_name,
@@ -431,7 +431,7 @@ Switch ($_IPS[\'SENDER\'])
 								"HarmonyVars" => $this->ReadPropertyBoolean("HarmonyVars"),
 								"HarmonyScript" => $this->ReadPropertyBoolean("HarmonyScript"),
 							]
-						]
+
 					]
 				];
 			}
