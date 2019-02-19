@@ -15,6 +15,7 @@ class HarmonyDevice extends IPSModule
 
 		$this->RegisterPropertyString("devicename", "");
 		$this->RegisterPropertyInteger("DeviceID", 0);
+		$this->RegisterPropertyInteger("ConnectionID", 0);
 		$this->RegisterPropertyBoolean("BluetoothDevice", false);
 		$this->RegisterPropertyBoolean("VolumeControl", false);
 		$this->RegisterPropertyInteger("MaxStepVolume", 0);
@@ -44,6 +45,13 @@ class HarmonyDevice extends IPSModule
 	 */
 	private function ValidateConfiguration()
 	{
+		/*
+		$ConnectionID = $this->ReadPropertyInteger("ConnectionID");
+		if($ConnectionID > 0)
+		{
+			IPS_ConnectInstance($this->InstanceID, $ConnectionID);
+		}
+		*/
 		//Type und Zone
 		$devicename = $this->ReadPropertyString('devicename');
 		$DeviceID = $this->ReadPropertyInteger('DeviceID');
@@ -199,37 +207,7 @@ class HarmonyDevice extends IPSModule
 
 	}
 
-	//Configuration Form
-	public function GetConfigurationForm()
-	{
-		$formhead = $this->FormHead();
-		$formselection = $this->FormSelection();
-		$formactions = $this->FormActions();
-		$formelementsend = '{ "type": "Label", "label": "__________________________________________________________________________________________________" }';
-		$formstatus = $this->FormStatus();
 
-		return '{ ' . $formhead . $formselection . $formelementsend . '],' . $formactions . $formstatus . ' }';
-	}
-
-	protected function FormSelection()
-	{
-		$CheckVolumeControl = $this->CheckVolumeControl();
-		if ($CheckVolumeControl == false) {
-			$form = '';
-		} else {
-			$form = '{
-                    "name": "VolumeControl",
-                    "type": "CheckBox",
-                    "caption": "Volume Control"
-                },
-				{
-                    "name": "MaxStepVolume",
-                    "type": "NumberSpinner",
-                    "caption": "Steps Volume"
-                },';
-		}
-		return $form;
-	}
 
 	protected function CheckVolumeControl()
 	{
@@ -316,8 +294,8 @@ class HarmonyDevice extends IPSModule
 				$varid = $this->SetupVariable($VarIdent, $VarName, $profiledevicename . "." . $profilegroupname, 0, 31, $splitProfileAssActivities[0]); //32 Associationen
 
 				//Association 2
-				$VarIdent1 = str_replace(" ", "_", $commands->name) . "1";//Command Group Name
-				$VarName1 = $commands->name . "1";//Command Group Name
+				$VarIdent1 = str_replace(" ", "_", $command->name) . "1";//Command Group Name
+				$VarName1 = $command->name . "1";//Command Group Name
 				$seconddescriptionjson = json_encode($seconddescription);
 				$varid1 = $this->SetupVariable($VarIdent1, $VarName1, $profiledevicename . "." . $profilegroupname . "1", 0, ($profilemax - 32), $SecondProfileAssActivities);
 				IPS_SetInfo($varid1, $seconddescriptionjson);
@@ -396,99 +374,148 @@ class HarmonyDevice extends IPSModule
 
 	}
 
+	/***********************************************************
+	 * Configuration Form
+	 ***********************************************************/
+
+	/**
+	 * build configuration form
+	 * @return string
+	 */
+	public function GetConfigurationForm()
+	{
+		// return current form
+		return json_encode([
+			'elements' => $this->FormHead(),
+			'actions' => $this->FormActions(),
+			'status' => $this->FormStatus()
+		]);
+	}
+
+	/**
+	 * return form configurations on configuration step
+	 * @return array
+	 */
 	protected function FormHead()
 	{
-		$form = '"elements":
-            [
-                { "type": "Label", "label": "Please create instance or harmony scripts with the harmony configurator"},
-				{
-                    "name": "devicename",
-                    "type": "ValidationTextBox",
-                    "caption": "Name"
-                },
-				{
-                    "name": "DeviceID",
-                    "type": "NumberSpinner",
-                    "caption": "DeviceID"
-                },
-                { "type": "Label", "label": "Create Variables"},
-                {
-                    "name": "HarmonyVars",
-                    "type": "CheckBox",
-                    "caption": "Harmony variables"
-                },
-                {
-                    "name": "HarmonyScript",
-                    "type": "CheckBox",
-                    "caption": "Harmony scripts"
-                },';
+		$form = [
+			[
+				'type' => 'Label',
+				'caption' => 'Please create instance or harmony scripts with the harmony configurator'
+			],
+			[
+				'name' => 'devicename',
+				'type' => 'ValidationTextBox',
+				'caption' => 'Name'
+			],
+			[
+				'name' => 'DeviceID',
+				'type' => 'NumberSpinner',
+				'caption' => 'DeviceID'
+			],
+			[
+				'type' => 'Label',
+				'caption' => 'Create Variables'
+			],
+			[
+				'name' => 'HarmonyVars',
+				'type' => 'CheckBox',
+				'caption' => 'Harmony variables'
+			],
+			[
+				'name' => 'HarmonyScript',
+				'type' => 'CheckBox',
+				'caption' => 'Harmony scripts'
+			]
+		];
+		$CheckVolumeControl = $this->CheckVolumeControl();
+		if($CheckVolumeControl)
+		{
+			$form = array_merge_recursive(
+				$form,
+				[
+					[
+						'name' => 'VolumeControl',
+						'type' => 'CheckBox',
+						'caption' => 'Volume Control'
+					],
+					[
+						'name' => 'MaxStepVolume',
+						'type' => 'NumberSpinner',
+						'caption' => 'Steps Volume'
+					]
+				]
+			);
+		}
 
 		return $form;
 	}
 
+	/**
+	 * return form actions by token
+	 * @return array
+	 */
 	protected function FormActions()
 	{
-		$zapchannel = false;
-		$form = '';
-		if ($zapchannel) {
-			$form = '"actions":
-			[
-				
-			],';
-		}
+		$form = [
+		];
 		return $form;
 	}
 
+	/**
+	 * return from status
+	 * @return array
+	 */
 	protected function FormStatus()
 	{
-		$form = '"status":
-            [
-                {
-                    "code": 101,
-                    "icon": "inactive",
-                    "caption": "Creating instance."
-                },
-				{
-                    "code": 102,
-                    "icon": "active",
-                    "caption": "configuration valid"
-                },
-                {
-                    "code": 104,
-                    "icon": "inactive",
-                    "caption": "Harmony Device is inactive"
-                },
-				{
-                    "code": 201,
-                    "icon": "error",
-                    "caption": "Volume step can not be zero."
-                },
-                {
-                    "code": 202,
-                    "icon": "error",
-                    "caption": "Harmony Hub IP adress must not empty."
-                },
-				{
-                    "code": 203,
-                    "icon": "error",
-                    "caption": "No valid IP adress."
-                },
-                {
-                    "code": 204,
-                    "icon": "error",
-                    "caption": "connection to the Harmony Hub lost."
-                },
-				{
-                    "code": 205,
-                    "icon": "error",
-                    "caption": "field must not be empty."
-                },
-				{
-                    "code": 206,
-                    "icon": "error",
-                    "caption": "select category for import."
-                }
-            ]';
+		$form = [
+			[
+				'code' => 101,
+				'icon' => 'inactive',
+				'caption' => 'Creating instance.'
+			],
+			[
+				'code' => 102,
+				'icon' => 'active',
+				'caption' => 'configuration valid'
+			],
+			[
+				'code' => 104,
+				'icon' => 'inactive',
+				'caption' => 'Harmony Device is inactive'
+			],
+			[
+				'code' => 201,
+				'icon' => 'inactive',
+				'caption' => 'Volume step can not be zero.'
+			],
+			[
+				'code' => 202,
+				'icon' => 'error',
+				'caption' => 'Harmony Hub IP adress must not empty.'
+			],
+			[
+				'code' => 203,
+				'icon' => 'error',
+				'caption' => 'No valid IP adress.'
+			],
+			[
+				'code' => 204,
+				'icon' => 'error',
+				'caption' => 'connection to the Harmony Hub lost.'
+			],
+			[
+				'code' => 205,
+				'icon' => 'error',
+				'caption' => 'field must not be empty.'
+			],
+			[
+				'code' => 206,
+				'icon' => 'error',
+				'caption' => 'select category for import.'
+			]
+		];
+
 		return $form;
 	}
 
