@@ -73,7 +73,7 @@ class HarmonyConfigurator extends IPSModule
 		$hubip = $this->SendData('GetHubIP');
 		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
 		$hubname = GetValue(IPS_GetObjectIDByIdent("HarmonyHubName", $MyParent));
-		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
+		$CategoryID = $this->CreateHarmonyScriptCategory();
 		//Prüfen ob Kategorie schon existiert
 		$HubCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHub_" . $hubipident, $CategoryID);
 		if ($HubCategoryID === false) {
@@ -83,8 +83,24 @@ class HarmonyConfigurator extends IPSModule
 			IPS_SetInfo($HubCategoryID, $hubip);
 			IPS_SetParent($HubCategoryID, $CategoryID);
 		}
-		$this->SendDebug("Hub Skript Category", strval($HubCategoryID), 0);
+		$this->SendDebug("Hub Hub Script Category", strval($HubCategoryID), 0);
 		return $HubCategoryID;
+	}
+
+	protected function CreateHarmonyScriptCategory()
+	{
+		$CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
+		//Prüfen ob Kategorie schon existiert
+		$HubScriptCategoryID = @IPS_GetObjectIDByIdent("CatLogitechHubScripts", $CategoryID);
+		if ($HubScriptCategoryID === false) {
+			$HubScriptCategoryID = IPS_CreateCategory();
+			IPS_SetName($HubScriptCategoryID, $this->Translate("Harmony Scripts"));
+			IPS_SetIdent($HubScriptCategoryID, "CatLogitechHubScripts");
+			IPS_SetInfo($HubScriptCategoryID, $this->Translate("Harmony Scripts"));
+			IPS_SetParent($HubScriptCategoryID, $CategoryID);
+		}
+		$this->SendDebug("Hub Script Category", strval($HubScriptCategoryID), 0);
+		return $HubScriptCategoryID;
 	}
 
 	protected function GetCurrentHarmonyDevices()
@@ -410,9 +426,7 @@ Switch ($_IPS[\'SENDER\'])
 					"manufacturer" => $manufacturer,
 					"deviceTypeDisplayName" => $deviceTypeDisplayName,
 					"deviceid" => $device_id,
-					"location" => [
-						$this->Translate('devices'), $this->Translate('harmony devices'), $hostname . " (" . $hubip . ")"
-					],
+					"location" => $this->SetLocation($hostname, $hubip),
 					"create" => [
 
 							"moduleID" => "{B0B4D0C2-192E-4669-A624-5D5E72DBB555}",
@@ -437,6 +451,34 @@ Switch ($_IPS[\'SENDER\'])
 			}
 		}
 		return $config_list;
+	}
+
+	private function SetLocation($hostname, $hubip)
+	{
+		/*
+		$tree_position = [
+			$this->Translate('devices'), $this->Translate('harmony devices'), $hostname . " (" . $hubip . ")"
+		];
+		*/
+
+		$category = $this->ReadPropertyInteger("ImportCategoryID");
+		$tree_position[] = IPS_GetName($category);
+		$parent = IPS_GetObject($category)['ParentID'];
+		$tree_position[] = IPS_GetName($parent);
+		do {
+			$parent = IPS_GetObject($parent)['ParentID'];
+			$tree_position[] = IPS_GetName($parent);
+		} while ($parent > 0);
+		// delete last key
+		end($tree_position);
+		$lastkey = key($tree_position);
+		unset($tree_position[$lastkey]);
+		// reverse array
+		$tree_position = array_reverse($tree_position);
+		array_push($tree_position, $this->Translate('harmony devices'));
+		array_push($tree_position, $hostname . " (" . $hubip . ")");
+		$this->SendDebug('Harmony Location', json_encode($tree_position) , 0);
+		return $tree_position;
 	}
 
 	/***********************************************************
@@ -475,12 +517,12 @@ Switch ($_IPS[\'SENDER\'])
 			],
 			[
 				'type' => 'Label',
-				'label' => 'category for Logitech Harmony Hub devices'
+				'label' => 'category for Logitech Harmony Hub devices:'
 			],
 			[
 				'name' => 'ImportCategoryID',
 				'type' => 'SelectCategory',
-				'caption' => 'category harmony scripts'
+				'caption' => 'category harmony'
 			],
 			[
 				'type' => 'Label',
@@ -591,7 +633,7 @@ Switch ($_IPS[\'SENDER\'])
 			],
 			[
 				'type' => 'Label',
-				'label' => '3. Setup Harmony activity scripts:'
+				'label' => '3. Setup Harmony (create activity scripts and scripts for devices created by the configurator):'
 			],
 			[
 				'type' => 'Button',
