@@ -440,54 +440,57 @@ Switch ($_IPS[\'SENDER\'])
 	{
 		$hubip = $this->GetParentIP();
 		$hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-		$json = $this->GetHarmonyConfigJSON();
-		$activities[] = $json["activity"];
-		$devices[] = $json["device"];
-		$ProfileAssActivities = array();
-		$assid = 1;
-		foreach ($activities as $activitieslist) {
-			foreach ($activitieslist as $activity) {
-				$label = $activity["label"];
-				$suggestedDisplay = $activity["suggestedDisplay"];
-				$this->SendDebug("Harmony Activity", "suggested display " . $suggestedDisplay , 0);
-				$id = $activity["id"];
-				$activityTypeDisplayName  = $activity["activityTypeDisplayName"];
-				$this->SendDebug("Harmony Activity", "activity type display name " . $activityTypeDisplayName, 0);
-				$controlGroup  = $activity["controlGroup"];
-				$this->SendDebug("Harmony Activity", "control group " . json_encode($controlGroup), 0);
-				if (isset($activity["isTuningDefault"])) {
-					$isTuningDefault  = $activity["isTuningDefault"];
-					$this->SendDebug("Harmony Activity", "is tuning default " . json_encode($isTuningDefault), 0);
+		$config = $this->GetHarmonyConfigJSON();
+		if(isset($config["device"]))
+		{
+			$activities[] = $config["activity"];
+			$devices[] = $config["device"];
+			$ProfileAssActivities = array();
+			$assid = 1;
+			foreach ($activities as $activitieslist) {
+				foreach ($activitieslist as $activity) {
+					$label = $activity["label"];
+					$suggestedDisplay = $activity["suggestedDisplay"];
+					$this->SendDebug("Harmony Activity", "suggested display " . $suggestedDisplay , 0);
+					$id = $activity["id"];
+					$activityTypeDisplayName  = $activity["activityTypeDisplayName"];
+					$this->SendDebug("Harmony Activity", "activity type display name " . $activityTypeDisplayName, 0);
+					$controlGroup  = $activity["controlGroup"];
+					$this->SendDebug("Harmony Activity", "control group " . json_encode($controlGroup), 0);
+					if (isset($activity["isTuningDefault"])) {
+						$isTuningDefault  = $activity["isTuningDefault"];
+						$this->SendDebug("Harmony Activity", "is tuning default " . json_encode($isTuningDefault), 0);
+					}
+					$sequences  = $activity["sequences"];
+					$this->SendDebug("Harmony Activity", "sequences " . json_encode($sequences), 0);
+					if (isset($activity["activityOrder"])) {
+						$activityOrder  = $activity["activityOrder"];
+						$this->SendDebug("Harmony Activity", "activity order " . json_encode($activityOrder), 0);
+					}
+					$fixit  = $activity["fixit"];
+					$this->SendDebug("Harmony Activity", "fixit " . json_encode($fixit), 0);
+					$type  = $activity["type"];
+					$this->SendDebug("Harmony Activity", "type " . $type, 0);
+					$icon  = $activity["icon"];
+					$this->SendDebug("Harmony Activity", "icon " . $icon, 0);
+					if (isset($activity["baseImageUri"])) {
+						$baseImageUri  = $activity["baseImageUri"];
+						$this->SendDebug("Harmony Activity", "base image uri " . $baseImageUri, 0);
+					}
+					if ($label == "PowerOff") {
+						$ProfileAssActivities[$assid] = Array($id, "Power Off", "", 0xFA5858);
+					} else {
+						$ProfileAssActivities[$assid] = Array($id, utf8_decode($label), "", -1);
+					}
+					$assid++;
 				}
-				$sequences  = $activity["sequences"];
-				$this->SendDebug("Harmony Activity", "sequences " . json_encode($sequences), 0);
-				if (isset($activity["activityOrder"])) {
-					$activityOrder  = $activity["activityOrder"];
-					$this->SendDebug("Harmony Activity", "activity order " . json_encode($activityOrder), 0);
-				}
-				$fixit  = $activity["fixit"];
-				$this->SendDebug("Harmony Activity", "fixit " . json_encode($fixit), 0);
-				$type  = $activity["type"];
-				$this->SendDebug("Harmony Activity", "type " . $type, 0);
-				$icon  = $activity["icon"];
-				$this->SendDebug("Harmony Activity", "icon " . $icon, 0);
-				if (isset($activity["baseImageUri"])) {
-					$baseImageUri  = $activity["baseImageUri"];
-					$this->SendDebug("Harmony Activity", "base image uri " . $baseImageUri, 0);
-				}
-				if ($label == "PowerOff") {
-					$ProfileAssActivities[$assid] = Array($id, "Power Off", "", 0xFA5858);
-				} else {
-					$ProfileAssActivities[$assid] = Array($id, utf8_decode($label), "", -1);
-				}
-				$assid++;
 			}
+			$profilemax = count($ProfileAssActivities);
+			$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony.Activity".$hubipident, "Popcorn", "", "", -1, ($profilemax + 1), 0, 0, $ProfileAssActivities);
+			$this->RegisterVariableInteger("HarmonyActivity", "Harmony Activity", "LogitechHarmony.Activity".$hubipident, 12);
+			$this->EnableAction("HarmonyActivity");
+			SetValueInteger($this->GetIDForIdent("HarmonyActivity"), -1);
 		}
-		$profilemax = count($ProfileAssActivities);
-		$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony.Activity".$hubipident, "Popcorn", "", "", -1, ($profilemax + 1), 0, 0, $ProfileAssActivities);
-		$this->RegisterVariableInteger("HarmonyActivity", "Harmony Activity", "LogitechHarmony.Activity".$hubipident, 12);
-		$this->EnableAction("HarmonyActivity");
-		SetValueInteger($this->GetIDForIdent("HarmonyActivity"), -1);
 	}
 
 
@@ -1315,76 +1318,78 @@ Switch ($_IPS[\'SENDER\'])
 
 	protected function SetHarmonyInstanceVars($InsIDList, $HubCategoryID)
 	{
-		$json = $this->GetHarmonyConfigJSON();
-		$devices[] = $json["device"];
+		$config = $this->GetHarmonyConfigJSON();
+		if(isset($config["device"]))
+		{
+			$devices[] = $config["device"];
+			foreach ($devices as $harmonydevicelist) {
+				$harmonydeviceid = 0;
+				foreach ($harmonydevicelist as $harmonydevice) {
+					// $InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
 
-		foreach ($devices as $harmonydevicelist) {
-			$harmonydeviceid = 0;
-			foreach ($harmonydevicelist as $harmonydevice) {
-				// $InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
+					$controlGroups = $harmonydevice["controlGroup"];
 
-				$controlGroups = $harmonydevice["controlGroup"];
+					//Variablen anlegen
+					$InsID = $InsIDList[$harmonydeviceid];
+					foreach ($controlGroups as $controlGroup) {
+						$commands = $controlGroup["function"]; //Function Array
+						$profilemax = (count($commands)) - 1;
+						$ProfileAssActivities = array();
 
-				//Variablen anlegen
-				$InsID = $InsIDList[$harmonydeviceid];
-				foreach ($controlGroups as $controlGroup) {
-					$commands = $controlGroup["function"]; //Function Array
-					$profilemax = (count($commands)) - 1;
-					$ProfileAssActivities = array();
-
-					$assid = 0;
-					$description = array();
-					foreach ($commands as $command) {
-						$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-						//Wert , Name, Icon , Farbe
-						$ProfileAssActivities[] = Array($assid, utf8_decode($harmonycommand["command"]), "", -1);
-						$description[$assid] = utf8_decode($harmonycommand["command"]);
-						$assid++;
-					}
-					$descriptionjson = json_encode($description);
-					$profiledevicename = str_replace(" ", "", $harmonydevice["label"]);
-					$profiledevicename = preg_replace('/[^A-Za-z0-9\-]/', '', $profiledevicename); // Removes special chars.
-					$profilegroupname = str_replace(" ", "", $controlGroup["name"]);
-					$profilegroupname = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
-					//Variablenprofil anlegen
-					$NumberAss = count($ProfileAssActivities);
-					$VarIdent = $controlGroup["name"];//Command Group Name
-					$VarName = $controlGroup["name"];//Command Group Name
-					$varid = LHD_SetupVariable($InsID, $VarIdent, $VarName, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname);
-					if ($NumberAss >= 32)//wenn mehr als 32 Assoziationen splitten
-					{
-						$splitProfileAssActivities = array_chunk($ProfileAssActivities, 32);
-						$splitdescription = array_chunk($description, 32);
-						//2. Array neu setzten
-						$id = 0;
-						$SecondProfileAssActivities = array();
-						$seconddescription = array();
-						foreach ($splitProfileAssActivities[1] as $Activity) {
-							$SecondProfileAssActivities[] = Array($id, $Activity[1], "", -1);
-							$seconddescription[] = $Activity[1];
-							$id++;
+						$assid = 0;
+						$description = array();
+						foreach ($commands as $command) {
+							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
+							//Wert , Name, Icon , Farbe
+							$ProfileAssActivities[] = Array($assid, utf8_decode($harmonycommand["command"]), "", -1);
+							$description[$assid] = utf8_decode($harmonycommand["command"]);
+							$assid++;
 						}
+						$descriptionjson = json_encode($description);
+						$profiledevicename = str_replace(" ", "", $harmonydevice["label"]);
+						$profiledevicename = preg_replace('/[^A-Za-z0-9\-]/', '', $profiledevicename); // Removes special chars.
+						$profilegroupname = str_replace(" ", "", $controlGroup["name"]);
+						$profilegroupname = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
+						//Variablenprofil anlegen
+						$NumberAss = count($ProfileAssActivities);
+						$VarIdent = $controlGroup["name"];//Command Group Name
+						$VarName = $controlGroup["name"];//Command Group Name
+						$varid = LHD_SetupVariable($InsID, $VarIdent, $VarName, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname);
+						if ($NumberAss >= 32)//wenn mehr als 32 Assoziationen splitten
+						{
+							$splitProfileAssActivities = array_chunk($ProfileAssActivities, 32);
+							$splitdescription = array_chunk($description, 32);
+							//2. Array neu setzten
+							$id = 0;
+							$SecondProfileAssActivities = array();
+							$seconddescription = array();
+							foreach ($splitProfileAssActivities[1] as $Activity) {
+								$SecondProfileAssActivities[] = Array($id, $Activity[1], "", -1);
+								$seconddescription[] = $Activity[1];
+								$id++;
+							}
 
-						//Association 1
-						$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, 31, 0, 0, $splitProfileAssActivities[0]); //32 Associationen
+							//Association 1
+							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, 31, 0, 0, $splitProfileAssActivities[0]); //32 Associationen
 
-						//Association 2
-						//var_dump($SecondProfileAssActivities);
-						$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1", "Execute", "", "", 0, ($profilemax - 32), 0, 0, $SecondProfileAssActivities);
+							//Association 2
+							//var_dump($SecondProfileAssActivities);
+							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1", "Execute", "", "", 0, ($profilemax - 32), 0, 0, $SecondProfileAssActivities);
 
-						$VarIdent1 = ($controlGroup["name"]) . "1";//Command Group Name
-						$VarName1 = ($controlGroup["name"]) . "1";//Command Group Name
-						$seconddescriptionjson = json_encode($seconddescription);
-						$varid1 = LHD_SetupVariable($InsID, $VarIdent1, $VarName1, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1");
-						IPS_SetInfo($varid1, $seconddescriptionjson);
-						$firstdescriptionjson = json_encode($splitdescription[0]);
-						IPS_SetInfo($varid, $firstdescriptionjson);
-					} else {
-						$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, $profilemax, 0, 0, $ProfileAssActivities);
-						IPS_SetInfo($varid, $descriptionjson);
+							$VarIdent1 = ($controlGroup["name"]) . "1";//Command Group Name
+							$VarName1 = ($controlGroup["name"]) . "1";//Command Group Name
+							$seconddescriptionjson = json_encode($seconddescription);
+							$varid1 = LHD_SetupVariable($InsID, $VarIdent1, $VarName1, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1");
+							IPS_SetInfo($varid1, $seconddescriptionjson);
+							$firstdescriptionjson = json_encode($splitdescription[0]);
+							IPS_SetInfo($varid, $firstdescriptionjson);
+						} else {
+							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, $profilemax, 0, 0, $ProfileAssActivities);
+							IPS_SetInfo($varid, $descriptionjson);
+						}
 					}
+					$harmonydeviceid++;
 				}
-				$harmonydeviceid++;
 			}
 		}
 	}
@@ -1392,14 +1397,17 @@ Switch ($_IPS[\'SENDER\'])
 	//DeviceIDs auslesen
 	public function GetHarmonyDeviceIDs()
 	{
-		$json = $this->GetHarmonyConfigJSON();
-		$devices[] = $json["device"];
+		$config = $this->GetHarmonyConfigJSON();
 		$currentactivities = array();
-		foreach ($devices as $harmonydevicelist) {
-			foreach ($harmonydevicelist as $harmonydevice) {
-				$label = $harmonydevice["label"];
-				$harmonyid = $harmonydevice["id"];
-				$currentactivities[$label] = $harmonyid;
+		if(isset($config["device"]))
+		{
+			$devices[] = $config["device"];
+			foreach ($devices as $harmonydevicelist) {
+				foreach ($harmonydevicelist as $harmonydevice) {
+					$label = $harmonydevice["label"];
+					$harmonyid = $harmonydevice["id"];
+					$currentactivities[$label] = $harmonyid;
+				}
 			}
 		}
 		return $currentactivities;
@@ -1408,15 +1416,22 @@ Switch ($_IPS[\'SENDER\'])
 	//Verfügbare Aktivitäten ausgeben
 	public function GetAvailableAcitivities()
 	{
-		$json = $this->GetHarmonyConfigJSON();
-		$activities[] = $json["activity"];
+		$config = $this->GetHarmonyConfigJSON();
 		$currentactivities = array();
-		foreach ($activities as $activitieslist) {
-			foreach ($activitieslist as $activity) {
-				$label = $activity["label"];
-				$id = $activity["id"];
-				$currentactivities[$label] = $id;
+		if(isset($config["activity"]))
+		{
+			$activities[] = $config["activity"];
+			foreach ($activities as $activitieslist) {
+				foreach ($activitieslist as $activity) {
+					$label = $activity["label"];
+					$id = $activity["id"];
+					$currentactivities[$label] = $id;
+				}
 			}
+		}
+		else
+		{
+			$this->SendDebug("Get Activities", "Could not find activities", 0);
 		}
 		return $currentactivities;
 	}
@@ -1425,7 +1440,15 @@ Switch ($_IPS[\'SENDER\'])
 	public function GetHarmonyConfigJSON()
 	{
 		$json = $this->GetHarmonyConfig();
-		$devices = json_decode($json, true);
+		$devices = [];
+		if($json != "")
+		{
+			$devices = json_decode($json, true);
+		}
+		else
+		{
+			$this->SendDebug("Get Harmony Config", "Config ist empty", 0);
+		}
 		return $devices;
 	}
 
