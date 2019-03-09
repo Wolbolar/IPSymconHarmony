@@ -180,7 +180,7 @@ class HarmonyConfigurator extends IPSModule
 		}
 	}
 
-	public function SetupActivityScripts($HubCategoryID)
+	public function SetupActivityScripts(int $HubCategoryID)
 	{
 		$MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
 		$hubip = $this->SendData('GetHubIP');
@@ -191,7 +191,7 @@ class HarmonyConfigurator extends IPSModule
 		if(!empty($activities_json)) {
 			$activities = json_decode($activities_json, true);
 			//Prüfen ob Kategorie schon existiert
-			$this->SendDebug("Top Category", $HubCategoryID, 0);
+			$this->SendDebug("Top Category", IPS_GetName($HubCategoryID), 0);
 			$MainCatID = @IPS_GetObjectIDByIdent("LogitechActivitiesScripts_" . $hubipident, $HubCategoryID);
 			if ($MainCatID === false) {
 				$MainCatID = IPS_CreateCategory();
