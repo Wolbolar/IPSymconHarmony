@@ -15,6 +15,8 @@ class HarmonyDiscovery extends IPSModule
 		//Never delete this line!
 		parent::Create();
 		$this->RegisterAttributeString("devices", "[]");
+		$this->RegisterPropertyString("Email", "");
+		$this->RegisterPropertyString("Password", "");
 
 		//we will wait until the kernel is ready
 		$this->RegisterMessage(0, IPS_KERNELMESSAGE);
@@ -77,6 +79,8 @@ class HarmonyDiscovery extends IPSModule
 		$ConfiguratorIDList = IPS_GetInstanceListByModuleID('{E1FB3491-F78D-457A-89EC-18C832F4E6D9}'); // Harmony  Configurator
 		$devices = $this->DiscoverDevices();
 		$this->SendDebug('Discovered Logitech Harmony Hubs', json_encode($devices), 0);
+		$email = $this->ReadPropertyString("Email");
+		$password = $this->ReadPropertyString("Password");
 		if (!empty($devices)) {
 			foreach ($devices as $device) {
 				$instanceID = 0;
@@ -110,8 +114,8 @@ class HarmonyDiscovery extends IPSModule
 							[
 								'moduleID' => '{03B162DB-7A3A-41AE-A676-2444F16EBEDF}',
 								'configuration' => [
-									'Email' => "",
-									'Password' => ""
+									'Email' => $email,
+									'Password' => $password
 								]
 							],
 							[
@@ -122,7 +126,6 @@ class HarmonyDiscovery extends IPSModule
 									'host' => $host
 								]
 							]
-
 						]
 					];
 
@@ -146,7 +149,7 @@ class HarmonyDiscovery extends IPSModule
 		return $harmony_info;
 	}
 
-	protected function mSearch($st = 'upnp:rootdevice', $mx = 2, $man = 'ssdp:discover', $from = null, $port = null, $sockTimout = 7)
+	protected function mSearch($st = 'upnp:rootdevice', $mx = 2, $man = 'ssdp:discover', $from = null, $port = null, $sockTimout = 3)
 	{
 		$user_agent = "MacOSX/10.8.2 UPnP/1.1 PHP-UPnP/0.0.1a";
 		// BUILD MESSAGE
@@ -292,7 +295,7 @@ class HarmonyDiscovery extends IPSModule
 	{
 		// return current form
 		$Form = json_encode([
-			'elements' => $this->FormHead(),
+			'elements' => $this->FormElements(),
 			'actions' => $this->FormActions(),
 			'status' => $this->FormStatus()
 		]);
@@ -305,9 +308,23 @@ class HarmonyDiscovery extends IPSModule
 	 * return form configurations on configuration step
 	 * @return array
 	 */
-	protected function FormHead()
+	protected function FormElements()
 	{
 		$form = [
+			[
+				'type' => 'Label',
+				'caption' => 'MyHarmony access data (email / password)'
+			],
+			[
+				'name' => 'Email',
+				'type' => 'ValidationTextBox',
+				'caption' => 'Email'
+			],
+			[
+				'name' => 'Password',
+				'type' => 'PasswordTextBox',
+				'caption' => 'Password'
+			]
 		];
 		return $form;
 	}

@@ -1,6 +1,9 @@
 {
   "translations": {
     "de": {
+      "Email": "E-Mail",
+      "Password": "Passwort",
+      "MyHarmony access data (email / password)": "MyHarmony Zugangsdaten (Email/Passwort)",
       "name": "Name",
       "host": "IP Adresse",
       "UUID": "UUID",
