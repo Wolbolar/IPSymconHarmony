@@ -104,11 +104,11 @@ class HarmonyDiscovery extends IPSModule
 						"host" => $host,
 						"create" => [
 							[
-								'moduleID' => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
+								'moduleID' => '{E1FB3491-F78D-457A-89EC-18C832F4E6D9}',
 								'configuration' => [
-									'Host' => $host,
-									'Port' => 5222,
-									'Open' => true
+									'name' => $name,
+									'uuid' => $uuid,
+									'host' => $host
 								]
 							],
 							[
@@ -119,11 +119,11 @@ class HarmonyDiscovery extends IPSModule
 								]
 							],
 							[
-								'moduleID' => '{E1FB3491-F78D-457A-89EC-18C832F4E6D9}',
+								'moduleID' => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
 								'configuration' => [
-									'name' => $name,
-									'uuid' => $uuid,
-									'host' => $host
+									'Host' => $host,
+									'Port' => 5222,
+									'Open' => true
 								]
 							]
 						]
