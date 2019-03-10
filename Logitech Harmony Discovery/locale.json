@@ -1,0 +1,17 @@
+{
+  "translations": {
+    "de": {
+      "name": "Name",
+      "host": "IP Adresse",
+      "UUID": "UUID",
+      "Refresh list": "Liste aktualisieren",
+      "Read configuration": "Konfiguration auslesen",
+      "Creating instance.": "Instanz erstellen.",
+      "Harmony Hub Discovery created.": "Harmony Hub Discovery erstellt.",
+      "interface closed.": "Interface geschlossen.",
+      "Please follow the instructions.": "Bitte den Anleitung folgen.",
+      "no category selected.": "keine Kategorie ausgewählt."
+
+    }
+  }
+}

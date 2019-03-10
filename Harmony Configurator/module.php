@@ -20,6 +20,9 @@ class HarmonyConfigurator extends IPSModule
 		// 1. Verfügbarer Harmony Hub wird verbunden oder neu erzeugt, wenn nicht vorhanden.
 		$this->ConnectParent("{03B162DB-7A3A-41AE-A676-2444F16EBEDF}");
 		$this->RegisterPropertyInteger("ImportCategoryID", 0);
+		$this->RegisterPropertyString("name", "");
+		$this->RegisterPropertyString("uuid", "");
+		$this->RegisterPropertyString("host", "");
 		$this->RegisterPropertyBoolean("HarmonyVars", false);
 		$this->RegisterPropertyBoolean("HarmonyScript", false);
 	}
