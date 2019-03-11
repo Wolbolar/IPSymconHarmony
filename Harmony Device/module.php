@@ -1,4 +1,5 @@
 <?
+declare(strict_types=1);
 
 class HarmonyDevice extends IPSModule
 {
@@ -274,7 +275,7 @@ class HarmonyDevice extends IPSModule
 			$profilegroupname = str_replace("-", "_", $profilegroupname);
 			//Variablenprofil anlegen
 			$NumberAss = count($ProfileAssActivities);
-			$VarIdent = str_replace(" ", "_", $name);//Command Group Name
+			$VarIdent = $this->CreateIdent($name);//Command Group Name
 			$VarName = $name;//Command Group Name
 			if ($NumberAss >= 32)//wenn mehr als 32 Assoziationen splitten
 			{
@@ -294,8 +295,8 @@ class HarmonyDevice extends IPSModule
 				$varid = $this->SetupVariable($VarIdent, $VarName, $profiledevicename . "." . $profilegroupname, 0, 31, $splitProfileAssActivities[0]); //32 Associationen
 
 				//Association 2
-				$VarIdent1 = str_replace(" ", "_", $command->name) . "1";//Command Group Name
-				$VarName1 = $command->name . "1";//Command Group Name
+				$VarIdent1 = $this->CreateIdent($name) . "1";//Command Group Name
+				$VarName1 = $name . "1";//Command Group Name
 				$seconddescriptionjson = json_encode($seconddescription);
 				$varid1 = $this->SetupVariable($VarIdent1, $VarName1, $profiledevicename . "." . $profilegroupname . "1", 0, ($profilemax - 32), $SecondProfileAssActivities);
 				IPS_SetInfo($varid1, $seconddescriptionjson);
@@ -306,6 +307,37 @@ class HarmonyDevice extends IPSModule
 				IPS_SetInfo($varid, $descriptionjson);
 			}
 		}
+	}
+
+	private function CreateIdent($str)
+	{
+		$search = array("ä", "ö", "ü", "ß", "Ä", "Ö",
+			"Ü", "&", "é", "á", "ó",
+			" :)", " :D", " :-)", " :P",
+			" :O", " ;D", " ;)", " ^^",
+			" :|", " :-/", ":)", ":D",
+			":-)", ":P", ":O", ";D", ";)",
+			"^^", ":|", ":-/", "(", ")", "[", "]",
+			"<", ">", "!", "\"", "§", "$", "%", "&",
+			"/", "(", ")", "=", "?", "`", "´", "*", "'",
+			"-", ":", ";", "²", "³", "{", "}",
+			"\\", "~", "#", "+", ".", ",",
+			"=", ":", "=)");
+		$replace = array("ae", "oe", "ue", "ss", "Ae", "Oe",
+			"Ue", "und", "e", "a", "o", "", "",
+			"", "", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "", "", "");
+
+		$str = str_replace($search, $replace, $str);
+		$str = str_replace(' ', '_', $str); // Replaces all spaces with underline.
+		$how = '_';
+		//$str = strtolower(preg_replace("/[^a-zA-Z0-9]+/", trim($how), $str));
+		$str = preg_replace("/[^a-zA-Z0-9]+/", trim($how), $str);
+		return $str;
 	}
 
 

@@ -1,0 +1,13 @@
+{
+  "id": "{22F51957-348D-9A73-E019-3811573E7CA2}",
+  "name": "HarmonyDiscovery",
+  "type": 5,
+  "vendor": "Logitech",
+  "aliases": [
+    "Logitech Harmony Discovery"
+  ],
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "HarmonyDiscovery"
+}
