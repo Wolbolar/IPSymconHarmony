@@ -21,7 +21,7 @@ class HarmonyDiscovery extends IPSModule
 		//we will wait until the kernel is ready
 		$this->RegisterMessage(0, IPS_KERNELMESSAGE);
 		$this->RegisterMessage(0, IPS_KERNELSTARTED);
-		$this->RegisterTimer('Discovery', 0, 'HarmonyDiscovery_Dicover($_IPS[\'TARGET\']);');
+		$this->RegisterTimer('Discovery', 0, 'HarmonyDiscovery_Discover($_IPS[\'TARGET\']);');
 	}
 
 	/**
@@ -204,35 +204,71 @@ class HarmonyDiscovery extends IPSModule
 		return $harmony_response;
 	}
 
-	protected function parseMSearchResponse( $response )
+	protected function parseMSearchResponse($response)
 	{
-		$responseArr = explode( "\r\n", $response );
+		$responseArr = explode("\r\n", $response);
 		$parsedResponse = array();
-		foreach( $responseArr as $key => $row ) {
-			if( stripos( $row, 'http' ) === 0 )
+		foreach ($responseArr as $key => $row) {
+			if (stripos($row, 'http') === 0)
+			{
 				$parsedResponse['http'] = $row;
-			if( stripos( $row, 'cach' ) === 0 )
-				$parsedResponse['cache-control'] = str_ireplace( 'cache-control: ', '', $row );
-			if( stripos( $row, 'date') === 0 )
-				$parsedResponse['date'] = str_ireplace( 'date: ', '', $row );
-			if( stripos( $row, 'ext') === 0 )
-				$parsedResponse['ext'] = str_ireplace( 'ext: ', '', $row );
-			if( stripos( $row, 'loca') === 0 )
-				$parsedResponse['location'] = str_ireplace( 'location: ', '', $row );
-			if( stripos( $row, 'serv') === 0 )
-				$parsedResponse['server'] = str_ireplace( 'server: ', '', $row );
-			if( stripos( $row, 'st:') === 0 )
-				$parsedResponse['st'] = str_ireplace( 'st: ', '', $row );
-			if( stripos( $row, 'usn:') === 0 )
-				$parsedResponse['usn'] = str_ireplace( 'usn: ', '', $row );
-			if( stripos( $row, 'cont') === 0 )
-				$parsedResponse['content-length'] = str_ireplace( 'content-length: ', '', $row );
-			if( stripos( $row, 'nt:') === 0 )
-				$parsedResponse['nt'] = str_ireplace( 'nt: ', '', $row );
-			if( stripos( $row, 'nl-deviceid') === 0 )
-				$parsedResponse['nl-deviceid'] = str_ireplace( 'nl-deviceid: ', '', $row );
-			if( stripos( $row, 'nl-devicename:') === 0 )
-				$parsedResponse['nl-devicename'] = str_ireplace( 'nl-devicename: ', '', $row );
+				$this->SendDebug("Discovered Device http:", json_encode($parsedResponse['http']), 0);
+			}
+			if (stripos($row, 'cach') === 0)
+			{
+				$parsedResponse['cache-control'] = str_ireplace('cache-control: ', '', $row);
+				$this->SendDebug("Discovered Device cache-control:", json_encode($parsedResponse['cache-control']), 0);
+			}
+			if (stripos($row, 'date') === 0)
+			{
+				$parsedResponse['date'] = str_ireplace('date: ', '', $row);
+				$this->SendDebug("Discovered Device date:", json_encode($parsedResponse['date']), 0);
+			}
+			if (stripos($row, 'ext') === 0)
+			{
+				$parsedResponse['ext'] = str_ireplace('ext: ', '', $row);
+				$this->SendDebug("Discovered Device ext:", json_encode($parsedResponse['ext']), 0);
+			}
+			if (stripos($row, 'loca') === 0)
+			{
+				$parsedResponse['location'] = str_ireplace('location: ', '', $row);
+				$this->SendDebug("Discovered Device location:", json_encode($parsedResponse['location']), 0);
+			}
+			if (stripos($row, 'serv') === 0)
+			{
+				$parsedResponse['server'] = str_ireplace('server: ', '', $row);
+				$this->SendDebug("Discovered Device server:", json_encode($parsedResponse['server']), 0);
+			}
+			if (stripos($row, 'st:') === 0)
+			{
+				$parsedResponse['st'] = str_ireplace('st: ', '', $row);
+				$this->SendDebug("Discovered Device st:", json_encode($parsedResponse['st']), 0);
+			}
+			if (stripos($row, 'usn:') === 0)
+			{
+				$parsedResponse['usn'] = str_ireplace('usn: ', '', $row);
+				$this->SendDebug("Discovered Device usn:", json_encode($parsedResponse['usn']), 0);
+			}
+			if (stripos($row, 'cont') === 0)
+			{
+				$parsedResponse['content-length'] = str_ireplace('content-length: ', '', $row);
+				$this->SendDebug("Discovered Device content-length:", json_encode($parsedResponse['content-length']), 0);
+			}
+			if (stripos($row, 'nt:') === 0)
+			{
+				$parsedResponse['nt'] = str_ireplace('nt: ', '', $row);
+				$this->SendDebug("Discovered Device nt:", json_encode($parsedResponse['nt']), 0);
+			}
+			if (stripos($row, 'nl-deviceid') === 0)
+			{
+				$parsedResponse['nl-deviceid'] = str_ireplace('nl-deviceid: ', '', $row);
+				$this->SendDebug("Discovered Device nl-deviceid:", json_encode($parsedResponse['nl-deviceid']), 0);
+			}
+			if (stripos($row, 'nl-devicename:') === 0)
+			{
+				$parsedResponse['nl-devicename'] = str_ireplace('nl-devicename: ', '', $row);
+				$this->SendDebug("Discovered Device nl-devicename:", json_encode($parsedResponse['nl-devicename']), 0);
+			}
 		}
 		return $parsedResponse;
 	}
@@ -264,7 +300,7 @@ class HarmonyDiscovery extends IPSModule
 		curl_setopt($ch, CURLOPT_URL,$url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-		$status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);   //get status code
+		// $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);   //get status code
 		$result=curl_exec ($ch);
 		curl_close ($ch);
 		return $result;

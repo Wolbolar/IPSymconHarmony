@@ -235,7 +235,7 @@ Switch ($_IPS[\'SENDER\'])
         break; 
 
     Case "Variable": 
-    Case "AlexaSmartHome": // Schalten durch den Alexa SmartHomeSkill
+    Case "VoiceControl": // Schalten durch den Alexa SmartHomeSkill
            
     if ($_IPS[\'VALUE\'] == True) 
         { 
@@ -357,17 +357,6 @@ Switch ($_IPS[\'SENDER\'])
 	{
 		$instance = IPS_GetInstance($this->InstanceID);
 		return $instance['ConnectionID'];
-	}
-
-	protected function HasActiveParent()
-	{
-		$instance = IPS_GetInstance($this->InstanceID);
-		if ($instance['ConnectionID'] > 0) {
-			$parent = IPS_GetInstance($instance['ConnectionID']);
-			if ($parent['InstanceStatus'] == 102)
-				return true;
-		}
-		return false;
 	}
 
 	// Testfunktion Data an Child weitergeben
@@ -851,7 +840,15 @@ Switch ($_IPS[\'SENDER\'])
 			IPS_SetProperty($instanceHarmonySocket, 'Open', true);
 			IPS_ApplyChanges($instanceHarmonySocket);
 		}
-		$this->Send($payload);
+		if($this->HasActiveParent())
+		{
+			$this->Send($payload);
+		}
+		else
+		{
+			$this->SendDebug("Logitech Harmony Hub", "could not send to harmony hub, hub is not active", 0);
+		}
+
 		return $parentactive;
 	}
 
@@ -1155,83 +1152,6 @@ Switch ($_IPS[\'SENDER\'])
 		//print_r ($result);
 		return $json_result;
 
-	}
-
-	protected function SetHarmonyInstanceVars($InsIDList, $HubCategoryID)
-	{
-		$config = $this->GetHarmonyConfigJSON();
-		if (isset($config["device"])) {
-			$devices[] = $config["device"];
-			foreach ($devices as $harmonydevicelist) {
-				$harmonydeviceid = 0;
-				foreach ($harmonydevicelist as $harmonydevice) {
-					// $InstName = utf8_decode($harmonydevice["label"]); //Bezeichnung Harmony Device
-
-					$controlGroups = $harmonydevice["controlGroup"];
-
-					//Variablen anlegen
-					$InsID = $InsIDList[$harmonydeviceid];
-					foreach ($controlGroups as $controlGroup) {
-						$commands = $controlGroup["function"]; //Function Array
-						$profilemax = (count($commands)) - 1;
-						$ProfileAssActivities = array();
-
-						$assid = 0;
-						$description = array();
-						foreach ($commands as $command) {
-							$harmonycommand = json_decode($command["action"], true); // command, type, deviceId
-							//Wert , Name, Icon , Farbe
-							$ProfileAssActivities[] = Array($assid, utf8_decode($harmonycommand["command"]), "", -1);
-							$description[$assid] = utf8_decode($harmonycommand["command"]);
-							$assid++;
-						}
-						$descriptionjson = json_encode($description);
-						$profiledevicename = str_replace(" ", "", $harmonydevice["label"]);
-						$profiledevicename = preg_replace('/[^A-Za-z0-9\-]/', '', $profiledevicename); // Removes special chars.
-						$profilegroupname = str_replace(" ", "", $controlGroup["name"]);
-						$profilegroupname = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
-						//Variablenprofil anlegen
-						$NumberAss = count($ProfileAssActivities);
-						$VarIdent = $controlGroup["name"];//Command Group Name
-						$VarName = $controlGroup["name"];//Command Group Name
-						$varid = LHD_SetupVariable($InsID, $VarIdent, $VarName, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname);
-						if ($NumberAss >= 32)//wenn mehr als 32 Assoziationen splitten
-						{
-							$splitProfileAssActivities = array_chunk($ProfileAssActivities, 32);
-							$splitdescription = array_chunk($description, 32);
-							//2. Array neu setzten
-							$id = 0;
-							$SecondProfileAssActivities = array();
-							$seconddescription = array();
-							foreach ($splitProfileAssActivities[1] as $Activity) {
-								$SecondProfileAssActivities[] = Array($id, $Activity[1], "", -1);
-								$seconddescription[] = $Activity[1];
-								$id++;
-							}
-
-							//Association 1
-							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, 31, 0, 0, $splitProfileAssActivities[0]); //32 Associationen
-
-							//Association 2
-							//var_dump($SecondProfileAssActivities);
-							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1", "Execute", "", "", 0, ($profilemax - 32), 0, 0, $SecondProfileAssActivities);
-
-							$VarIdent1 = ($controlGroup["name"]) . "1";//Command Group Name
-							$VarName1 = ($controlGroup["name"]) . "1";//Command Group Name
-							$seconddescriptionjson = json_encode($seconddescription);
-							$varid1 = LHD_SetupVariable($InsID, $VarIdent1, $VarName1, "LogitechHarmony." . $profiledevicename . "." . $profilegroupname . "1");
-							IPS_SetInfo($varid1, $seconddescriptionjson);
-							$firstdescriptionjson = json_encode($splitdescription[0]);
-							IPS_SetInfo($varid, $firstdescriptionjson);
-						} else {
-							$this->RegisterProfileIntegerHarmonyAss("LogitechHarmony." . $profiledevicename . "." . $profilegroupname, "Execute", "", "", 0, $profilemax, 0, 0, $ProfileAssActivities);
-							IPS_SetInfo($varid, $descriptionjson);
-						}
-					}
-					$harmonydeviceid++;
-				}
-			}
-		}
 	}
 
 	//DeviceIDs auslesen
