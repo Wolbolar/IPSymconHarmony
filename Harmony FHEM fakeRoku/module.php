@@ -456,7 +456,7 @@ class HarmonyfakeRoku extends IPSModule
 		foreach ($harmonyhubs as $harmonyhub) {
 			$activities = $this->GetHubActivities($harmonyhub);
 			foreach ($activities as $key => $activity) {
-				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '');
+				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '[]');
 			}
 		}
 	}
