@@ -12,6 +12,8 @@ class HarmonyfakeRoku extends IPSModule
 		$this->RegisterPropertyInteger('HarmonyHubObjID', 0);
 		$this->RegisterPropertyInteger('HarmonyHubActivity', 0);
 		$this->CreateActivityProperties();
+		//we will wait until the kernel is ready
+		$this->RegisterMessage(0, IPS_KERNELMESSAGE);
 	}
 
 
@@ -19,6 +21,11 @@ class HarmonyfakeRoku extends IPSModule
 	{
 		//Never delete this line!
 		parent::ApplyChanges();
+
+		if (IPS_GetKernelRunlevel() !== KR_READY) {
+			return;
+		}
+
 		$this->RegisterProfileAssociation(
 			'LogitechHarmony.FakeRoku',
 			'Keyboard',
@@ -61,56 +68,35 @@ class HarmonyfakeRoku extends IPSModule
 	 */
 	private function ValidateConfiguration()
 	{
-		$ipsversion = $this->GetIPSVersion();
-		if ($ipsversion == 0) {
-			//prüfen ob Script existent
-			$SkriptID = @($this->GetIDForIdent('FHEMIPSInterface'));
-			if ($SkriptID === false) {
-				$ID = $this->RegisterScript("FHEMIPSInterface", "FHEM IPS Interface", $this->CreateWebHookScript(), 5);
-				IPS_SetHidden($ID, true);
-				$this->RegisterHookOLD('/hook/fhem/fakeRoku', $ID);
-			} else {
-				//echo "Die Skript-ID lautet: ". $SkriptID;
-			}
-		} else {
-			$SkriptID = @($this->GetIDForIdent('FHEMIPSInterface'));
-			if ($SkriptID > 0) {
-				$this->UnregisterHook("/hook/fhem/fakeRoku");
-				$this->UnregisterScript("FHEMIPSInterface");
-			}
-			$this->RegisterHook("/hook/fhem/fakeRoku");
-		}
-
-		$this->SetStatus(102);
+		$this->RegisterHook("/hook/fhem/fakeRoku");
+		$this->SetStatus(IS_ACTIVE);
 
 	}
 
+	public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+	{
+
+		switch ($Message) {
+			case IM_CHANGESTATUS:
+				if ($Data[0] === IS_ACTIVE) {
+					$this->ApplyChanges();
+				}
+				break;
+
+			case IPS_KERNELMESSAGE:
+				if ($Data[0] === KR_READY) {
+					$this->ApplyChanges();
+				}
+				break;
+
+			default:
+				break;
+		}
+	}
 
 	public function RequestAction($Ident, $Value)
 	{
 		$this->SetValue($Ident, $Value);
-	}
-
-	private function RegisterHookOLD($WebHook, $TargetID)
-	{
-		$ids = IPS_GetInstanceListByModuleID("{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}");
-		if (sizeof($ids) > 0) {
-			$hooks = json_decode(IPS_GetProperty($ids[0], "Hooks"), true);
-			$found = false;
-			foreach ($hooks as $index => $hook) {
-				if ($hook['Hook'] == $WebHook) {
-					if ($hook['TargetID'] == $TargetID)
-						return;
-					$hooks[$index]['TargetID'] = $TargetID;
-					$found = true;
-				}
-			}
-			if (!$found) {
-				$hooks[] = Array("Hook" => $WebHook, "TargetID" => $TargetID);
-			}
-			IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
-			IPS_ApplyChanges($ids[0]);
-		}
 	}
 
 	private function RegisterHook($WebHook)
@@ -132,76 +118,6 @@ class HarmonyfakeRoku extends IPSModule
 			}
 			IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
 			IPS_ApplyChanges($ids[0]);
-		}
-	}
-
-	/**
-	 * Löscht einen WebHook, wenn vorhanden.
-	 *
-	 * @access private
-	 * @param string $WebHook URI des WebHook.
-	 */
-	protected function UnregisterHook($WebHook)
-	{
-		$ids = IPS_GetInstanceListByModuleID("{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}");
-		if (sizeof($ids) > 0) {
-			$hooks = json_decode(IPS_GetProperty($ids[0], "Hooks"), true);
-			$found = false;
-			foreach ($hooks as $index => $hook) {
-				if ($hook['Hook'] == $WebHook) {
-					$found = $index;
-					break;
-				}
-			}
-			if ($found !== false) {
-				array_splice($hooks, $index, 1);
-				IPS_SetProperty($ids[0], "Hooks", json_encode($hooks));
-				IPS_ApplyChanges($ids[0]);
-			}
-		}
-	}
-
-	/**
-	 * Löscht eine Script, sofern vorhanden.
-	 *
-	 * @access private
-	 * @param int $Ident Ident der Variable.
-	 */
-	protected function UnregisterScript($Ident)
-	{
-		$sid = @IPS_GetObjectIDByIdent($Ident, $this->InstanceID);
-		if ($sid === false)
-			return;
-		if (!IPS_ScriptExists($sid))
-			return; //bail out
-		IPS_DeleteScript($sid, true);
-	}
-
-	private function CreateWebHookScript()
-	{
-		$Script = '<?
-//Do not delete or modify.
-LHFakeRoku_ProcessHookDataOLD(' . $this->InstanceID . ');		
-?>';
-
-		return $Script;
-	}
-
-	public function ProcessHookDataOLD()
-	{
-		//workaround for bug
-		if (!isset($_IPS))
-			global $_IPS;
-		if ($_IPS['SENDER'] == "Execute") {
-			echo "This script cannot be used this way.";
-			return;
-		}
-		//Auswerten von Events von FHEM fakeRoku
-		// FHEM nutzt GET
-		if (isset($_GET["fhemevent"])) {
-			$data = $_GET["fhemevent"];
-			$this->SendDebug("Logitech Roku", "Roku Command: " . $data, 0);
-			$this->WriteValues($data);
 		}
 	}
 
