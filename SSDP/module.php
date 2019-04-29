@@ -164,16 +164,25 @@ class SSDPRoku extends IPSModule
 		}
 	}
 
+	protected function GetParent()
+	{
+		$instance = IPS_GetInstance($this->InstanceID); //array
+		return ($instance['ConnectionID'] > 0) ? $instance['ConnectionID'] : false; //ConnectionID
+	}
+
 	/**
 	 * Versendet ein NOTIFY
 	 */
 	protected function SendNotify(int $serverport)
 	{
+		$parent_form = IPS_GetConfiguration($this->GetParent());
+		$bind_ip = json_decode($parent_form, true)["BindIP"];
+
 		$Header[] = "NOTIFY * HTTP/1.1";
 		$Header[] = "HOST: 239.255.255.250:1900";
 		$Header[] = "CACHE-CONTROL: max-age=300";
-		$Header[] = "LOCATION: http://" . $this->myIP . ":".$serverport;
-		// $Header[] = "LOCATION: http://" . $this->myIP . ":3777/hook/roku" . $this->InstanceID;
+		$Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport;
+		//$Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
 		// $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		//$Header[] = "NT: roku:ecp";
 		//$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;

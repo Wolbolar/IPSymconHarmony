@@ -274,23 +274,6 @@ trait InstanceStatus
         return $ParentId;
     }
 
-    /**
-     * Prüft den Parent auf vorhandensein und Status.
-     * 
-     * @access protected
-     * @return bool True wenn Parent vorhanden und in Status 102, sonst false.
-     */
-    protected function HasActiveParent()
-    {
-        $instance = IPS_GetInstance($this->InstanceID);
-        if ($instance['ConnectionID'] > 0) {
-            $parent = IPS_GetInstance($instance['ConnectionID']);
-            if ($parent['InstanceStatus'] == 102)
-                return true;
-        }
-        return false;
-    }
-
 }
 
 trait BufferHelper
