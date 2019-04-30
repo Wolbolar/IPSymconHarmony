@@ -181,8 +181,8 @@ class SSDPRoku extends IPSModule
 		$Header[] = "NOTIFY * HTTP/1.1";
 		$Header[] = "HOST: 239.255.255.250:1900";
 		$Header[] = "CACHE-CONTROL: max-age=300";
-		$Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport;
-		//$Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
+		// $Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport;
+		$Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
 		// $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		//$Header[] = "NT: roku:ecp";
 		//$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
@@ -210,15 +210,16 @@ class SSDPRoku extends IPSModule
 	 */
 	public function SendSearchResponse(string $Host, int $Port, int $serverport)
 	{
+		$parent_form = IPS_GetConfiguration($this->GetParent());
+		$bind_ip = json_decode($parent_form, true)["BindIP"];
+
 		$Header[] = "HTTP/1.1 200 OK";
-		$Header[] = "LOCATION: http://" . $this->myIP . ":".$serverport;
-		// $Header[] = "LOCATION: http://" . $this->myIP . ":3777/hook/roku" . $this->InstanceID;
-		//$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		$Header[] = "CACHE-CONTROL: max-age=300";
 		$Header[] = "ST: roku:ecp";
+		// $Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport;
+		$Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
+		//$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
-		//$Header[] = "SERVER: Roku/1.0 UPnP/1.1";
-		//$Header[] = "Content_Length: 0";
 		$Header[] = "";
 		$Header[] = "";
 		$Payload = implode("\r\n", $Header);
