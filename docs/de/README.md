@@ -36,7 +36,12 @@ Harmony Aktivitäten können von IP-Symcon aus gestartet werden. Wenn der Harmon
  
 ### Aktivität starten 
    
-- Starten einen Harmony hub Aktivität
+- Starten einen Harmony Hub Aktivität
+
+### Tastendrücke auswerten 
+   
+- Es können bei einem IP-Symcon Geräte (Roku 3 Emulation) die Tastendrücke Up, Down, Left, Right, Select, Back, Play, Reverse, Forward, Search, Info, Home in IP-Symcon ausgewertet werden und Skripte gestartet werden
+
 
 ## 2. Voraussetzungen
 
@@ -106,7 +111,7 @@ Es öffnet sich ein weiteres Fenster,
 hier kann man auf einen anderen Zweig wechseln, für ältere Versionen kleiner als 5.1 (min 4.3) ist hier
 _Old-Version_ auszuwählen. 
 
-### b. Einrichtung in IPS
+### b. Einrichtung in IP-Symcon
 
 Wenn Skripte angelegt werden sollen werden diese unterhalb einer Kategorie abgelegt. Zunächst legen wir eine Kategorie im Objektbaum _Rechte Maustaste -> Objekt hinzufügen -> Kategorie_ an, dieser geben wir einen beliebigen Namen wie z.B. _**Harmony Geräte**_.
 Unter dieser Kategorie werden später alle Skripte für Geräte des Logitech Harmony Hub angelegt werden.
@@ -178,6 +183,25 @@ Sobald ein Gerät oder Harmony Fernbedienung eine Harmony Aktivität auslöst wi
 Die aktuelle Aktivität wird in der Variable Harmony Activity, diese liegt unter dem Logitech Harmony Splitter, angezeigt. Es wird automatisch ein Link unter der oben gewählten Kategorie zu dieser Variable angelegt.
 
 Die Variablennamen und die Bezeichnung der Befehle werden so angelegt wie diese von der Bezeichnung im Harmony Hub hinterlegt sind. Für jede angelegte Variable wird auch das Beschreibungsfeld genutzt, hier steht der eigentliche Befehl drinnen der an den Harmony Hub gesendet wird. Daher darf das Beschreibungsfeld der Variable nicht geändert werden. Die Bezeichnung der Variable sowie die Befehlsnamen die im Variablenprofile der Variable hinterlegt sind können individuell vom Nutzer angepasst werden. Dabei darf nur nicht die Reihenfolge im Variablenprofil verändert werden.
+
+#### Reagieren auf Tastendrücke der Harmony Remote in IP-Symcon
+
+Um auf Tastendrücke einer Harmony Remote reagieren zu können muss zunächst ein zusätzliches Gerät im Harmony Hub eingebunden werden und dieses dann in die Harmony Aktion eingebunden werden, in der auf einen Tastendruck reagiert werden soll.
+Dazu ist zunächst in IP-Symcon unter Splitter eine neue Instanz _SSDP Roku_ anzulegen. 
+
+![Webfront](img/SSDP_Roku.png?raw=true "Webfront")
+
+
+Anschließend wird eine weitere Instanz _Logitech Harmony Roku Emulator_ angelegt.
+
+Jetzt kann in der Harmony App das Gerät gesucht und hinzugefügt werden. Dazu ist in der Harmony App _Harmony-Eeinrichtung_ -> _Geräte und Aktionen hinzufügen und bearbeiten_ -> _Geräte_ -> _Gerät hinzufügen_ -> _WLAN-Geräte suchen_ anzuklicken.
+Nach einer Weile sollte von der Harmony App Geräte im WLAN gefunden worden sein und eine Auswahl der gefundenen Geräte angezeigt werden. Es sollte auch ein Eintrag _Roku 3_ vorhanden sein.
+Wenn man hier auf das _i_ (Infozeichen) klickt sollte bei Name IP-Symcon (Roku Device) stehen. Mit _Weiter_ wird das Gerät den Geräten des Harmony Hub hinzugefügt.
+Das Gerät kann jetzt entweder aus der App einzeln geschaltet werden oder das Gerät wird in Harmony Aktionen eingebunden.
+
+In IP-Symcon zeigt die Instanz _Logitech Harmony Roku Emulator_ den letzten Tastendruck an der beim Gerät Roku Emulator erfolgt ist. In der Instanz können pro Aktion den Tastenbefehlen ein Skript zugewiesen werden das ausgeführt wird sobald die Taste gedrückt worden ist.
+So kann man dann das Gerät in die Harmony Aktionen, in denen man einen Tastaturdruck der Harmony Remote auswerten will, einbinden und auf die Tasten der Harmony legen.
+IP-Symcon wertet dann diesen Tastendruck aus und ein ein beliebiges Gerät, das von IP-Symcon gesteuert wird, kann so geschaltet werden.
 
 ## 4. Funktionsreferenz
 
