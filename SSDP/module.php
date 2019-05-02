@@ -13,8 +13,7 @@ class SSDPRoku extends IPSModule
 {
 
 	// use fügt bestimmte Traits dieser Klasse hinzu.
-	use BufferHelper, // Enthält die Magische Methoden __get und __set damit wir bequem auf die Instanz-Buffer zugreifen können.
-		DebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
+	use DebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
 		InstanceStatus /* Diverse Methoden für die Verwendung im Splitter */ {
 		InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
 		InstanceStatus::RegisterParent as IORegisterParent; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
@@ -37,6 +36,7 @@ class SSDPRoku extends IPSModule
 		// Alle Instanz-Buffer initialisieren
 		$this->MySerial = md5(openssl_random_pseudo_bytes(10));
 		$this->SendQueue = array();
+		$this->SetMultiBuffer('SSDPData', '');
 	}
 
 	// Überschreibt die intere IPS_ApplyChanges($id) Funktion
@@ -243,13 +243,28 @@ class SSDPRoku extends IPSModule
 		return $Header;
 	}
 
+	private function WriteBuffer($databuffer)
+	{
+		// Inhalt von $databuffer im Puffer speichern
+		$this->SetMultiBuffer('SSDPData', $databuffer);
+	}
+
+	private function GetBufferIN()
+	{
+		// bereits im Puffer der Instanz vorhandene Daten in $databuffer kopieren
+		$databuffer = $this->GetMultiBuffer('SSDPData');
+		return $databuffer;
+	}
+
 	public function ReceiveData($JSONString)
 	{
 		$ReceiveData = json_decode($JSONString);
 		//$this->SendDebug("Receive", $ReceiveData, 0);
-		$data = $this->Buffer . utf8_decode($ReceiveData->Buffer);
+
+		$databuffer = $this->GetBufferIN();
+		$data = $databuffer . utf8_decode($ReceiveData->Buffer);
 		if (substr($data, -4) != "\r\n\r\n") { // HEADER nicht komplett ?
-			$this->Buffer = $data;
+			$this->WriteBuffer($data);
 			return;
 		}
 		//Okay Header komplett. Zerlegen:
@@ -387,4 +402,62 @@ class SSDPRoku extends IPSModule
 	<software-build>09021</software-build>
 	<power-mode>PowerOn</power-mode>
 	 */
+
+	public function __get($name)
+	{
+		if (strpos($name, 'Multi_') === 0) {
+			$curCount = $this->GetBuffer('BufferCount_' . $name);
+			if ($curCount == false) {
+				$curCount = 0;
+			}
+			$data = '';
+			for ($i = 0; $i < $curCount; $i++) {
+				$data .= $this->GetBuffer('BufferPart' . $i . '_' . $name);
+			}
+		} else {
+			$data = $this->GetBuffer($name);
+		}
+		return unserialize($data);
+	}
+
+	public function __set($name, $value)
+	{
+		$data = serialize($value);
+		if (strpos($name, 'Multi_') === 0) {
+			$oldCount = $this->GetBuffer('BufferCount_' . $name);
+			if ($oldCount == false) {
+				$oldCount = 0;
+			}
+			$parts = str_split($data, 8000);
+			$newCount = strval(count($parts));
+			$this->SetBuffer('BufferCount_' . $name, $newCount);
+			for ($i = 0; $i < $newCount; $i++) {
+				$this->SetBuffer('BufferPart' . $i . '_' . $name, $parts[$i]);
+			}
+			for ($i = $newCount; $i < $oldCount; $i++) {
+				$this->SetBuffer('BufferPart' . $i . '_' . $name, '');
+			}
+		} else {
+			$this->SetBuffer($name, $data);
+		}
+	}
+
+	private function SetMultiBuffer($name, $value)
+	{
+		if (IPS_GetKernelVersion() >= 5) {
+			$this->{'Multi_' . $name} = $value;
+		} else {
+			$this->SetBuffer($name, $value);
+		}
+	}
+
+	private function GetMultiBuffer($name)
+	{
+		if (IPS_GetKernelVersion() >= 5) {
+			$value = $this->{'Multi_' . $name};
+		} else {
+			$value = $this->GetBuffer($name);
+		}
+		return $value;
+	}
 }
