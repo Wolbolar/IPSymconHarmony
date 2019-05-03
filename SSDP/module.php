@@ -1,7 +1,7 @@
 <?
 
 include_once(__DIR__ . "/../libs/SSDPTraits.php");
-
+require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 /**
  *
  * @property integer $ParentID
@@ -13,7 +13,7 @@ class SSDPRoku extends IPSModule
 {
 
 	// use fügt bestimmte Traits dieser Klasse hinzu.
-	use DebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
+	use HarmonyDebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
 		InstanceStatus /* Diverse Methoden für die Verwendung im Splitter */ {
 		InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
 		InstanceStatus::RegisterParent as IORegisterParent; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
