@@ -1,7 +1,7 @@
 <?
 
 include_once(__DIR__ . "/../libs/SSDPTraits.php");
-
+require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 /**
  *
  * @property integer $ParentID
@@ -13,8 +13,7 @@ class SSDPRoku extends IPSModule
 {
 
 	// use fügt bestimmte Traits dieser Klasse hinzu.
-	use BufferHelper, // Enthält die Magische Methoden __get und __set damit wir bequem auf die Instanz-Buffer zugreifen können.
-		DebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
+	use HarmonyDebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
 		InstanceStatus /* Diverse Methoden für die Verwendung im Splitter */ {
 		InstanceStatus::MessageSink as IOMessageSink; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
 		InstanceStatus::RegisterParent as IORegisterParent; // MessageSink gibt es sowohl hier in der Klasse, als auch im Trait InstanceStatus. Hier wird für die Methode im Trait ein Alias benannt.
@@ -37,6 +36,7 @@ class SSDPRoku extends IPSModule
 		// Alle Instanz-Buffer initialisieren
 		$this->MySerial = md5(openssl_random_pseudo_bytes(10));
 		$this->SendQueue = array();
+		$this->SetMultiBuffer('SSDPData', '');
 	}
 
 	// Überschreibt die intere IPS_ApplyChanges($id) Funktion
@@ -164,16 +164,25 @@ class SSDPRoku extends IPSModule
 		}
 	}
 
+	protected function GetParent()
+	{
+		$instance = IPS_GetInstance($this->InstanceID); //array
+		return ($instance['ConnectionID'] > 0) ? $instance['ConnectionID'] : false; //ConnectionID
+	}
+
 	/**
 	 * Versendet ein NOTIFY
 	 */
 	protected function SendNotify(int $serverport)
 	{
+		$parent_form = IPS_GetConfiguration($this->GetParent());
+		$bind_ip = json_decode($parent_form, true)["BindIP"];
+
 		$Header[] = "NOTIFY * HTTP/1.1";
 		$Header[] = "HOST: 239.255.255.250:1900";
 		$Header[] = "CACHE-CONTROL: max-age=300";
-		$Header[] = "LOCATION: http://" . $this->myIP . ":".$serverport;
-		// $Header[] = "LOCATION: http://" . $this->myIP . ":3777/hook/roku" . $this->InstanceID;
+		$Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport."/";
+		// $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
 		// $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		//$Header[] = "NT: roku:ecp";
 		//$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
@@ -201,15 +210,16 @@ class SSDPRoku extends IPSModule
 	 */
 	public function SendSearchResponse(string $Host, int $Port, int $serverport)
 	{
+		$parent_form = IPS_GetConfiguration($this->GetParent());
+		$bind_ip = json_decode($parent_form, true)["BindIP"];
+
 		$Header[] = "HTTP/1.1 200 OK";
-		$Header[] = "LOCATION: http://" . $this->myIP . ":".$serverport;
-		// $Header[] = "LOCATION: http://" . $this->myIP . ":3777/hook/roku" . $this->InstanceID;
-		//$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		$Header[] = "CACHE-CONTROL: max-age=300";
 		$Header[] = "ST: roku:ecp";
+		$Header[] = "LOCATION: http://" . $bind_ip . ":".$serverport."/";
+		// $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
+		//$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
 		$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
-		//$Header[] = "SERVER: Roku/1.0 UPnP/1.1";
-		//$Header[] = "Content_Length: 0";
 		$Header[] = "";
 		$Header[] = "";
 		$Payload = implode("\r\n", $Header);
@@ -233,13 +243,28 @@ class SSDPRoku extends IPSModule
 		return $Header;
 	}
 
+	private function WriteBuffer($databuffer)
+	{
+		// Inhalt von $databuffer im Puffer speichern
+		$this->SetMultiBuffer('SSDPData', $databuffer);
+	}
+
+	private function GetBufferIN()
+	{
+		// bereits im Puffer der Instanz vorhandene Daten in $databuffer kopieren
+		$databuffer = $this->GetMultiBuffer('SSDPData');
+		return $databuffer;
+	}
+
 	public function ReceiveData($JSONString)
 	{
 		$ReceiveData = json_decode($JSONString);
 		//$this->SendDebug("Receive", $ReceiveData, 0);
-		$data = $this->Buffer . utf8_decode($ReceiveData->Buffer);
+
+		$databuffer = $this->GetBufferIN();
+		$data = $databuffer . utf8_decode($ReceiveData->Buffer);
 		if (substr($data, -4) != "\r\n\r\n") { // HEADER nicht komplett ?
-			$this->Buffer = $data;
+			$this->WriteBuffer($data);
 			return;
 		}
 		//Okay Header komplett. Zerlegen:
@@ -377,4 +402,62 @@ class SSDPRoku extends IPSModule
 	<software-build>09021</software-build>
 	<power-mode>PowerOn</power-mode>
 	 */
+
+	public function __get($name)
+	{
+		if (strpos($name, 'Multi_') === 0) {
+			$curCount = $this->GetBuffer('BufferCount_' . $name);
+			if ($curCount == false) {
+				$curCount = 0;
+			}
+			$data = '';
+			for ($i = 0; $i < $curCount; $i++) {
+				$data .= $this->GetBuffer('BufferPart' . $i . '_' . $name);
+			}
+		} else {
+			$data = $this->GetBuffer($name);
+		}
+		return unserialize($data);
+	}
+
+	public function __set($name, $value)
+	{
+		$data = serialize($value);
+		if (strpos($name, 'Multi_') === 0) {
+			$oldCount = $this->GetBuffer('BufferCount_' . $name);
+			if ($oldCount == false) {
+				$oldCount = 0;
+			}
+			$parts = str_split($data, 8000);
+			$newCount = strval(count($parts));
+			$this->SetBuffer('BufferCount_' . $name, $newCount);
+			for ($i = 0; $i < $newCount; $i++) {
+				$this->SetBuffer('BufferPart' . $i . '_' . $name, $parts[$i]);
+			}
+			for ($i = $newCount; $i < $oldCount; $i++) {
+				$this->SetBuffer('BufferPart' . $i . '_' . $name, '');
+			}
+		} else {
+			$this->SetBuffer($name, $data);
+		}
+	}
+
+	private function SetMultiBuffer($name, $value)
+	{
+		if (IPS_GetKernelVersion() >= 5) {
+			$this->{'Multi_' . $name} = $value;
+		} else {
+			$this->SetBuffer($name, $value);
+		}
+	}
+
+	private function GetMultiBuffer($name)
+	{
+		if (IPS_GetKernelVersion() >= 5) {
+			$value = $this->{'Multi_' . $name};
+		} else {
+			$value = $this->GetBuffer($name);
+		}
+		return $value;
+	}
 }

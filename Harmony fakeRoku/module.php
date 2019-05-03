@@ -101,12 +101,12 @@ class HarmonyRokuEmulator extends IPSModule
 		$data = json_decode($JSONString);
 		//$dataio = json_encode($data->Buffer);
 		$dataio = $data->Buffer;
-		$this->SendDebug("ReceiveData:", $dataio, 0);
+		// $this->SendDebug("ReceiveData:", json_encode($dataio), 0);
 		// "GET \/ HTTP\/1.1\r\nHost: 192.168.55.10:42450\r\nConnection: close\r\n\r\n"
 		$Host = $data->ClientIP;
-		$this->SendDebug("ReceiveData:", "IP: " . $Host, 0);
+		// $this->SendDebug("ReceiveData:", "IP: " . $Host, 0);
 		$Port = $data->ClientPort;
-		$this->SendDebug("ReceiveData:", "Port: " . $Port, 0);
+		// $this->SendDebug("ReceiveData:", "Port: " . $Port, 0);
 		$pos = strpos($dataio, "GET");
 		if ($pos == 0) {
 			$this->RokuResponse($Host, $Port);
@@ -114,15 +114,16 @@ class HarmonyRokuEmulator extends IPSModule
 		$pos = strpos($dataio, "POST");
 		if ($pos == 0) {
 			// cut off data
-			$data = "Up";
-			$this->SendDebug("Logitech Harmony Hub", "Roku Command: " . $data, 0);
+			$keypress_pos = strpos($dataio, "keypress");
+			$http_pos = strpos($dataio, "HTTP");
+			$data = substr($dataio, $keypress_pos+9, ($http_pos - ($keypress_pos+10)));
 			$this->WriteValues($data);
-
 		}
 	}
 
 	protected function WriteValues($data)
 	{
+		$this->SendDebug("Logitech Harmony Hub", "Roku Command: " . $data, 0);
 		if ($data == "Up") {
 			$this->SetValue("KeyFakeRoku", 0);
 			$this->SetValue("LastKeystrokeFakeRoku", "Up");
@@ -425,7 +426,7 @@ class HarmonyRokuEmulator extends IPSModule
 		foreach ($harmonyhubs as $harmonyhub) {
 			$activities = $this->GetHubActivities($harmonyhub);
 			foreach ($activities as $key => $activity) {
-				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '');
+				$this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '[]');
 			}
 		}
 	}

@@ -840,7 +840,7 @@ Switch ($_IPS[\'SENDER\'])
 			IPS_SetProperty($instanceHarmonySocket, 'Open', true);
 			IPS_ApplyChanges($instanceHarmonySocket);
 		}
-		if($this->HasActiveParent())
+		if($parentactive)
 		{
 			$this->Send($payload);
 		}

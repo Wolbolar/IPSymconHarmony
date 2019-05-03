@@ -2,15 +2,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../libs/ConstHelper.php';
-require_once __DIR__ . '/../libs/BufferHelper.php';
-require_once __DIR__ . '/../libs/DebugHelper.php';
+require_once __DIR__ . '/../libs/HarmonyBufferHelper.php';
+require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 
 
 
 class HarmonyConfigurator extends IPSModule
 {
-	use BufferHelper,
-		DebugHelper;
+	use HarmonyBufferHelper,
+		HarmonyDebugHelper;
 
 	public function Create()
 	{
