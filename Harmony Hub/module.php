@@ -987,7 +987,10 @@ Switch ($_IPS[\'SENDER\'])
 			if ($BluetoothDevice == true) {
 				$this->sendcommandAction($DeviceID, $Command);
 			} else {
-				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press</oa></iq>";
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press:timestamp=0</oa></iq>";
+				$this->XMPP_Send($iqString);
+				IPS_Sleep(100);
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=release:timestamp=100</oa></iq>";
 				$this->XMPP_Send($iqString);
 			}
 		} else // Open Stream
@@ -997,7 +1000,10 @@ Switch ($_IPS[\'SENDER\'])
 			if ($BluetoothDevice == true) {
 				$this->sendcommandAction($DeviceID, $Command);
 			} else {
-				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press</oa></iq>";
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=press:timestamp=0</oa></iq>";
+				$this->XMPP_Send($iqString);
+				IPS_Sleep(100);
+				$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'>action={\"type\"::\"IRCommand\",\"deviceId\"::\"$DeviceID\",\"command\"::\"$Command\"}:status=release:timestamp=100</oa></iq>";
 				$this->XMPP_Send($iqString);
 			}
 		}
