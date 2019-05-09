@@ -1221,7 +1221,15 @@ Switch ($_IPS[\'SENDER\'])
 			$jsonend = strripos($jsonrawstring, "]]></oa></iq>");
 		}
 		$jsonharmony = substr($jsonrawstring, ($jsonstart + 8), ($jsonend - $jsonrawlength));
-		$json = utf8_decode($jsonharmony);
+		if($jsonharmony == false)
+		{
+			$this->SendDebug("Error", "Could not get harmony config", 0);
+			$json = "";
+		}
+		else
+		{
+			$json = utf8_decode($jsonharmony);
+		}
 		return $json;
 	}
 

@@ -312,108 +312,112 @@ class HarmonyRokuEmulator extends IPSModule
 	{
 		if (strlen($HubID) == 5) {
 			$activities = $this->GetHubActivities($HubID);
-			foreach ($activities as $key => $activity) {
-				$form = array_merge_recursive(
-					$form,
-					[
+			$number_activities = count($activities);
+			if($number_activities > 0)
+			{
+				foreach ($activities as $key => $activity) {
+					$form = array_merge_recursive(
+						$form,
 						[
-							'type' => 'ExpansionPanel',
-							'caption' => $key,
-							'items' => [
-								[
-									'type' => 'List',
-									'name' => $this->GetListName($HubID, $activity),
-									'caption' => 'Roku Emulator Keys',
-									'rowCount' => 13,
-									'add' => false,
-									'delete' => false,
-									'sort' => [
-										'column' => 'command',
-										'direction' => 'ascending'
-									],
-									'columns' => [
-										[
-											'name' => 'command',
-											'label' => 'command',
-											'width' => '200px',
-											'save' => true,
-											'visible' => true
+							[
+								'type' => 'ExpansionPanel',
+								'caption' => $key,
+								'items' => [
+									[
+										'type' => 'List',
+										'name' => $this->GetListName($HubID, $activity),
+										'caption' => 'Roku Emulator Keys',
+										'rowCount' => 13,
+										'add' => false,
+										'delete' => false,
+										'sort' => [
+											'column' => 'command',
+											'direction' => 'ascending'
 										],
-										[
-											'name' => 'rokuscript',
-											'label' => 'script',
-											'width' => 'auto',
-											'save' => true,
-											'edit' => [
-												'type' => 'SelectScript'
+										'columns' => [
+											[
+												'name' => 'command',
+												'label' => 'command',
+												'width' => '200px',
+												'save' => true,
+												'visible' => true
+											],
+											[
+												'name' => 'rokuscript',
+												'label' => 'script',
+												'width' => 'auto',
+												'save' => true,
+												'edit' => [
+													'type' => 'SelectScript'
+												]
+											],
+											[
+												'name' => 'key_id',
+												'label' => 'Key ID',
+												'width' => 'auto',
+												'save' => true,
+												'visible' => false
 											]
 										],
-										[
-											'name' => 'key_id',
-											'label' => 'Key ID',
-											'width' => 'auto',
-											'save' => true,
-											'visible' => false
-										]
-									],
-									'values' => [
-										[
-											'command' => "Up",
-											'key_id' => 0
-										],
-										[
-											'command' => "Down",
-											'key_id' => 1
-										],
-										[
-											'command' => "Left",
-											'key_id' => 2
-										],
-										[
-											'command' => "Right",
-											'key_id' => 3
-										],
-										[
-											'command' => "Select",
-											'key_id' => 4
-										],
-										[
-											'command' => "Back",
-											'key_id' => 5
-										],
-										[
-											'command' => "Play",
-											'key_id' => 6
-										],
-										[
-											'command' => "Reverse",
-											'key_id' => 7
-										],
-										[
-											'command' => "Forward",
-											'key_id' => 8
-										],
-										[
-											'command' => "Search",
-											'key_id' => 9
-										],
-										[
-											'command' => "Info",
-											'key_id' => 10
-										],
-										[
-											'command' => "Home",
-											'key_id' => 11
-										],
-										[
-											'command' => "Instant Replay",
-											'key_id' => 12
-										]]
+										'values' => [
+											[
+												'command' => "Up",
+												'key_id' => 0
+											],
+											[
+												'command' => "Down",
+												'key_id' => 1
+											],
+											[
+												'command' => "Left",
+												'key_id' => 2
+											],
+											[
+												'command' => "Right",
+												'key_id' => 3
+											],
+											[
+												'command' => "Select",
+												'key_id' => 4
+											],
+											[
+												'command' => "Back",
+												'key_id' => 5
+											],
+											[
+												'command' => "Play",
+												'key_id' => 6
+											],
+											[
+												'command' => "Reverse",
+												'key_id' => 7
+											],
+											[
+												'command' => "Forward",
+												'key_id' => 8
+											],
+											[
+												'command' => "Search",
+												'key_id' => 9
+											],
+											[
+												'command' => "Info",
+												'key_id' => 10
+											],
+											[
+												'command' => "Home",
+												'key_id' => 11
+											],
+											[
+												'command' => "Instant Replay",
+												'key_id' => 12
+											]]
+									]
 								]
 							]
 						]
-					]
-				);
+					);
+				}
 			}
 		}
 		return $form;
@@ -560,18 +564,40 @@ class HarmonyRokuEmulator extends IPSModule
 				'name' => 'ServerSocketPort',
 				'type' => 'NumberSpinner',
 				'caption' => 'Port'
-			],
-			[
-				'type' => 'Label',
-				'label' => 'Please select the Harmony Hub for configuration:'
-			],
-			[
-				'name' => 'HarmonyHubObjID',
-				'type' => 'Select',
-				'caption' => 'Harmony Hub',
-				'options' => $this->GetHarmonyHubList()
 			]
 		];
+		$harmonyhubs = $this->GetHarmonyHubs();
+		$number_hubs = count($harmonyhubs);
+		if($number_hubs == 0)
+		{
+			$form = array_merge_recursive(
+				$form,
+				[
+					[
+						'type' => 'Label',
+						'label' => 'No hub found, please configure harmony hub first'
+					]
+				]
+			);
+		}
+		else
+		{
+			$form = array_merge_recursive(
+				$form,
+				[
+					[
+						'type' => 'Label',
+						'label' => 'Please select the Harmony Hub for configuration:'
+					],
+					[
+						'name' => 'HarmonyHubObjID',
+						'type' => 'Select',
+						'caption' => 'Harmony Hub',
+						'options' => $this->GetHarmonyHubList()
+					]
+				]
+			);
+		}
 
 		$HarmonyHubObjID = $this->ReadPropertyInteger("HarmonyHubObjID");
 		if ($HarmonyHubObjID > 0) {

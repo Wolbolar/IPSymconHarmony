@@ -2,6 +2,7 @@
   "translations": {
     "de": {
       "This instance is for getting keystrokes from the Harmony remote via fakeRoku": "Diese Instanz dient dazu Tastendrücke der Harmony von FHEM fakeRoku übermittelt zu bekommen",
+      "No hub found, please configure harmony hub first": "kein harmony Hub gefunden, bitte zuerst einen harmony Hub einrichten",
       "Please select the Harmony Hub for configuration:": "Bitte den Harmony Hub für die Konfiguration auswählen",
       "Select activity": "Aktivität auswählen",
       "configure activities": "Aktivitäten konfigurieren",
