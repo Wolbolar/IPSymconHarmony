@@ -31,6 +31,7 @@ class HarmonyHub extends IPSModule
 		$this->RegisterAttributeString("HarmonyConfig", "");
 		$this->RegisterAttributeInteger("HarmonyConfigTimestamp", 0);
 		$this->RegisterAttributeString("HarmonyBuffer", "");
+		$this->RegisterAttributeBoolean("HarmonyReachable", true);
 		$this->SetBuffer("BufferIN", "");
 		$this->SetBuffer("ConfigComplete", "0");
 		$this->SetMultiBuffer('HarmonyBufferIN', '');
@@ -96,6 +97,21 @@ class HarmonyHub extends IPSModule
 	{
 		$this->SetTimerInterval("HarmonyHubSocketTimer", 40000);
 	}
+
+	public function HarmonyReachable(bool $reachable)
+	{
+		if($reachable)
+		{
+			$this->WriteAttributeBoolean("HarmonyReachable", true);
+			$this->SetTimerInterval("HarmonyHubSocketTimer", 40000);
+		}
+		else
+		{
+			$this->WriteAttributeBoolean("HarmonyReachable", false);
+			$this->SetTimerInterval("HarmonyHubSocketTimer", 0);
+		}
+	}
+
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
 	{
