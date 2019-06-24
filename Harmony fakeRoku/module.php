@@ -284,6 +284,14 @@ class HarmonyRokuEmulator extends IPSModule
 		return $harmonyhubs;
 	}
 
+	protected function GetSSDPRoku()
+	{
+		$ssdp_roku = IPS_GetInstanceListByModuleID("{058CE601-4353-F473-EA14-A2B7B94628A0}"); // SSDP Roku;
+		return $ssdp_roku;
+	}
+
+
+
 	protected function GetHarmonyHubList()
 	{
 		$harmonyhubs = $this->GetHarmonyHubs();
@@ -444,7 +452,7 @@ class HarmonyRokuEmulator extends IPSModule
 	public function RequestAction($Ident, $Value)
 	{
 		$ObjID = $this->GetIDForIdent($Ident);
-		$lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
+		// $lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
 		SetValue($ObjID, $Value);
 		//SetValue($lastkeyid, $keyval);
 	}
@@ -566,6 +574,20 @@ class HarmonyRokuEmulator extends IPSModule
 				'caption' => 'Port'
 			]
 		];
+		$ssdproku = $this->GetSSDPRoku();
+		$number_ssdproku = count($ssdproku);
+		if($number_ssdproku == 0)
+		{
+			$form = array_merge_recursive(
+				$form,
+				[
+					[
+						'type' => 'Label',
+						'label' => 'No SSDP Roku instance found, please create SSDP Roku instance first'
+					]
+				]
+			);
+		}
 		$harmonyhubs = $this->GetHarmonyHubs();
 		$number_hubs = count($harmonyhubs);
 		if($number_hubs == 0)

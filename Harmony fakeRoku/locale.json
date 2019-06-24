@@ -3,6 +3,7 @@
     "de": {
       "command": "Befehl",
       "No hub found, please configure harmony hub first": "kein harmony Hub gefunden, bitte zuerst einen harmony Hub einrichten",
+      "No SSDP Roku instance found, please create SSDP Roku instance first": "keine SSDP Roku Instanz gefunden, bitte zunächst eine SSDP Roku Instanz einrichten",
       "Please choose": "Bitte auswählen",
       "This instance is for getting keystrokes from the Harmony remote via Roku Emulator": "Diese Instanz dient dazu Tastendrücke der Harmony über Roku Emulator übermittelt zu bekommen",
       "Please select the Harmony Hub for configuration:": "Bitte den Harmony Hub für die Konfiguration auswählen",
