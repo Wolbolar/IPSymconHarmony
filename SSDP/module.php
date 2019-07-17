@@ -1,12 +1,12 @@
 <?php
 
-include_once __DIR__.'/../libs/SSDPTraits.php';
-require_once __DIR__.'/../libs/HarmonyDebugHelper.php';
+include_once __DIR__ . '/../libs/SSDPTraits.php';
+require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 /**
- * @property int $ParentID
- * @property string  $MySerial
- * @property string  $myIP IP-Adresse von IPS
- * @property string  $Buffer
+ * @property int    $ParentID
+ * @property string $MySerial
+ * @property string $myIP IP-Adresse von IPS
+ * @property string $Buffer
  */
 class SSDPRoku extends IPSModule
 {
@@ -32,7 +32,7 @@ class SSDPRoku extends IPSModule
         $this->RegisterPropertyBoolean('ExtendedDebug', true);
         $this->RegisterTimer('SendNotify', 0, 'SSDPRoku_TimerNotify($_IPS[\'TARGET\']);');
         // Alle Instanz-Buffer initialisieren
-        $this->MySerial = md5(openssl_random_pseudo_bytes(10));
+        $this->MySerial  = md5(openssl_random_pseudo_bytes(10));
         $this->SendQueue = [];
         $this->SetMultiBuffer('SSDPData', '');
     }
@@ -54,7 +54,7 @@ class SSDPRoku extends IPSModule
             return;
         }
 
-        $this->RegisterHook('/hook/roku'.$this->InstanceID);
+        $this->RegisterHook('/hook/roku' . $this->InstanceID);
         // Unseren Parent merken und auf dessen Statusänderungen registrieren.
         $this->RegisterParent();
         if ($this->HasActiveParent()) {
@@ -126,14 +126,14 @@ class SSDPRoku extends IPSModule
      */
     public function GetConfigurationForParent()
     {
-        $Config['Port'] = 1900; //SSDP Multicast Sende-Port
-        $Config['Host'] = '239.255.255.250'; //SSDP Multicast-IP
+        $Config['Port']        = 1900; //SSDP Multicast Sende-Port
+        $Config['Host']        = '239.255.255.250'; //SSDP Multicast-IP
         $Config['MulticastIP'] = '239.255.255.250'; //SSDP Multicast-IP
-        $Config['BindPort'] = 1900; //SSDP Multicast Empfangs-Port
+        $Config['BindPort']    = 1900; //SSDP Multicast Empfangs-Port
         //$Config['BindIP'] muss der User auswählen und setzen wenn mehrere Netzwerkadressen auf dem IP-System vorhanden sind.
-        $Config['EnableBroadcast'] = true;
+        $Config['EnableBroadcast']    = true;
         $Config['EnableReuseAddress'] = true;
-        $Config['EnableLoopback'] = true;
+        $Config['EnableLoopback']     = true;
 
         return json_encode($Config);
     }
@@ -141,10 +141,10 @@ class SSDPRoku extends IPSModule
     protected function GetRokuEmulatorPort()
     {
         $rokuemulators = IPS_GetInstanceListByModuleID('{8C1A1681-9CAD-A828-70B2-38DD6BD78FD0}'); // Roku Emulators
-        $serverports = [];
+        $serverports   = [];
         foreach ($rokuemulators as $rokuemulator) {
             $ServerSocketPort = IPS_GetProperty($rokuemulator, 'ServerSocketPort');
-            $serverports[] = $ServerSocketPort;
+            $serverports[]    = $ServerSocketPort;
         }
 
         return $serverports;
@@ -174,25 +174,25 @@ class SSDPRoku extends IPSModule
     protected function SendNotify(int $serverport)
     {
         $parent_form = IPS_GetConfiguration($this->GetParent());
-        $bind_ip = json_decode($parent_form, true)['BindIP'];
+        $bind_ip     = json_decode($parent_form, true)['BindIP'];
 
         $Header[] = 'NOTIFY * HTTP/1.1';
         $Header[] = 'HOST: 239.255.255.250:1900';
         $Header[] = 'CACHE-CONTROL: max-age=300';
-        $Header[] = 'LOCATION: http://'.$bind_ip.':'.$serverport.'/';
+        $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
         // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
         // $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
         //$Header[] = "NT: roku:ecp";
         //$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
         //$Header[] = "USN: uuid:" . $this->MySerial.'::roku:ecp:';
         $Header[] = 'NT: upnp:rootdevice';
-        $Header[] = 'USN: uuid:'.$this->MySerial.'::upnp:rootdevice';
+        $Header[] = 'USN: uuid:' . $this->MySerial . '::upnp:rootdevice';
         $Header[] = 'NTS: ssdp:alive';
         $Header[] = 'SERVER: Roku/1.0 UPnP/1.1';
         $Header[] = 'Content_Length: 0';
         $Header[] = '';
         $Header[] = '';
-        $Payload = implode("\r\n", $Header);
+        $Payload  = implode("\r\n", $Header);
         if ($this->ReadPropertyBoolean('ExtendedDebug')) {
             $this->SendDebug('SendNotify', $Payload, 0);
         }
@@ -200,7 +200,7 @@ class SSDPRoku extends IPSModule
             'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
             'Buffer'     => utf8_encode($Payload),
             'ClientIP'   => '239.255.255.250',
-            'ClientPort' => 1900, ];
+            'ClientPort' => 1900,];
         //        $this->SendDebug("SendToParent", $SendData, 0);
         $this->SendDataToParent(json_encode($SendData));
     }
@@ -211,18 +211,18 @@ class SSDPRoku extends IPSModule
     public function SendSearchResponse(string $Host, int $Port, int $serverport)
     {
         $parent_form = IPS_GetConfiguration($this->GetParent());
-        $bind_ip = json_decode($parent_form, true)['BindIP'];
+        $bind_ip     = json_decode($parent_form, true)['BindIP'];
 
         $Header[] = 'HTTP/1.1 200 OK';
         $Header[] = 'CACHE-CONTROL: max-age=300';
         $Header[] = 'ST: roku:ecp';
-        $Header[] = 'LOCATION: http://'.$bind_ip.':'.$serverport.'/';
+        $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
         // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
         //$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
-        $Header[] = 'USN: uuid:roku:ecp:'.$this->MySerial;
+        $Header[] = 'USN: uuid:roku:ecp:' . $this->MySerial;
         $Header[] = '';
         $Header[] = '';
-        $Payload = implode("\r\n", $Header);
+        $Payload  = implode("\r\n", $Header);
         if ($this->ReadPropertyBoolean('ExtendedDebug')) {
             $this->SendDebug('SendSearchResponse', $Payload, 0);
         }
@@ -236,8 +236,8 @@ class SSDPRoku extends IPSModule
     {
         $Header = [];
         foreach ($Lines as $Line) {
-            $pair = explode(':', $Line);
-            $Key = array_shift($pair);
+            $pair                     = explode(':', $Line);
+            $Key                      = array_shift($pair);
             $Header[strtoupper($Key)] = trim(implode(':', $pair));
         }
 
@@ -264,7 +264,7 @@ class SSDPRoku extends IPSModule
         //$this->SendDebug("Receive", $ReceiveData, 0);
 
         $databuffer = $this->GetBufferIN();
-        $data = $databuffer.utf8_decode($ReceiveData->Buffer);
+        $data       = $databuffer . utf8_decode($ReceiveData->Buffer);
         if (substr($data, -4) != "\r\n\r\n") { // HEADER nicht komplett ?
             $this->WriteBuffer($data);
 
@@ -279,7 +279,7 @@ class SSDPRoku extends IPSModule
 
         //        $this->SendDebug("Receive", $Lines, 0);
         $Request = array_shift($Lines);
-        $Header = $this->ParseHeader($Lines);
+        $Header  = $this->ParseHeader($Lines);
         // Auf verschiedene Requests prüfen.
         switch ($Request) { // REQUEST
             case 'M-SEARCH * HTTP/1.1':
@@ -332,7 +332,7 @@ class SSDPRoku extends IPSModule
                         return;
                     }
                     $hooks[$index]['TargetID'] = $this->InstanceID;
-                    $found = true;
+                    $found                     = true;
                 }
             }
             if (!$found) {
@@ -365,8 +365,8 @@ class SSDPRoku extends IPSModule
 <modelName>Roku</modelName>
 <modelURL>https://github.com/Wolbolar/IPSymconHarmony</modelURL>
 <modelNumber>4200X</modelNumber>
-<serialNumber>'.$this->MySerial.'</serialNumber>
-<UDN>uuid:roku:ecp:'.$this->MySerial.'</UDN>
+<serialNumber>' . $this->MySerial . '</serialNumber>
+<UDN>uuid:roku:ecp:' . $this->MySerial . '</UDN>
 <serviceList>
 <service>
 <serviceType>urn:roku-com:service:ecp:1</serviceType>
@@ -402,7 +402,7 @@ class SSDPRoku extends IPSModule
             'Left'          => 10,
             'Select'        => 11,
             'InstantReplay' => 12,
-            'Search'        => 13, ];
+            'Search'        => 13,];
     }
 
     // <deviceType>urn:roku-com:device:player:1-0</deviceType>
@@ -419,13 +419,13 @@ class SSDPRoku extends IPSModule
     public function __get($name)
     {
         if (strpos($name, 'Multi_') === 0) {
-            $curCount = $this->GetBuffer('BufferCount_'.$name);
+            $curCount = $this->GetBuffer('BufferCount_' . $name);
             if ($curCount == false) {
                 $curCount = 0;
             }
             $data = '';
             for ($i = 0; $i < $curCount; $i++) {
-                $data .= $this->GetBuffer('BufferPart'.$i.'_'.$name);
+                $data .= $this->GetBuffer('BufferPart' . $i . '_' . $name);
             }
         } else {
             $data = $this->GetBuffer($name);
@@ -438,18 +438,18 @@ class SSDPRoku extends IPSModule
     {
         $data = serialize($value);
         if (strpos($name, 'Multi_') === 0) {
-            $oldCount = $this->GetBuffer('BufferCount_'.$name);
+            $oldCount = $this->GetBuffer('BufferCount_' . $name);
             if ($oldCount == false) {
                 $oldCount = 0;
             }
-            $parts = str_split($data, 8000);
+            $parts    = str_split($data, 8000);
             $newCount = strval(count($parts));
-            $this->SetBuffer('BufferCount_'.$name, $newCount);
+            $this->SetBuffer('BufferCount_' . $name, $newCount);
             for ($i = 0; $i < $newCount; $i++) {
-                $this->SetBuffer('BufferPart'.$i.'_'.$name, $parts[$i]);
+                $this->SetBuffer('BufferPart' . $i . '_' . $name, $parts[$i]);
             }
             for ($i = $newCount; $i < $oldCount; $i++) {
-                $this->SetBuffer('BufferPart'.$i.'_'.$name, '');
+                $this->SetBuffer('BufferPart' . $i . '_' . $name, '');
             }
         } else {
             $this->SetBuffer($name, $data);
@@ -459,7 +459,7 @@ class SSDPRoku extends IPSModule
     private function SetMultiBuffer($name, $value)
     {
         if (IPS_GetKernelVersion() >= 5) {
-            $this->{'Multi_'.$name} = $value;
+            $this->{'Multi_' . $name} = $value;
         } else {
             $this->SetBuffer($name, $value);
         }
@@ -468,7 +468,7 @@ class SSDPRoku extends IPSModule
     private function GetMultiBuffer($name)
     {
         if (IPS_GetKernelVersion() >= 5) {
-            $value = $this->{'Multi_'.$name};
+            $value = $this->{'Multi_' . $name};
         } else {
             $value = $this->GetBuffer($name);
         }
