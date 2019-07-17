@@ -108,18 +108,18 @@ class HarmonyDiscovery extends IPSModule
                             'configuration' => [
                                 'name' => $name,
                                 'uuid' => $uuid,
-                                'host' => $host,],],
+                                'host' => $host, ], ],
                         [
                             'moduleID'      => '{03B162DB-7A3A-41AE-A676-2444F16EBEDF}',
                             'configuration' => [
                                 'Email'    => $email,
-                                'Password' => $password,],],
+                                'Password' => $password, ], ],
                         [
                             'moduleID'      => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
                             'configuration' => [
                                 'Host' => $host,
                                 'Port' => 5222,
-                                'Open' => true,],],],];
+                                'Open' => true, ], ], ], ];
             }
         }
 
@@ -316,7 +316,7 @@ class HarmonyDiscovery extends IPSModule
             [
                 'elements' => $this->FormElements(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(),]
+                'status'   => $this->FormStatus(), ]
         );
         $this->SendDebug('FORM', $Form, 0);
         $this->SendDebug('FORM', json_last_error_msg(), 0);
@@ -334,15 +334,15 @@ class HarmonyDiscovery extends IPSModule
         $form = [
             [
                 'type'    => 'Label',
-                'caption' => 'MyHarmony access data (email / password)',],
+                'caption' => 'MyHarmony access data (email / password)', ],
             [
                 'name'    => 'Email',
                 'type'    => 'ValidationTextBox',
-                'caption' => 'Email',],
+                'caption' => 'Email', ],
             [
                 'name'    => 'Password',
                 'type'    => 'PasswordTextBox',
-                'caption' => 'Password',],];
+                'caption' => 'Password', ], ];
 
         return $form;
     }
@@ -363,26 +363,26 @@ class HarmonyDiscovery extends IPSModule
                 'delete'   => true,
                 'sort'     => [
                     'column'    => 'name',
-                    'direction' => 'ascending',],
+                    'direction' => 'ascending', ],
                 'columns'  => [
                     [
                         'label'   => 'ID',
                         'name'    => 'id',
                         'width'   => '200px',
-                        'visible' => false,],
+                        'visible' => false, ],
                     [
                         'label' => 'name',
                         'name'  => 'name',
-                        'width' => 'auto',],
+                        'width' => 'auto', ],
                     [
                         'label' => 'UUID',
                         'name'  => 'uuid',
-                        'width' => '400px',],
+                        'width' => '400px', ],
                     [
                         'label' => 'host',
                         'name'  => 'host',
-                        'width' => '250px',],],
-                'values'   => $this->Get_ListConfiguration(),],];
+                        'width' => '250px', ], ],
+                'values'   => $this->Get_ListConfiguration(), ], ];
 
         return $form;
     }
@@ -398,19 +398,19 @@ class HarmonyDiscovery extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.',],
+                'caption' => 'Creating instance.', ],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'Harmony Hub Discovery created.',],
+                'caption' => 'Harmony Hub Discovery created.', ],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'interface closed.',],
+                'caption' => 'interface closed.', ],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Please follow the instructions.',],];
+                'caption' => 'Please follow the instructions.', ], ];
 
         return $form;
     }
