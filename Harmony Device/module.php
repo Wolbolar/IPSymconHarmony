@@ -53,8 +53,8 @@ class HarmonyDevice extends IPSModule
         }
         */
         //Type und Zone
-        $devicename = $this->ReadPropertyString('devicename');
-        $DeviceID = $this->ReadPropertyInteger('DeviceID');
+        $devicename    = $this->ReadPropertyString('devicename');
+        $DeviceID      = $this->ReadPropertyInteger('DeviceID');
         $VolumeControl = $this->ReadPropertyBoolean('VolumeControl');
         $MaxStepVolume = $this->ReadPropertyInteger('MaxStepVolume');
         if ($VolumeControl) {
@@ -79,11 +79,11 @@ class HarmonyDevice extends IPSModule
 
     public function RequestAction($Ident, $Value)
     {
-        $ObjID = $this->GetIDForIdent($Ident);
-        $Object = IPS_GetObject($ObjID);
+        $ObjID      = $this->GetIDForIdent($Ident);
+        $Object     = IPS_GetObject($ObjID);
         $ObjectInfo = $Object['ObjectInfo'];
-        $commands = json_decode($ObjectInfo, true);
-        $command = $commands[$Value];
+        $commands   = json_decode($ObjectInfo, true);
+        $command    = $commands[$Value];
         if ($Ident == 'VolumeSlider') {
             $this->SetVolumeSlider($Value);
         } else {
@@ -95,24 +95,24 @@ class HarmonyDevice extends IPSModule
     public function SetVolumeSlider(float $Value)
     {
         $MaxStepVolume = $this->ReadPropertyInteger('MaxStepVolume');
-        $this->SendDebug('Logitech Hub', 'Max Step Volume: '.print_r($MaxStepVolume, true), 0);
+        $this->SendDebug('Logitech Hub', 'Max Step Volume: ' . print_r($MaxStepVolume, true), 0);
         $CurrentVolume = GetValue($this->GetIDForIdent('VolumeSlider'));
-        $this->SendDebug('Logitech Hub', 'Current Volume: '.print_r($CurrentVolume, true), 0);
+        $this->SendDebug('Logitech Hub', 'Current Volume: ' . print_r($CurrentVolume, true), 0);
         $TargetVolume = round($Value * $MaxStepVolume);
-        $this->SendDebug('Logitech Hub', 'Target Volume: '.print_r($Value, true), 0);
-        $this->SendDebug('Logitech Hub', 'Steps to Target Volume: '.print_r($TargetVolume, true), 0);
+        $this->SendDebug('Logitech Hub', 'Target Volume: ' . print_r($Value, true), 0);
+        $this->SendDebug('Logitech Hub', 'Steps to Target Volume: ' . print_r($TargetVolume, true), 0);
         $commandrepeat = 0;
-        $command = 'Unknown';
+        $command       = 'Unknown';
         if ($Value > $CurrentVolume) {
-            $command = 'VolumeUp';
+            $command       = 'VolumeUp';
             $commandrepeat = $TargetVolume - ($CurrentVolume * $MaxStepVolume);
         } elseif ($Value < $CurrentVolume) {
-            $command = 'VolumeDown';
+            $command       = 'VolumeDown';
             $commandrepeat = ($CurrentVolume * $MaxStepVolume) - $TargetVolume;
         }
         $commandrepeat = round($commandrepeat);
-        $this->SendDebug('Logitech Hub', 'Send Command: '.print_r($command, true), 0);
-        $this->SendDebug('Logitech Hub', 'Repeat Rate: '.print_r($commandrepeat, true), 0);
+        $this->SendDebug('Logitech Hub', 'Send Command: ' . print_r($command, true), 0);
+        $this->SendDebug('Logitech Hub', 'Repeat Rate: ' . print_r($commandrepeat, true), 0);
         $this->VolumeControl($command, intval($commandrepeat));
     }
 
@@ -133,7 +133,7 @@ class HarmonyDevice extends IPSModule
     //IP Harmony Hub
     protected function GetIPHarmonyHub()
     {
-        $ParentID = $this->GetParent();
+        $ParentID     = $this->GetParent();
         $IPHarmonyHub = '';
         if ($ParentID) {
             $IPHarmonyHub = IPS_GetProperty(intval($ParentID), 'Host');
@@ -154,7 +154,7 @@ class HarmonyDevice extends IPSModule
     public function Send(string $Command)
     {
         $DeviceID = $this->ReadPropertyInteger('DeviceID');
-        $payload = ['DeviceID' => $DeviceID, 'Command' => $Command, 'BluetoothDevice' => $this->ReadPropertyBoolean('BluetoothDevice')];
+        $payload  = ['DeviceID' => $DeviceID, 'Command' => $Command, 'BluetoothDevice' => $this->ReadPropertyBoolean('BluetoothDevice')];
         $this->SendDebug('Harmony device id:', strval($DeviceID), 0);
         $this->SendDebug('Command:', $Command, 0);
         $this->SendDataToParent(
@@ -166,10 +166,10 @@ class HarmonyDevice extends IPSModule
     public function GetCommands()
     {
         $currentdeviceid = $this->ReadPropertyInteger('DeviceID');
-        $commandlist = false;
-        $config = $this->SendData('GetHarmonyConfigJSON');
+        $commandlist     = false;
+        $config          = $this->SendData('GetHarmonyConfigJSON');
         if (!empty($config)) {
-            $data = json_decode($config, true);
+            $data      = json_decode($config, true);
             $devices[] = $data['device'];
             foreach ($devices as $harmonydevicelist) {
                 foreach ($harmonydevicelist as $harmonydevice) {
@@ -177,12 +177,12 @@ class HarmonyDevice extends IPSModule
                     $DeviceID = $harmonydevice['id']; // Harmony Device ID
                     if ($DeviceID == $currentdeviceid) {
                         $controlGroups = $harmonydevice['controlGroup'];
-                        $commandlist = [];
+                        $commandlist   = [];
                         foreach ($controlGroups as $controlGroup) {
                             $commands = $controlGroup['function']; //Function Array
                             foreach ($commands as $command) {
                                 $harmonycommand = json_decode($command['action'], true); // command, type, deviceId
-                                $commandlist[] = $harmonycommand['command'];
+                                $commandlist[]  = $harmonycommand['command'];
                             }
                         }
                     }
@@ -198,7 +198,7 @@ class HarmonyDevice extends IPSModule
     {
 
         // Empfangene Daten vom Splitter
-        $data = json_decode($JSONString);
+        $data         = json_decode($JSONString);
         $datasplitter = $data->Buffer;
         //SetValueString($this->GetIDForIdent("BufferIN"), $datasplitter);
         IPS_LogMessage('ReceiveData Harmony Device', utf8_decode($datasplitter));
@@ -209,7 +209,7 @@ class HarmonyDevice extends IPSModule
     protected function CheckVolumeControl()
     {
         $CheckVolumeControl = false;
-        $commands = $this->GetCommands();
+        $commands           = $this->GetCommands();
         if ($commands) {
             foreach ($commands as $key => $command) {
                 if ($command == 'VolumeDown') {
@@ -225,11 +225,11 @@ class HarmonyDevice extends IPSModule
     protected function SetupVariable(string $VarIdent, string $VarName, string $VarProfile, $profilemin, $profilemax, $ProfileAssActivities)
     {
         $this->RegisterProfileAssociation(
-            'LogitechHarmony.'.$VarProfile, 'Execute', '', '', $profilemin, $profilemax, 0, 0, 1, $ProfileAssActivities
+            'LogitechHarmony.' . $VarProfile, 'Execute', '', '', $profilemin, $profilemax, 0, 0, 1, $ProfileAssActivities
         );
-        $variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, 'LogitechHarmony.'.$VarProfile, $this->_getPosition());
+        $variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, 'LogitechHarmony.' . $VarProfile, $this->_getPosition());
         $this->SendDebug(
-            'Logitech Device', 'Register Variable: '.$VarName.' ('.$VarIdent.') with profile '.$VarProfile.' and ID: '.$variablenID, 0
+            'Logitech Device', 'Register Variable: ' . $VarName . ' (' . $VarIdent . ') with profile ' . $VarProfile . ' and ID: ' . $variablenID, 0
         );
         $this->EnableAction($VarIdent);
 
@@ -238,67 +238,67 @@ class HarmonyDevice extends IPSModule
 
     protected function SetHarmonyInstanceVars()
     {
-        $devicename = $this->ReadPropertyString('devicename');
+        $devicename    = $this->ReadPropertyString('devicename');
         $commands_json = $this->ReadPropertyString('commandset');
         $controlGroups = json_decode($commands_json);
         foreach ($controlGroups as $controlGroup) {
-            $name = $controlGroup->name;
-            $commands = $controlGroup->function; //Function Array
-            $profilemax = (count($commands)) - 1;
+            $name                 = $controlGroup->name;
+            $commands             = $controlGroup->function; //Function Array
+            $profilemax           = (count($commands)) - 1;
             $ProfileAssActivities = [];
 
-            $assid = 0;
+            $assid       = 0;
             $description = [];
             foreach ($commands as $command) {
-                $this->SendDebug('Device '.$devicename, $name.': '.$command->action, 0);
+                $this->SendDebug('Device ' . $devicename, $name . ': ' . $command->action, 0);
                 $harmonycommand = json_decode($command->action); // command, type, deviceId
                 //Wert , Name, Icon , Farbe
                 $ProfileAssActivities[] = [$assid, $harmonycommand->command, '', -1];
-                $description[$assid] = $harmonycommand->command;
+                $description[$assid]    = $harmonycommand->command;
                 $assid++;
             }
-            $descriptionjson = json_encode($description);
+            $descriptionjson   = json_encode($description);
             $profiledevicename = str_replace(' ', '', $devicename);
             $profiledevicename = preg_replace('/[^A-Za-z0-9\-]/', '', $profiledevicename); // Removes special chars.
             $profiledevicename = str_replace('-', '_', $profiledevicename);
-            $profilegroupname = str_replace(' ', '', $name);
-            $profilegroupname = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
-            $profilegroupname = str_replace('-', '_', $profilegroupname);
+            $profilegroupname  = str_replace(' ', '', $name);
+            $profilegroupname  = preg_replace('/[^A-Za-z0-9\-]/', '', $profilegroupname); // Removes special chars.
+            $profilegroupname  = str_replace('-', '_', $profilegroupname);
             //Variablenprofil anlegen
             $NumberAss = count($ProfileAssActivities);
-            $VarIdent = $this->CreateIdent($name); //Command Group Name
-            $VarName = $name; //Command Group Name
+            $VarIdent  = $this->CreateIdent($name); //Command Group Name
+            $VarName   = $name; //Command Group Name
             if ($NumberAss >= 32) {//wenn mehr als 32 Assoziationen splitten
                 $splitProfileAssActivities = array_chunk($ProfileAssActivities, 32);
-                $splitdescription = array_chunk($description, 32);
+                $splitdescription          = array_chunk($description, 32);
                 //2. Array neu setzten
-                $id = 0;
+                $id                         = 0;
                 $SecondProfileAssActivities = [];
-                $seconddescription = [];
+                $seconddescription          = [];
                 foreach ($splitProfileAssActivities[1] as $Activity) {
                     $SecondProfileAssActivities[] = [$id, $Activity[1], '', -1];
-                    $seconddescription[] = $Activity[1];
+                    $seconddescription[]          = $Activity[1];
                     $id++;
                 }
 
                 //Association 1
                 $varid = $this->SetupVariable(
-                    $VarIdent, $VarName, $profiledevicename.'.'.$profilegroupname, 0, 31, $splitProfileAssActivities[0]
+                    $VarIdent, $VarName, $profiledevicename . '.' . $profilegroupname, 0, 31, $splitProfileAssActivities[0]
                 ); //32 Associationen
 
                 //Association 2
-                $VarIdent1 = $this->CreateIdent($name).'1'; //Command Group Name
-                $VarName1 = $name.'1'; //Command Group Name
+                $VarIdent1             = $this->CreateIdent($name) . '1'; //Command Group Name
+                $VarName1              = $name . '1'; //Command Group Name
                 $seconddescriptionjson = json_encode($seconddescription);
-                $varid1 = $this->SetupVariable(
-                    $VarIdent1, $VarName1, $profiledevicename.'.'.$profilegroupname.'1', 0, ($profilemax - 32), $SecondProfileAssActivities
+                $varid1                = $this->SetupVariable(
+                    $VarIdent1, $VarName1, $profiledevicename . '.' . $profilegroupname . '1', 0, ($profilemax - 32), $SecondProfileAssActivities
                 );
                 IPS_SetInfo($varid1, $seconddescriptionjson);
                 $firstdescriptionjson = json_encode($splitdescription[0]);
                 IPS_SetInfo($varid, $firstdescriptionjson);
             } else {
                 $varid =
-                    $this->SetupVariable($VarIdent, $VarName, $profiledevicename.'.'.$profilegroupname, 0, $profilemax, $ProfileAssActivities);
+                    $this->SetupVariable($VarIdent, $VarName, $profiledevicename . '.' . $profilegroupname, 0, $profilemax, $ProfileAssActivities);
                 IPS_SetInfo($varid, $descriptionjson);
             }
         }
@@ -306,7 +306,7 @@ class HarmonyDevice extends IPSModule
 
     private function CreateIdent($str)
     {
-        $search = [
+        $search  = [
             'ä',
             'ö',
             'ü',
@@ -374,7 +374,7 @@ class HarmonyDevice extends IPSModule
             ',',
             '=',
             ':',
-            '=)', ];
+            '=)',];
         $replace = [
             'ae',
             'oe',
@@ -443,7 +443,7 @@ class HarmonyDevice extends IPSModule
             '',
             '',
             '',
-            '', ];
+            '',];
 
         $str = str_replace($search, $replace, $str);
         $str = str_replace(' ', '_', $str); // Replaces all spaces with underline.
@@ -476,7 +476,7 @@ class HarmonyDevice extends IPSModule
         } else {
             $profile = IPS_GetVariableProfile($Name);
             if ($profile['ProfileType'] != $Vartype) {
-                $this->_debug('profile', 'Variable profile type does not match for profile '.$Name);
+                $this->_debug('profile', 'Variable profile type does not match for profile ' . $Name);
             }
         }
 
@@ -538,7 +538,7 @@ class HarmonyDevice extends IPSModule
             [
                 'elements' => $this->FormHead(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
+                'status'   => $this->FormStatus(),]
         );
     }
 
@@ -549,29 +549,29 @@ class HarmonyDevice extends IPSModule
      */
     protected function FormHead()
     {
-        $form = [
+        $form               = [
             [
                 'type'    => 'Label',
-                'caption' => 'Please create instance or harmony scripts with the harmony configurator', ],
+                'caption' => 'Please create instance or harmony scripts with the harmony configurator',],
             [
                 'name'    => 'devicename',
                 'type'    => 'ValidationTextBox',
-                'caption' => 'Name', ],
+                'caption' => 'Name',],
             [
                 'name'    => 'DeviceID',
                 'type'    => 'NumberSpinner',
-                'caption' => 'DeviceID', ],
+                'caption' => 'DeviceID',],
             [
                 'type'    => 'Label',
-                'caption' => 'Create Variables', ],
+                'caption' => 'Create Variables',],
             [
                 'name'    => 'HarmonyVars',
                 'type'    => 'CheckBox',
-                'caption' => 'Harmony variables', ],
+                'caption' => 'Harmony variables',],
             [
                 'name'    => 'HarmonyScript',
                 'type'    => 'CheckBox',
-                'caption' => 'Harmony scripts', ], ];
+                'caption' => 'Harmony scripts',],];
         $CheckVolumeControl = $this->CheckVolumeControl();
         if ($CheckVolumeControl) {
             $form = array_merge_recursive(
@@ -579,11 +579,11 @@ class HarmonyDevice extends IPSModule
                          [
                              'name'    => 'VolumeControl',
                              'type'    => 'CheckBox',
-                             'caption' => 'Volume Control', ],
+                             'caption' => 'Volume Control',],
                          [
                              'name'    => 'MaxStepVolume',
                              'type'    => 'NumberSpinner',
-                             'caption' => 'Steps Volume', ], ]
+                             'caption' => 'Steps Volume',],]
             );
         }
 
@@ -613,39 +613,39 @@ class HarmonyDevice extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.', ],
+                'caption' => 'Creating instance.',],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'configuration valid', ],
+                'caption' => 'configuration valid',],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'Harmony Device is inactive', ],
+                'caption' => 'Harmony Device is inactive',],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Volume step can not be zero.', ],
+                'caption' => 'Volume step can not be zero.',],
             [
                 'code'    => 202,
                 'icon'    => 'error',
-                'caption' => 'Harmony Hub IP adress must not empty.', ],
+                'caption' => 'Harmony Hub IP adress must not empty.',],
             [
                 'code'    => 203,
                 'icon'    => 'error',
-                'caption' => 'No valid IP adress.', ],
+                'caption' => 'No valid IP adress.',],
             [
                 'code'    => 204,
                 'icon'    => 'error',
-                'caption' => 'connection to the Harmony Hub lost.', ],
+                'caption' => 'connection to the Harmony Hub lost.',],
             [
                 'code'    => 205,
                 'icon'    => 'error',
-                'caption' => 'field must not be empty.', ],
+                'caption' => 'field must not be empty.',],
             [
                 'code'    => 206,
                 'icon'    => 'error',
-                'caption' => 'select category for import.', ], ];
+                'caption' => 'select category for import.',],];
 
         return $form;
     }
@@ -655,7 +655,7 @@ class HarmonyDevice extends IPSModule
      *
      * @param string $notification
      * @param string $message
-     * @param int    $format       0 = Text, 1 = Hex
+     * @param int    $format 0 = Text, 1 = Hex
      */
     private function _debug(string $notification = null, string $message = null, $format = 0)
     {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__.'/../libs/ConstHelper.php';
-require_once __DIR__.'/../libs/HarmonyBufferHelper.php';
-require_once __DIR__.'/../libs/HarmonyDebugHelper.php';
+require_once __DIR__ . '/../libs/ConstHelper.php';
+require_once __DIR__ . '/../libs/HarmonyBufferHelper.php';
+require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 
 class HarmonyDiscovery extends IPSModule
 {
@@ -73,24 +73,24 @@ class HarmonyDiscovery extends IPSModule
      */
     private function Get_ListConfiguration()
     {
-        $config_list = [];
+        $config_list        = [];
         $ConfiguratorIDList = IPS_GetInstanceListByModuleID('{E1FB3491-F78D-457A-89EC-18C832F4E6D9}'); // Harmony  Configurator
-        $devices = $this->DiscoverDevices();
+        $devices            = $this->DiscoverDevices();
         $this->SendDebug('Discovered Logitech Harmony Hubs', json_encode($devices), 0);
-        $email = $this->ReadPropertyString('Email');
+        $email    = $this->ReadPropertyString('Email');
         $password = $this->ReadPropertyString('Password');
         if (!empty($devices)) {
             foreach ($devices as $device) {
                 $instanceID = 0;
-                $name = $device['name'];
-                $uuid = $device['uuid'];
-                $host = $device['host'];
-                $device_id = 0;
+                $name       = $device['name'];
+                $uuid       = $device['uuid'];
+                $host       = $device['host'];
+                $device_id  = 0;
                 foreach ($ConfiguratorIDList as $ConfiguratorID) {
                     if ($uuid == IPS_GetProperty($ConfiguratorID, 'uuid')) {
                         $configurator_name = IPS_GetName($ConfiguratorID);
                         $this->SendDebug(
-                            'Harmony Discovery', 'configurator found: '.utf8_decode($configurator_name).' ('.$ConfiguratorID.')', 0
+                            'Harmony Discovery', 'configurator found: ' . utf8_decode($configurator_name) . ' (' . $ConfiguratorID . ')', 0
                         );
                         $instanceID = $ConfiguratorID;
                     }
@@ -108,18 +108,18 @@ class HarmonyDiscovery extends IPSModule
                             'configuration' => [
                                 'name' => $name,
                                 'uuid' => $uuid,
-                                'host' => $host, ], ],
+                                'host' => $host,],],
                         [
                             'moduleID'      => '{03B162DB-7A3A-41AE-A676-2444F16EBEDF}',
                             'configuration' => [
                                 'Email'    => $email,
-                                'Password' => $password, ], ],
+                                'Password' => $password,],],
                         [
                             'moduleID'      => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
                             'configuration' => [
                                 'Host' => $host,
                                 'Port' => 5222,
-                                'Open' => true, ], ], ], ];
+                                'Open' => true,],],],];
             }
         }
 
@@ -145,13 +145,13 @@ class HarmonyDiscovery extends IPSModule
     {
         $user_agent = 'MacOSX/10.8.2 UPnP/1.1 PHP-UPnP/0.0.1a';
         // BUILD MESSAGE
-        $msg = 'M-SEARCH * HTTP/1.1'."\r\n";
-        $msg .= 'HOST: 239.255.255.250:1900'."\r\n";
-        $msg .= 'MAN: "'.$man.'"'."\r\n";
-        $msg .= 'MX: '.$mx."\r\n";
-        $msg .= 'ST:'.$st."\r\n";
-        $msg .= 'USER-AGENT: '.$user_agent."\r\n";
-        $msg .= ''."\r\n";
+        $msg = 'M-SEARCH * HTTP/1.1' . "\r\n";
+        $msg .= 'HOST: 239.255.255.250:1900' . "\r\n";
+        $msg .= 'MAN: "' . $man . '"' . "\r\n";
+        $msg .= 'MX: ' . $mx . "\r\n";
+        $msg .= 'ST:' . $st . "\r\n";
+        $msg .= 'USER-AGENT: ' . $user_agent . "\r\n";
+        $msg .= '' . "\r\n";
         // MULTICAST MESSAGE
         $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
         if (!$socket) {
@@ -168,7 +168,7 @@ class HarmonyDiscovery extends IPSModule
         // RECIEVE RESPONSE
         $response = [];
         do {
-            $buf = null;
+            $buf   = null;
             $bytes = @socket_recvfrom($socket, $buf, 2048, 0, $from, $port);
             if ($bytes === false) {
                 break;
@@ -183,9 +183,9 @@ class HarmonyDiscovery extends IPSModule
         foreach ($response as $device) {
             if (isset($device['st'])) {
                 if ($device['st'] == 'urn:myharmony-com:device:harmony:1') {
-                    $uuid = str_ireplace('uuid:', '', $device['usn']);
-                    $cutoff = strpos($uuid, '::');
-                    $uuid = substr($uuid, 0, $cutoff);
+                    $uuid               = str_ireplace('uuid:', '', $device['usn']);
+                    $cutoff             = strpos($uuid, '::');
+                    $uuid               = substr($uuid, 0, $cutoff);
                     $harmony_response[] = ['uuid' => $uuid, 'location' => $device['location']];
                 }
             }
@@ -196,7 +196,7 @@ class HarmonyDiscovery extends IPSModule
 
     protected function parseMSearchResponse($response)
     {
-        $responseArr = explode("\r\n", $response);
+        $responseArr    = explode("\r\n", $response);
         $parsedResponse = [];
         foreach ($responseArr as $key => $row) {
             if (stripos($row, 'http') === 0) {
@@ -256,16 +256,16 @@ class HarmonyDiscovery extends IPSModule
     {
         $harmony_info = [];
         foreach ($result as $device) {
-            $uuid = $device['uuid'];
-            $location = $device['location'];
-            $description = $this->GetXML($location);
-            $xml = simplexml_load_string($description);
-            $name = strval($xml->device->friendlyName);
-            $location = str_ireplace('http://', '', $location);
-            $location = explode(':', $location);
-            $ip = $location[0];
-            $cutoff = strpos($location[1], '/');
-            $port = substr($location[1], 0, $cutoff);
+            $uuid           = $device['uuid'];
+            $location       = $device['location'];
+            $description    = $this->GetXML($location);
+            $xml            = simplexml_load_string($description);
+            $name           = strval($xml->device->friendlyName);
+            $location       = str_ireplace('http://', '', $location);
+            $location       = explode(':', $location);
+            $ip             = $location[0];
+            $cutoff         = strpos($location[1], '/');
+            $port           = substr($location[1], 0, $cutoff);
             $harmony_info[] = ['name' => $name, 'uuid' => $uuid, 'host' => $ip, 'port' => $port];
         }
 
@@ -316,7 +316,7 @@ class HarmonyDiscovery extends IPSModule
             [
                 'elements' => $this->FormElements(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
+                'status'   => $this->FormStatus(),]
         );
         $this->SendDebug('FORM', $Form, 0);
         $this->SendDebug('FORM', json_last_error_msg(), 0);
@@ -334,15 +334,15 @@ class HarmonyDiscovery extends IPSModule
         $form = [
             [
                 'type'    => 'Label',
-                'caption' => 'MyHarmony access data (email / password)', ],
+                'caption' => 'MyHarmony access data (email / password)',],
             [
                 'name'    => 'Email',
                 'type'    => 'ValidationTextBox',
-                'caption' => 'Email', ],
+                'caption' => 'Email',],
             [
                 'name'    => 'Password',
                 'type'    => 'PasswordTextBox',
-                'caption' => 'Password', ], ];
+                'caption' => 'Password',],];
 
         return $form;
     }
@@ -363,26 +363,26 @@ class HarmonyDiscovery extends IPSModule
                 'delete'   => true,
                 'sort'     => [
                     'column'    => 'name',
-                    'direction' => 'ascending', ],
+                    'direction' => 'ascending',],
                 'columns'  => [
                     [
                         'label'   => 'ID',
                         'name'    => 'id',
                         'width'   => '200px',
-                        'visible' => false, ],
+                        'visible' => false,],
                     [
                         'label' => 'name',
                         'name'  => 'name',
-                        'width' => 'auto', ],
+                        'width' => 'auto',],
                     [
                         'label' => 'UUID',
                         'name'  => 'uuid',
-                        'width' => '400px', ],
+                        'width' => '400px',],
                     [
                         'label' => 'host',
                         'name'  => 'host',
-                        'width' => '250px', ], ],
-                'values'   => $this->Get_ListConfiguration(), ], ];
+                        'width' => '250px',],],
+                'values'   => $this->Get_ListConfiguration(),],];
 
         return $form;
     }
@@ -398,19 +398,19 @@ class HarmonyDiscovery extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.', ],
+                'caption' => 'Creating instance.',],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'Harmony Hub Discovery created.', ],
+                'caption' => 'Harmony Hub Discovery created.',],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'interface closed.', ],
+                'caption' => 'interface closed.',],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Please follow the instructions.', ], ];
+                'caption' => 'Please follow the instructions.',],];
 
         return $form;
     }

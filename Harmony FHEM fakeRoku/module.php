@@ -39,7 +39,7 @@ class HarmonyfakeRoku extends IPSModule
                                           [9, $this->Translate('Search'), '', -1],
                                           [10, $this->Translate('info'), '', -1],
                                           [11, $this->Translate('Home'), '', -1],
-                                          [12, $this->Translate('Instant Replay'), '', -1], ]
+                                          [12, $this->Translate('Instant Replay'), '', -1],]
         );
 
         $this->RegisterVariableInteger('KeyFakeRoku', 'Roku Emulator', 'LogitechHarmony.FakeRoku', $this->_getPosition());
@@ -96,7 +96,7 @@ class HarmonyfakeRoku extends IPSModule
                         return;
                     }
                     $hooks[$index]['TargetID'] = $this->InstanceID;
-                    $found = true;
+                    $found                     = true;
                 }
             }
             if (!$found) {
@@ -109,29 +109,29 @@ class HarmonyfakeRoku extends IPSModule
 
     protected function StartRokuKeyscript($command)
     {
-        $activity = $this->GetCurrentActivity();
+        $activity     = $this->GetCurrentActivity();
         $activityname = $activity['activityname'];
-        $activityid = $activity['activityid'];
-        $this->SendDebug('Logitech Roku', 'Current activity: '.$activityname, 0);
-        $this->SendDebug('Logitech Roku', 'Current activity id: '.$activityid, 0);
+        $activityid   = $activity['activityid'];
+        $this->SendDebug('Logitech Roku', 'Current activity: ' . $activityname, 0);
+        $this->SendDebug('Logitech Roku', 'Current activity id: ' . $activityid, 0);
         $harmonyid = $this->ReadPropertyInteger('HarmonyHubObjID');
-        $this->SendDebug('Logitech Roku', 'Harmony hub object ID: '.$harmonyid, 0);
-        $list_json = $this->ReadPropertyString('rokukeys_'.$harmonyid.'_'.abs($activityid));
-        $this->SendDebug('Logitech Roku', 'Property: '.'rokukeys_'.$harmonyid.'_'.abs($activityid), 0);
-        $this->SendDebug('Logitech Roku', 'List Roku Command: '.$list_json, 0);
+        $this->SendDebug('Logitech Roku', 'Harmony hub object ID: ' . $harmonyid, 0);
+        $list_json = $this->ReadPropertyString('rokukeys_' . $harmonyid . '_' . abs($activityid));
+        $this->SendDebug('Logitech Roku', 'Property: ' . 'rokukeys_' . $harmonyid . '_' . abs($activityid), 0);
+        $this->SendDebug('Logitech Roku', 'List Roku Command: ' . $list_json, 0);
         $list = json_decode($list_json, true);
         foreach ($list as $rokucommand) {
             if ($command == $rokucommand['command']) {
                 if (!empty($rokucommand['rokuscript'])) {
                     $this->SendDebug(
                         'Logitech Roku',
-                        'Roku starts script: '.utf8_decode(IPS_GetName($rokucommand['rokuscript'])).' ('.$rokucommand['rokuscript'].')', 0
+                        'Roku starts script: ' . utf8_decode(IPS_GetName($rokucommand['rokuscript'])) . ' (' . $rokucommand['rokuscript'] . ')', 0
                     );
-                    $this->SendDebug('Logitech Roku', 'Command '.$command.' for activity '.$activityname, 0);
+                    $this->SendDebug('Logitech Roku', 'Command ' . $command . ' for activity ' . $activityname, 0);
                     IPS_RunScriptEx($rokucommand['rokuscript'], ['Command' => $command, 'Activity' => $activityname]);
                 } else {
                     $this->SendDebug('Logitech Roku', 'no script to lauch selected', 0);
-                    $this->SendDebug('Logitech Roku', 'Command '.$command.' for activity '.$activityname, 0);
+                    $this->SendDebug('Logitech Roku', 'Command ' . $command . ' for activity ' . $activityname, 0);
                 }
             }
         }
@@ -140,9 +140,9 @@ class HarmonyfakeRoku extends IPSModule
     protected function GetCurrentActivity()
     {
         $HarmonyHubObjID = $this->ReadPropertyInteger('HarmonyHubObjID');
-        $activityname = GetValueFormatted(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
-        $activityid = GetValue(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
-        $activity = ['activityname' => $activityname, 'activityid' => $activityid];
+        $activityname    = GetValueFormatted(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
+        $activityid      = GetValue(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
+        $activity        = ['activityname' => $activityname, 'activityid' => $activityid];
 
         return $activity;
     }
@@ -165,7 +165,7 @@ class HarmonyfakeRoku extends IPSModule
         // FHEM nutzt GET
         if (isset($_GET['fhemevent'])) {
             $data = $_GET['fhemevent'];
-            $this->SendDebug('Logitech Harmony Hub', 'Roku Command: '.$data, 0);
+            $this->SendDebug('Logitech Harmony Hub', 'Roku Command: ' . $data, 0);
             $this->WriteValues($data);
         }
     }
@@ -247,7 +247,7 @@ class HarmonyfakeRoku extends IPSModule
         } else {
             $profile = IPS_GetVariableProfile($Name);
             if ($profile['ProfileType'] != $Vartype) {
-                $this->_debug('profile', 'Variable profile type does not match for profile '.$Name);
+                $this->_debug('profile', 'Variable profile type does not match for profile ' . $Name);
             }
         }
 
@@ -311,14 +311,14 @@ class HarmonyfakeRoku extends IPSModule
     protected function GetHarmonyHubList()
     {
         $harmonyhubs = $this->GetHarmonyHubs();
-        $options = [
+        $options     = [
             [
                 'label' => 'Please choose',
-                'value' => 0, ], ];
+                'value' => 0,],];
         foreach ($harmonyhubs as $harmonyhub) {
             $options[] = [
                 'label' => IPS_GetName($harmonyhub),
-                'value' => $harmonyhub, ];
+                'value' => $harmonyhub,];
         }
 
         return $options;
@@ -334,7 +334,7 @@ class HarmonyfakeRoku extends IPSModule
     protected function GetHubActivitiesExpansionPanels($HubID, $form)
     {
         if (strlen($HubID) == 5) {
-            $activities = $this->GetHubActivities($HubID);
+            $activities        = $this->GetHubActivities($HubID);
             $number_activities = count($activities);
             if ($number_activities > 0) {
                 foreach ($activities as $key => $activity) {
@@ -353,67 +353,67 @@ class HarmonyfakeRoku extends IPSModule
                                              'delete'   => false,
                                              'sort'     => [
                                                  'column'    => 'command',
-                                                 'direction' => 'ascending', ],
+                                                 'direction' => 'ascending',],
                                              'columns'  => [
                                                  [
                                                      'name'    => 'command',
                                                      'label'   => 'command',
                                                      'width'   => '200px',
                                                      'save'    => true,
-                                                     'visible' => true, ],
+                                                     'visible' => true,],
                                                  [
                                                      'name'  => 'rokuscript',
                                                      'label' => 'script',
                                                      'width' => 'auto',
                                                      'save'  => true,
                                                      'edit'  => [
-                                                         'type' => 'SelectScript', ], ],
+                                                         'type' => 'SelectScript',],],
                                                  [
                                                      'name'    => 'key_id',
                                                      'label'   => 'Key ID',
                                                      'width'   => 'auto',
                                                      'save'    => true,
-                                                     'visible' => false, ], ],
+                                                     'visible' => false,],],
                                              'values'   => [
                                                  [
                                                      'command' => 'Up',
-                                                     'key_id'  => 0, ],
+                                                     'key_id'  => 0,],
                                                  [
                                                      'command' => 'Down',
-                                                     'key_id'  => 1, ],
+                                                     'key_id'  => 1,],
                                                  [
                                                      'command' => 'Left',
-                                                     'key_id'  => 2, ],
+                                                     'key_id'  => 2,],
                                                  [
                                                      'command' => 'Right',
-                                                     'key_id'  => 3, ],
+                                                     'key_id'  => 3,],
                                                  [
                                                      'command' => 'Select',
-                                                     'key_id'  => 4, ],
+                                                     'key_id'  => 4,],
                                                  [
                                                      'command' => 'Back',
-                                                     'key_id'  => 5, ],
+                                                     'key_id'  => 5,],
                                                  [
                                                      'command' => 'Play',
-                                                     'key_id'  => 6, ],
+                                                     'key_id'  => 6,],
                                                  [
                                                      'command' => 'Reverse',
-                                                     'key_id'  => 7, ],
+                                                     'key_id'  => 7,],
                                                  [
                                                      'command' => 'Forward',
-                                                     'key_id'  => 8, ],
+                                                     'key_id'  => 8,],
                                                  [
                                                      'command' => 'Search',
-                                                     'key_id'  => 9, ],
+                                                     'key_id'  => 9,],
                                                  [
                                                      'command' => 'Info',
-                                                     'key_id'  => 10, ],
+                                                     'key_id'  => 10,],
                                                  [
                                                      'command' => 'Home',
-                                                     'key_id'  => 11, ],
+                                                     'key_id'  => 11,],
                                                  [
                                                      'command' => 'Instant Replay',
-                                                     'key_id'  => 12, ], ], ], ], ], ]
+                                                     'key_id'  => 12,],],],],],]
                     );
                 }
             }
@@ -428,14 +428,14 @@ class HarmonyfakeRoku extends IPSModule
         foreach ($harmonyhubs as $harmonyhub) {
             $activities = $this->GetHubActivities($harmonyhub);
             foreach ($activities as $key => $activity) {
-                $this->RegisterPropertyString('rokukeys_'.$harmonyhub.'_'.abs($activity), '[]');
+                $this->RegisterPropertyString('rokukeys_' . $harmonyhub . '_' . abs($activity), '[]');
             }
         }
     }
 
     protected function GetListName($HarmonyHubObjID, $HarmonyHubActivity)
     {
-        $name = 'rokukeys_'.$HarmonyHubObjID.'_'.abs($HarmonyHubActivity);
+        $name = 'rokukeys_' . $HarmonyHubObjID . '_' . abs($HarmonyHubActivity);
 
         return $name;
     }
@@ -456,7 +456,7 @@ class HarmonyfakeRoku extends IPSModule
             [
                 'elements' => $this->FormHead(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
+                'status'   => $this->FormStatus(),]
         );
     }
 
@@ -470,7 +470,7 @@ class HarmonyfakeRoku extends IPSModule
         $form = [
             [
                 'type'  => 'Label',
-                'label' => 'Roku Emulator IP-Symcon', ], ];
+                'label' => 'Roku Emulator IP-Symcon',],];
 
         $harmonyhubs = $this->GetHarmonyHubs();
         $number_hubs = count($harmonyhubs);
@@ -479,19 +479,19 @@ class HarmonyfakeRoku extends IPSModule
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'No hub found, please configure harmony hub first', ], ]
+                             'label' => 'No hub found, please configure harmony hub first',],]
             );
         } else {
             $form = array_merge_recursive(
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'Please select the Harmony Hub for configuration:', ],
+                             'label' => 'Please select the Harmony Hub for configuration:',],
                          [
                              'name'    => 'HarmonyHubObjID',
                              'type'    => 'Select',
                              'caption' => 'Harmony Hub',
-                             'options' => $this->GetHarmonyHubList(), ], ]
+                             'options' => $this->GetHarmonyHubList(),],]
             );
         }
 
@@ -501,7 +501,7 @@ class HarmonyfakeRoku extends IPSModule
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'configure activities', ], ]
+                             'label' => 'configure activities',],]
             );
             $form = $this->GetHubActivitiesExpansionPanels($HarmonyHubObjID, $form);
         }
@@ -532,31 +532,31 @@ class HarmonyfakeRoku extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.', ],
+                'caption' => 'Creating instance.',],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'Roku emulator device created.', ],
+                'caption' => 'Roku emulator device created.',],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'interface closed.', ],
+                'caption' => 'interface closed.',],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Please follow the instructions.', ],
+                'caption' => 'Please follow the instructions.',],
             [
                 'code'    => 202,
                 'icon'    => 'error',
-                'caption' => 'Device code must not be empty.', ],
+                'caption' => 'Device code must not be empty.',],
             [
                 'code'    => 203,
                 'icon'    => 'error',
-                'caption' => 'Device code has not the correct lenght.', ],
+                'caption' => 'Device code has not the correct lenght.',],
             [
                 'code'    => 204,
                 'icon'    => 'error',
-                'caption' => 'no Harmony Hub selected.', ], ];
+                'caption' => 'no Harmony Hub selected.',],];
 
         return $form;
     }
@@ -570,7 +570,7 @@ class HarmonyfakeRoku extends IPSModule
      *
      * @param string $notification
      * @param string $message
-     * @param int    $format       0 = Text, 1 = Hex
+     * @param int    $format 0 = Text, 1 = Hex
      */
     private function _debug(string $notification = null, string $message = null, $format = 0)
     {
