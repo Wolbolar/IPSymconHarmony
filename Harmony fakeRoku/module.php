@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 include_once __DIR__ . '/../libs/SSDPTraits.php';
 
 class HarmonyRokuEmulator extends IPSModule
@@ -40,7 +42,7 @@ class HarmonyRokuEmulator extends IPSModule
                                              [9, $this->Translate('Search'), '', -1],
                                              [10, $this->Translate('info'), '', -1],
                                              [11, $this->Translate('Home'), '', -1],
-                                             [12, $this->Translate('Instant Replay'), '', -1],]
+                                             [12, $this->Translate('Instant Replay'), '', -1], ]
         );
 
         $this->RegisterVariableInteger('KeyFakeRoku', 'Roku Emulator', 'LogitechHarmony.FakeRokuIPS', $this->_getPosition());
@@ -265,7 +267,7 @@ class HarmonyRokuEmulator extends IPSModule
             'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
             'Buffer'     => utf8_encode($payload),
             'ClientIP'   => $Host,
-            'ClientPort' => $Port,]; // Server Socket
+            'ClientPort' => $Port, ]; // Server Socket
         $this->SendDataToParent(json_encode($SendData));
         $this->SendDebug('SendData:', $payload, 0);
     }
@@ -298,11 +300,11 @@ class HarmonyRokuEmulator extends IPSModule
         $options     = [
             [
                 'caption' => 'Please choose',
-                'value'   => 0,],];
+                'value'   => 0, ], ];
         foreach ($harmonyhubs as $harmonyhub) {
             $options[] = [
                 'caption' => IPS_GetName($harmonyhub),
-                'value'   => $harmonyhub,];
+                'value'   => $harmonyhub, ];
         }
 
         return $options;
@@ -337,67 +339,67 @@ class HarmonyRokuEmulator extends IPSModule
                                              'delete'   => false,
                                              'sort'     => [
                                                  'column'    => 'command',
-                                                 'direction' => 'ascending',],
+                                                 'direction' => 'ascending', ],
                                              'columns'  => [
                                                  [
                                                      'name'    => 'command',
                                                      'label'   => 'command',
                                                      'width'   => '200px',
                                                      'save'    => true,
-                                                     'visible' => true,],
+                                                     'visible' => true, ],
                                                  [
                                                      'name'  => 'rokuscript',
                                                      'label' => 'script',
                                                      'width' => 'auto',
                                                      'save'  => true,
                                                      'edit'  => [
-                                                         'type' => 'SelectScript',],],
+                                                         'type' => 'SelectScript', ], ],
                                                  [
                                                      'name'    => 'key_id',
                                                      'label'   => 'Key ID',
                                                      'width'   => 'auto',
                                                      'save'    => true,
-                                                     'visible' => false,],],
+                                                     'visible' => false, ], ],
                                              'values'   => [
                                                  [
                                                      'command' => 'Up',
-                                                     'key_id'  => 0,],
+                                                     'key_id'  => 0, ],
                                                  [
                                                      'command' => 'Down',
-                                                     'key_id'  => 1,],
+                                                     'key_id'  => 1, ],
                                                  [
                                                      'command' => 'Left',
-                                                     'key_id'  => 2,],
+                                                     'key_id'  => 2, ],
                                                  [
                                                      'command' => 'Right',
-                                                     'key_id'  => 3,],
+                                                     'key_id'  => 3, ],
                                                  [
                                                      'command' => 'Select',
-                                                     'key_id'  => 4,],
+                                                     'key_id'  => 4, ],
                                                  [
                                                      'command' => 'Back',
-                                                     'key_id'  => 5,],
+                                                     'key_id'  => 5, ],
                                                  [
                                                      'command' => 'Play',
-                                                     'key_id'  => 6,],
+                                                     'key_id'  => 6, ],
                                                  [
                                                      'command' => 'Reverse',
-                                                     'key_id'  => 7,],
+                                                     'key_id'  => 7, ],
                                                  [
                                                      'command' => 'Forward',
-                                                     'key_id'  => 8,],
+                                                     'key_id'  => 8, ],
                                                  [
                                                      'command' => 'Search',
-                                                     'key_id'  => 9,],
+                                                     'key_id'  => 9, ],
                                                  [
                                                      'command' => 'Info',
-                                                     'key_id'  => 10,],
+                                                     'key_id'  => 10, ],
                                                  [
                                                      'command' => 'Home',
-                                                     'key_id'  => 11,],
+                                                     'key_id'  => 11, ],
                                                  [
                                                      'command' => 'Instant Replay',
-                                                     'key_id'  => 12,],],],],],]
+                                                     'key_id'  => 12, ], ], ], ], ], ]
                     );
                 }
             }
@@ -528,7 +530,7 @@ class HarmonyRokuEmulator extends IPSModule
             [
                 'elements' => $this->FormHead(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(),]
+                'status'   => $this->FormStatus(), ]
         );
     }
 
@@ -542,14 +544,14 @@ class HarmonyRokuEmulator extends IPSModule
         $form            = [
             [
                 'type'  => 'Label',
-                'label' => 'Roku Emulator IP-Symcon',],
+                'label' => 'Roku Emulator IP-Symcon', ],
             [
                 'type'  => 'Label',
-                'label' => 'Please select port to use for the Roku emulator:',],
+                'label' => 'Please select port to use for the Roku emulator:', ],
             [
                 'name'    => 'ServerSocketPort',
                 'type'    => 'NumberSpinner',
-                'caption' => 'Port',],];
+                'caption' => 'Port', ], ];
         $ssdproku        = $this->GetSSDPRoku();
         $number_ssdproku = count($ssdproku);
         if ($number_ssdproku == 0) {
@@ -557,7 +559,7 @@ class HarmonyRokuEmulator extends IPSModule
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'No SSDP Roku instance found, please create SSDP Roku instance first',],]
+                             'label' => 'No SSDP Roku instance found, please create SSDP Roku instance first', ], ]
             );
         }
         $harmonyhubs = $this->GetHarmonyHubs();
@@ -567,19 +569,19 @@ class HarmonyRokuEmulator extends IPSModule
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'No hub found, please configure harmony hub first',],]
+                             'label' => 'No hub found, please configure harmony hub first', ], ]
             );
         } else {
             $form = array_merge_recursive(
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'Please select the Harmony Hub for configuration:',],
+                             'label' => 'Please select the Harmony Hub for configuration:', ],
                          [
                              'name'    => 'HarmonyHubObjID',
                              'type'    => 'Select',
                              'caption' => 'Harmony Hub',
-                             'options' => $this->GetHarmonyHubList(),],]
+                             'options' => $this->GetHarmonyHubList(), ], ]
             );
         }
 
@@ -589,7 +591,7 @@ class HarmonyRokuEmulator extends IPSModule
                 $form, [
                          [
                              'type'  => 'Label',
-                             'label' => 'configure activities',],]
+                             'label' => 'configure activities', ], ]
             );
             $form = $this->GetHubActivitiesExpansionPanels($HarmonyHubObjID, $form);
         }
@@ -620,31 +622,31 @@ class HarmonyRokuEmulator extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.',],
+                'caption' => 'Creating instance.', ],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'Roku emulator device created.',],
+                'caption' => 'Roku emulator device created.', ],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'interface closed.',],
+                'caption' => 'interface closed.', ],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Please follow the instructions.',],
+                'caption' => 'Please follow the instructions.', ],
             [
                 'code'    => 202,
                 'icon'    => 'error',
-                'caption' => 'Device code must not be empty.',],
+                'caption' => 'Device code must not be empty.', ],
             [
                 'code'    => 203,
                 'icon'    => 'error',
-                'caption' => 'Device code has not the correct lenght.',],
+                'caption' => 'Device code has not the correct lenght.', ],
             [
                 'code'    => 204,
                 'icon'    => 'error',
-                'caption' => 'no Harmony Hub selected.',],];
+                'caption' => 'no Harmony Hub selected.', ], ];
 
         return $form;
     }
@@ -658,7 +660,7 @@ class HarmonyRokuEmulator extends IPSModule
      *
      * @param string $notification
      * @param string $message
-     * @param int    $format 0 = Text, 1 = Hex
+     * @param int    $format       0 = Text, 1 = Hex
      */
     private function _debug(string $notification = null, string $message = null, $format = 0)
     {

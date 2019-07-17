@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 include_once __DIR__ . '/../libs/SSDPTraits.php';
 require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 /**
@@ -200,7 +202,7 @@ class SSDPRoku extends IPSModule
             'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
             'Buffer'     => utf8_encode($Payload),
             'ClientIP'   => '239.255.255.250',
-            'ClientPort' => 1900,];
+            'ClientPort' => 1900, ];
         //        $this->SendDebug("SendToParent", $SendData, 0);
         $this->SendDataToParent(json_encode($SendData));
     }
@@ -402,7 +404,7 @@ class SSDPRoku extends IPSModule
             'Left'          => 10,
             'Select'        => 11,
             'InstantReplay' => 12,
-            'Search'        => 13,];
+            'Search'        => 13, ];
     }
 
     // <deviceType>urn:roku-com:device:player:1-0</deviceType>
