@@ -374,7 +374,7 @@ class HarmonyDevice extends IPSModule
             ',',
             '=',
             ':',
-            '=)',];
+            '=)', ];
         $replace = [
             'ae',
             'oe',
@@ -443,7 +443,7 @@ class HarmonyDevice extends IPSModule
             '',
             '',
             '',
-            '',];
+            '', ];
 
         $str = str_replace($search, $replace, $str);
         $str = str_replace(' ', '_', $str); // Replaces all spaces with underline.
@@ -538,7 +538,7 @@ class HarmonyDevice extends IPSModule
             [
                 'elements' => $this->FormHead(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(),]
+                'status'   => $this->FormStatus(), ]
         );
     }
 
@@ -552,26 +552,26 @@ class HarmonyDevice extends IPSModule
         $form               = [
             [
                 'type'    => 'Label',
-                'caption' => 'Please create instance or harmony scripts with the harmony configurator',],
+                'caption' => 'Please create instance or harmony scripts with the harmony configurator', ],
             [
                 'name'    => 'devicename',
                 'type'    => 'ValidationTextBox',
-                'caption' => 'Name',],
+                'caption' => 'Name', ],
             [
                 'name'    => 'DeviceID',
                 'type'    => 'NumberSpinner',
-                'caption' => 'DeviceID',],
+                'caption' => 'DeviceID', ],
             [
                 'type'    => 'Label',
-                'caption' => 'Create Variables',],
+                'caption' => 'Create Variables', ],
             [
                 'name'    => 'HarmonyVars',
                 'type'    => 'CheckBox',
-                'caption' => 'Harmony variables',],
+                'caption' => 'Harmony variables', ],
             [
                 'name'    => 'HarmonyScript',
                 'type'    => 'CheckBox',
-                'caption' => 'Harmony scripts',],];
+                'caption' => 'Harmony scripts', ], ];
         $CheckVolumeControl = $this->CheckVolumeControl();
         if ($CheckVolumeControl) {
             $form = array_merge_recursive(
@@ -579,11 +579,11 @@ class HarmonyDevice extends IPSModule
                          [
                              'name'    => 'VolumeControl',
                              'type'    => 'CheckBox',
-                             'caption' => 'Volume Control',],
+                             'caption' => 'Volume Control', ],
                          [
                              'name'    => 'MaxStepVolume',
                              'type'    => 'NumberSpinner',
-                             'caption' => 'Steps Volume',],]
+                             'caption' => 'Steps Volume', ], ]
             );
         }
 
@@ -613,39 +613,39 @@ class HarmonyDevice extends IPSModule
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.',],
+                'caption' => 'Creating instance.', ],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'configuration valid',],
+                'caption' => 'configuration valid', ],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'Harmony Device is inactive',],
+                'caption' => 'Harmony Device is inactive', ],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Volume step can not be zero.',],
+                'caption' => 'Volume step can not be zero.', ],
             [
                 'code'    => 202,
                 'icon'    => 'error',
-                'caption' => 'Harmony Hub IP adress must not empty.',],
+                'caption' => 'Harmony Hub IP adress must not empty.', ],
             [
                 'code'    => 203,
                 'icon'    => 'error',
-                'caption' => 'No valid IP adress.',],
+                'caption' => 'No valid IP adress.', ],
             [
                 'code'    => 204,
                 'icon'    => 'error',
-                'caption' => 'connection to the Harmony Hub lost.',],
+                'caption' => 'connection to the Harmony Hub lost.', ],
             [
                 'code'    => 205,
                 'icon'    => 'error',
-                'caption' => 'field must not be empty.',],
+                'caption' => 'field must not be empty.', ],
             [
                 'code'    => 206,
                 'icon'    => 'error',
-                'caption' => 'select category for import.',],];
+                'caption' => 'select category for import.', ], ];
 
         return $form;
     }
@@ -655,7 +655,7 @@ class HarmonyDevice extends IPSModule
      *
      * @param string $notification
      * @param string $message
-     * @param int    $format 0 = Text, 1 = Hex
+     * @param int    $format       0 = Text, 1 = Hex
      */
     private function _debug(string $notification = null, string $message = null, $format = 0)
     {

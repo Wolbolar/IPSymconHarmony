@@ -344,7 +344,7 @@ Switch ($_IPS[\'SENDER\'])
             ',',
             '=',
             ':',
-            '=)',];
+            '=)', ];
         $replace = [
             'ae',
             'oe',
@@ -413,7 +413,7 @@ Switch ($_IPS[\'SENDER\'])
             '',
             '',
             '',
-            '',];
+            '', ];
 
         $str = str_replace($search, $replace, $str);
         $str = str_replace(' ', '_', $str); // Replaces all spaces with underline.
@@ -1248,7 +1248,7 @@ Switch ($_IPS[\'SENDER\'])
 
         $credentials = [
             'email'    => $email,
-            'password' => $password,];
+            'password' => $password, ];
         $json_string = json_encode($credentials); // '{'.$cmd.'}';
 
         $ch = curl_init($LOGITECH_AUTH_URL);
@@ -1262,7 +1262,7 @@ Switch ($_IPS[\'SENDER\'])
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER     => ['Content-type: application/json; charset=utf-8'],
             CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $json_string,];
+            CURLOPT_POSTFIELDS     => $json_string, ];
 
         // Setting curl options
         curl_setopt_array($ch, $options);
@@ -1467,7 +1467,7 @@ Switch ($_IPS[\'SENDER\'])
             [
                 'elements' => $this->FormHead(),
                 'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(),]
+                'status'   => $this->FormStatus(), ]
         );
     }
 
@@ -1481,15 +1481,15 @@ Switch ($_IPS[\'SENDER\'])
         $form = [
             [
                 'type'    => 'Label',
-                'caption' => 'MyHarmony access data (email / password)',],
+                'caption' => 'MyHarmony access data (email / password)', ],
             [
                 'name'    => 'Email',
                 'type'    => 'ValidationTextBox',
-                'caption' => 'Email',],
+                'caption' => 'Email', ],
             [
                 'name'    => 'Password',
                 'type'    => 'PasswordTextBox',
-                'caption' => 'Password',],];
+                'caption' => 'Password', ], ];
 
         return $form;
     }
@@ -1504,28 +1504,28 @@ Switch ($_IPS[\'SENDER\'])
         $form = [
             [
                 'type'    => 'Label',
-                'caption' => '1. Read Logitech Harmony Hub configuration:',],
+                'caption' => '1. Read Logitech Harmony Hub configuration:', ],
             [
                 'type'    => 'Button',
                 'caption' => 'Read configuration',
-                'onClick' => 'HarmonyHub_getConfig($id);',],
+                'onClick' => 'HarmonyHub_getConfig($id);', ],
             [
                 'type'    => 'Label',
-                'caption' => '2. Setup Harmony Activities:',],
+                'caption' => '2. Setup Harmony Activities:', ],
             [
                 'type'    => 'Button',
                 'caption' => 'Setup Harmony',
-                'onClick' => 'HarmonyHub_SetupHarmony($id);',],
+                'onClick' => 'HarmonyHub_SetupHarmony($id);', ],
             [
                 'type'    => 'Label',
-                'caption' => '3. close this instance and open the Harmony configurator for setup of the devices.',],
+                'caption' => '3. close this instance and open the Harmony configurator for setup of the devices.', ],
             [
                 'type'    => 'Label',
-                'caption' => 'reload firmware version and Logitech Harmony Hub name:',],
+                'caption' => 'reload firmware version and Logitech Harmony Hub name:', ],
             [
                 'type'    => 'Button',
                 'caption' => 'update Harmony info',
-                'onClick' => 'HarmonyHub_getDiscoveryInfo($id);',],];
+                'onClick' => 'HarmonyHub_getDiscoveryInfo($id);', ], ];
 
         return $form;
     }
@@ -1541,43 +1541,43 @@ Switch ($_IPS[\'SENDER\'])
             [
                 'code'    => 101,
                 'icon'    => 'inactive',
-                'caption' => 'Creating instance.',],
+                'caption' => 'Creating instance.', ],
             [
                 'code'    => 102,
                 'icon'    => 'active',
-                'caption' => 'Harmony Hub accessible.',],
+                'caption' => 'Harmony Hub accessible.', ],
             [
                 'code'    => 104,
                 'icon'    => 'inactive',
-                'caption' => 'interface closed.',],
+                'caption' => 'interface closed.', ],
             [
                 'code'    => 201,
                 'icon'    => 'inactive',
-                'caption' => 'Please follow the instructions.',],
+                'caption' => 'Please follow the instructions.', ],
             [
                 'code'    => 202,
                 'icon'    => 'error',
-                'caption' => 'Harmony Hub IP adress must not empty.',],
+                'caption' => 'Harmony Hub IP adress must not empty.', ],
             [
                 'code'    => 203,
                 'icon'    => 'error',
-                'caption' => 'No valid IP adress.',],
+                'caption' => 'No valid IP adress.', ],
             [
                 'code'    => 204,
                 'icon'    => 'error',
-                'caption' => 'connection to the Harmony Hub lost.',],
+                'caption' => 'connection to the Harmony Hub lost.', ],
             [
                 'code'    => 205,
                 'icon'    => 'error',
-                'caption' => 'field must not be empty.',],
+                'caption' => 'field must not be empty.', ],
             [
                 'code'    => 206,
                 'icon'    => 'error',
-                'caption' => 'select category for import.',],
+                'caption' => 'select category for import.', ],
             [
                 'code'    => 207,
                 'icon'    => 'error',
-                'caption' => 'Harmony Hub IO not found.',],];
+                'caption' => 'Harmony Hub IO not found.', ], ];
 
         return $form;
     }
