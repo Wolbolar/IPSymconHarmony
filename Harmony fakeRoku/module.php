@@ -319,7 +319,7 @@ class HarmonyRokuEmulator extends IPSModule
 
     protected function GetHubActivitiesExpansionPanels($HubID, $form)
     {
-        if (strlen($HubID) == 5) {
+        if (strlen(strval($HubID)) == 5) {
             $activities        = $this->GetHubActivities($HubID);
             $number_activities = count($activities);
             if ($number_activities > 0) {
