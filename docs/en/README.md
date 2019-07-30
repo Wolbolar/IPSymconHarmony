@@ -46,10 +46,15 @@ Harmony activities can be started from IP-Symcon. When the Harmony Hub performs 
 
 - IPS 5.x.
 - Logitech Harmony Hub on the same network as IP Symcon
+- XMPP activated in the Harmony app
 
 ## 3. Installation
 
-### a. Loading the module
+### a. Enable XMPP in the Harmony app
+
+Open the Harmony app and then enable XMPP under _Harmony Setup -> Add and Edit Devices and Actions -> Remote Control / Keyboard and Hub -> Enable XMPP_.
+
+### b. Loading the module
 
 Open the IP Console's web console with _http://<IP-Symcon IP>:3777/console/_.
 
@@ -108,7 +113,7 @@ It opens another window,
 
 here you can switch to another branch, for older versions smaller than 5.1 (min 4.3) select _Old-Version_ .
 
-### b. Configuration in IPS
+### c. Configuration in IPS
 
 If scripts are to be created, they will be placed below a category. First, we create a category in the object tree _right mouse button -> add object -> category_, which we give an arbitrary name such as. _**Harmony devices**_.
 Later, all scripts for devices of the Logitech Harmony Hub will be created under this category.
