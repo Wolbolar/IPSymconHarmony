@@ -23,6 +23,7 @@ class HarmonyHub extends IPSModule
         $this->RegisterPropertyBoolean('HarmonyVars', false);
         $this->RegisterPropertyBoolean('HarmonyScript', false);
         $this->RegisterPropertyBoolean('Alexa', false);
+        $this->RegisterPropertyInteger('UpdateInterval', 40);
         $this->RegisterTimer('HarmonyHubSocketTimer', 0, 'HarmonyHub_UpdateSocket(' . $this->InstanceID . ');');
         $this->RegisterAttributeString('HarmonySessionToken', '');
         $this->RegisterAttributeString('HarmonyUserAuthToken', '');
@@ -91,7 +92,8 @@ class HarmonyHub extends IPSModule
 
     protected function SetCyclicTimerInterval()
     {
-        $this->SetTimerInterval('HarmonyHubSocketTimer', 40000);
+        $updateinterval = $this->ReadPropertyInteger('UpdateInterval') * 1000;
+        $this->SetTimerInterval('HarmonyHubSocketTimer', $updateinterval);
     }
 
     public function HarmonyReachable(bool $reachable)
@@ -1489,7 +1491,15 @@ Switch ($_IPS[\'SENDER\'])
             [
                 'name'    => 'Password',
                 'type'    => 'PasswordTextBox',
-                'caption' => 'Password', ], ];
+                'caption' => 'Password', ],
+            [
+                'type'    => 'Label',
+                'caption' => 'interval after the socket is disconnected and restored', ],
+            [
+                'name'    => 'UpdateInterval',
+                'type'    => 'NumberSpinner',
+                'caption' => 'Update Interval',
+                'suffix'  => 'seconds', ], ];
 
         return $form;
     }

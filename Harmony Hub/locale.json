@@ -37,7 +37,10 @@
       "select category for import.": "Kategorie zum Import auswählen.",
       "Alexa Smart Home Skill is available in IP-Symcon": "Alexa SmartHomeSkill ist in IP-Symcon verfügbar",
       "Would you like to create links to the Harmony actions scripts for Alexa in the SmartHomeSkill (IQL4SmartHome) instance?": "Sollen Links zum Schalten von Harmony Aktion für Alexa in der SmartHomeSkill Instanz (IQL4SmartHome) erstellt werden?",
-      "Create links for Amazon Echo / Dot": "Links für Amazon Echo /Dot anlegen"
+      "Create links for Amazon Echo / Dot": "Links für Amazon Echo /Dot anlegen",
+      "Update Interval": "Aktualisierungsintervall",
+      "seconds": "Sekunden",
+      "interval after the socket is disconnected and restored": "intervall nachdem der socket getrennt und wiederhergestellt wird"
     }
   }
 }
