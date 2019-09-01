@@ -144,11 +144,13 @@ class SSDPRoku extends IPSModule
     {
         $rokuemulators = IPS_GetInstanceListByModuleID('{8C1A1681-9CAD-A828-70B2-38DD6BD78FD0}'); // Roku Emulators
         $serverports   = [];
-        foreach ($rokuemulators as $rokuemulator) {
-            $ServerSocketPort = IPS_GetProperty($rokuemulator, 'ServerSocketPort');
-            $serverports[]    = $ServerSocketPort;
+        if(!empty($rokuemulators))
+        {
+            foreach ($rokuemulators as $rokuemulator) {
+                $ServerSocketPort = IPS_GetProperty($rokuemulator, 'ServerSocketPort');
+                $serverports[]    = $ServerSocketPort;
+            }
         }
-
         return $serverports;
     }
 
@@ -159,8 +161,11 @@ class SSDPRoku extends IPSModule
     public function TimerNotify()
     {
         $serverports = $this->GetRokuEmulatorPort();
-        foreach ($serverports as $serverport) {
-            $this->SendNotify($serverport); // und einmal jetzt
+        if(!empty($serverports))
+        {
+            foreach ($serverports as $serverport) {
+                $this->SendNotify($serverport); // und einmal jetzt
+            }
         }
     }
 
@@ -294,10 +299,12 @@ class SSDPRoku extends IPSModule
                 if (isset($Header['MAN']) and (strtolower($Header['MAN']) == '"ssdp:discover"')) {
                     //   Antworten an diesen HOST und PORT.
                     $serverports = $this->GetRokuEmulatorPort();
-                    foreach ($serverports as $serverport) {
-                        $this->SendSearchResponse($ReceiveData->ClientIP, $ReceiveData->ClientPort, $serverport);
+                    if(!empty($serverports))
+                    {
+                        foreach ($serverports as $serverport) {
+                            $this->SendSearchResponse($ReceiveData->ClientIP, $ReceiveData->ClientPort, $serverport);
+                        }
                     }
-
                     return;
                 }
                 break;
