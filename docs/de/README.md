@@ -206,9 +206,45 @@ Nach einer Weile sollte von der Harmony App Geräte im WLAN gefunden worden sein
 Wenn man hier auf das _i_ (Infozeichen) klickt sollte bei Name IP-Symcon (Roku Device) stehen. Mit _Weiter_ wird das Gerät den Geräten des Harmony Hub hinzugefügt.
 Das Gerät kann jetzt entweder aus der App einzeln geschaltet werden oder das Gerät wird in Harmony Aktionen eingebunden.
 
-In IP-Symcon zeigt die Instanz _Logitech Harmony Roku Emulator_ den letzten Tastendruck an der beim Gerät Roku Emulator erfolgt ist. In der Instanz können pro Aktion den Tastenbefehlen ein Skript zugewiesen werden das ausgeführt wird sobald die Taste gedrückt worden ist.
+#### Beispiel bei Play Licht herunter dimmen und bei Pause hochdimmen
+
+Nachdem das Roku Gerät hinzugefügt wurde, wird dies zusätzlich in die Harmony Aktion eingebunden in der die Tastendrücke ausgewertet werden sollen.
+
+![TVRoku1](img/tv_roku1.png?raw=true "TVRoku1") 
+
+Anschließend wechselt man nun zu den Einstellungen der Tastenbelegung in MyHarmony und weist der Taste einen Befehl des _IP-Symcon Roku 3_ Geräts zu
+
+![TVRoku2](img/tv_roku2.png?raw=true "TVRoku2") 
+
+In IP-Symcon zeigt die Instanz _Logitech Harmony Roku Emulator_ den letzten Tastendruck an der beim Gerät Roku Emulator erfolgt ist.
+ 
+![TVRoku3](img/tv_roku3.png?raw=true "TVRoku3") 
+
+In der Instanz können pro Aktion den Tastenbefehlen ein Skript zugewiesen werden das ausgeführt wird sobald die Taste gedrückt worden ist.
+
+![TVRoku4](img/tv_roku4.png?raw=true "TVRoku4") 
+
+Es werden nur die in IP-Symcon ausgewiesenen Befehle von der Harmony Remote an IP-Symcon übergeben. Man kann also z.B. beim Tastendruck auf Play den Befehl _Play_ und beim Tastendruck von Pause
+den Befehl _Instant Replay_ in der MyHarmony App zuweisen. Jetzt muss das passende Skript noch zugewiesen werden, im Beipiel Bild heißen die Skripte _Pause Beleuchtung hochdimmen_ und _Pause Beleuchtung abdimmen_.
+Die jeweiligen Skripte umfassen nun alle Befehle die ausgeführt werden sollen sobald die Play Taste gedrückt wird. Das ist in der Regel die Standardfunktion des Geräts das in der Harmony Aktion gesteuert wird und noch weitere Befehle.
+
+Eine Beispiel für das Abdimmen einer Hue Lampe bei Play
+
+```php
+<?php
+IPS_RunScript(53512); // Dreambox Play
+$list = ["BRIGHTNESS" => 0, "TRANSITIONTIME" => 40];// Helligkeit in (0 bis 254), transitiontime x 100ms 10 entspricht 1 s
+$lightId = 33485; // Coachlampen
+HUE_SetValues($lightId, $list);
+``` 
+
+Es können in dem Skript dann beliebige Geräte, die aus IP-Symcon ansteuerbar sind, angesprochen werden. Man kann also so bei einem Tastendruck z.B. auch KNX, LCN, Homematic, Hue usw. dimmen.
+
+Die Einstellungen sind pro Harmony Aktion vorzunehmen in der Tastendrücke ausgewertet werden sollen.
+
 So kann man dann das Gerät in die Harmony Aktionen, in denen man einen Tastaturdruck der Harmony Remote auswerten will, einbinden und auf die Tasten der Harmony legen.
 IP-Symcon wertet dann diesen Tastendruck aus und ein ein beliebiges Gerät, das von IP-Symcon gesteuert wird, kann so geschaltet werden.
+
 
 ## 4. Funktionsreferenz
 
