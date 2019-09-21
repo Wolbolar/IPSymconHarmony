@@ -201,7 +201,7 @@ Dazu ist zunächst in IP-Symcon unter Splitter eine neue Instanz _SSDP Roku_ anz
 
 Anschließend wird eine weitere Instanz _Logitech Harmony Roku Emulator_ angelegt.
 
-Jetzt kann in der Harmony App das Gerät gesucht und hinzugefügt werden. Dazu ist in der Harmony App _Harmony-Eeinrichtung_ -> _Geräte und Aktionen hinzufügen und bearbeiten_ -> _Geräte_ -> _Gerät hinzufügen_ -> _WLAN-Geräte suchen_ anzuklicken.
+Jetzt kann in der Harmony App das Gerät gesucht und hinzugefügt werden. Dazu ist in der Harmony App _Harmony-Einrichtung_ -> _Geräte und Aktionen hinzufügen und bearbeiten_ -> _Geräte_ -> _Gerät hinzufügen_ -> _WLAN-Geräte suchen_ anzuklicken.
 Nach einer Weile sollte von der Harmony App Geräte im WLAN gefunden worden sein und eine Auswahl der gefundenen Geräte angezeigt werden. Es sollte auch ein Eintrag _Roku 3_ vorhanden sein.
 Wenn man hier auf das _i_ (Infozeichen) klickt sollte bei Name IP-Symcon (Roku Device) stehen. Mit _Weiter_ wird das Gerät den Geräten des Harmony Hub hinzugefügt.
 Das Gerät kann jetzt entweder aus der App einzeln geschaltet werden oder das Gerät wird in Harmony Aktionen eingebunden.
@@ -243,7 +243,7 @@ Es können in dem Skript dann beliebige Geräte, die aus IP-Symcon ansteuerbar s
 Die Einstellungen sind pro Harmony Aktion vorzunehmen in der Tastendrücke ausgewertet werden sollen.
 
 So kann man dann das Gerät in die Harmony Aktionen, in denen man einen Tastaturdruck der Harmony Remote auswerten will, einbinden und auf die Tasten der Harmony legen.
-IP-Symcon wertet dann diesen Tastendruck aus und ein ein beliebiges Gerät, das von IP-Symcon gesteuert wird, kann so geschaltet werden.
+IP-Symcon wertet dann diesen Tastendruck aus und ein beliebiges Gerät, das von IP-Symcon gesteuert wird, kann so geschaltet werden.
 
 
 ## 4. Funktionsreferenz
