@@ -56,7 +56,7 @@ Open the Harmony app and then enable XMPP under _Harmony Setup -> Add and Edit D
 
 ### b. Loading the module
 
-Open the IP Console's web console with _http://<IP-Symcon IP>:3777/console/_.
+Open the IP Console's web console with _http://{IP-Symcon IP}:3777/console/_.
 
 Then click on the module store (IP-Symcon > 5.1) icon in the upper right corner.
 
