@@ -64,9 +64,14 @@ class SSDPRoku extends IPSModule
         }
     }
 
-    /**
-     * Interne Funktion des SDK.
+    /** Interne Funktion des SDK.
      * Verarbeitet alle Nachrichten auf die wir uns registriert haben.
+     * @param $TimeStamp
+     * @param $SenderID
+     * @param $Message
+     * @param $Data
+     *
+     * @return bool|void
      */
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
@@ -172,71 +177,81 @@ class SSDPRoku extends IPSModule
     protected function GetParent()
     {
         $instance = IPS_GetInstance($this->InstanceID); //array
-        return ($instance['ConnectionID'] > 0) ? $instance['ConnectionID'] : false; //ConnectionID
+        return ($instance['ConnectionID'] > 0) ? $instance['ConnectionID'] : 0; //ConnectionID
     }
 
-    /**
-     * Versendet ein NOTIFY.
+    /** Versendet ein NOTIFY.
+     * @param int $serverport
      */
     protected function SendNotify(int $serverport)
     {
-        $parent_form = IPS_GetConfiguration($this->GetParent());
-        $bind_ip     = json_decode($parent_form, true)['BindIP'];
+        $parent = $this->GetParent();
+        if($parent > 0)
+        {
+            $parent_form = IPS_GetConfiguration($parent);
+            $bind_ip     = json_decode($parent_form, true)['BindIP'];
 
-        $Header[] = 'NOTIFY * HTTP/1.1';
-        $Header[] = 'HOST: 239.255.255.250:1900';
-        $Header[] = 'CACHE-CONTROL: max-age=300';
-        $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
-        // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
-        // $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
-        //$Header[] = "NT: roku:ecp";
-        //$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
-        //$Header[] = "USN: uuid:" . $this->MySerial.'::roku:ecp:';
-        $Header[] = 'NT: upnp:rootdevice';
-        $Header[] = 'USN: uuid:' . $this->MySerial . '::upnp:rootdevice';
-        $Header[] = 'NTS: ssdp:alive';
-        $Header[] = 'SERVER: Roku/1.0 UPnP/1.1';
-        $Header[] = 'Content_Length: 0';
-        $Header[] = '';
-        $Header[] = '';
-        $Payload  = implode("\r\n", $Header);
-        if ($this->ReadPropertyBoolean('ExtendedDebug')) {
-            $this->SendDebug('SendNotify', $Payload, 0);
+            $Header[] = 'NOTIFY * HTTP/1.1';
+            $Header[] = 'HOST: 239.255.255.250:1900';
+            $Header[] = 'CACHE-CONTROL: max-age=300';
+            $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
+            // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
+            // $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
+            //$Header[] = "NT: roku:ecp";
+            //$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
+            //$Header[] = "USN: uuid:" . $this->MySerial.'::roku:ecp:';
+            $Header[] = 'NT: upnp:rootdevice';
+            $Header[] = 'USN: uuid:' . $this->MySerial . '::upnp:rootdevice';
+            $Header[] = 'NTS: ssdp:alive';
+            $Header[] = 'SERVER: Roku/1.0 UPnP/1.1';
+            $Header[] = 'Content_Length: 0';
+            $Header[] = '';
+            $Header[] = '';
+            $Payload  = implode("\r\n", $Header);
+            if ($this->ReadPropertyBoolean('ExtendedDebug')) {
+                $this->SendDebug('SendNotify', $Payload, 0);
+            }
+            $SendData = [
+                'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
+                'Buffer'     => utf8_encode($Payload),
+                'ClientIP'   => '239.255.255.250',
+                'ClientPort' => 1900, ];
+            //        $this->SendDebug("SendToParent", $SendData, 0);
+            $this->SendDataToParent(json_encode($SendData));
         }
-        $SendData = [
-            'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
-            'Buffer'     => utf8_encode($Payload),
-            'ClientIP'   => '239.255.255.250',
-            'ClientPort' => 1900, ];
-        //        $this->SendDebug("SendToParent", $SendData, 0);
-        $this->SendDataToParent(json_encode($SendData));
     }
 
-    /**
-     * Antwort auf M-SEARCH.
+    /** Antwort auf M-SEARCH.
+     * @param string $Host
+     * @param int    $Port
+     * @param int    $serverport
      */
     public function SendSearchResponse(string $Host, int $Port, int $serverport)
     {
-        $parent_form = IPS_GetConfiguration($this->GetParent());
-        $bind_ip     = json_decode($parent_form, true)['BindIP'];
+        $parent = $this->GetParent();
+        if($parent > 0)
+        {
+            $parent_form = IPS_GetConfiguration($parent);
+            $bind_ip     = json_decode($parent_form, true)['BindIP'];
 
-        $Header[] = 'HTTP/1.1 200 OK';
-        $Header[] = 'CACHE-CONTROL: max-age=300';
-        $Header[] = 'ST: roku:ecp';
-        $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
-        // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
-        //$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
-        $Header[] = 'USN: uuid:roku:ecp:' . $this->MySerial;
-        $Header[] = '';
-        $Header[] = '';
-        $Payload  = implode("\r\n", $Header);
-        if ($this->ReadPropertyBoolean('ExtendedDebug')) {
-            $this->SendDebug('SendSearchResponse', $Payload, 0);
+            $Header[] = 'HTTP/1.1 200 OK';
+            $Header[] = 'CACHE-CONTROL: max-age=300';
+            $Header[] = 'ST: roku:ecp';
+            $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
+            // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
+            //$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
+            $Header[] = 'USN: uuid:roku:ecp:' . $this->MySerial;
+            $Header[] = '';
+            $Header[] = '';
+            $Payload  = implode("\r\n", $Header);
+            if ($this->ReadPropertyBoolean('ExtendedDebug')) {
+                $this->SendDebug('SendSearchResponse', $Payload, 0);
+            }
+            $SendData =
+                ['DataID' => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}', 'Buffer' => utf8_encode($Payload), 'ClientIP' => $Host, 'ClientPort' => $Port];
+            // $this->SendDebug("SendToParent", $SendData, 0);
+            $this->SendDataToParent(json_encode($SendData));
         }
-        $SendData =
-            ['DataID' => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}', 'Buffer' => utf8_encode($Payload), 'ClientIP' => $Host, 'ClientPort' => $Port];
-        // $this->SendDebug("SendToParent", $SendData, 0);
-        $this->SendDataToParent(json_encode($SendData));
     }
 
     private function ParseHeader($Lines)
