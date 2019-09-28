@@ -66,6 +66,7 @@ class SSDPRoku extends IPSModule
 
     /** Interne Funktion des SDK.
      * Verarbeitet alle Nachrichten auf die wir uns registriert haben.
+     *
      * @param $TimeStamp
      * @param $SenderID
      * @param $Message
