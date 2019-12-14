@@ -66,7 +66,6 @@ class SSDPRoku extends IPSModule
 
     /** Interne Funktion des SDK.
      * Verarbeitet alle Nachrichten auf die wir uns registriert haben.
-     *
      * @param $TimeStamp
      * @param $SenderID
      * @param $Message
@@ -167,6 +166,7 @@ class SSDPRoku extends IPSModule
     public function TimerNotify()
     {
         $serverports = $this->GetRokuEmulatorPort();
+        $this->SendDebug('Roku Ports', json_encode($serverports), 0);
         if(!empty($serverports))
         {
             foreach ($serverports as $serverport) {
@@ -315,6 +315,7 @@ class SSDPRoku extends IPSModule
                 if (isset($Header['MAN']) and (strtolower($Header['MAN']) == '"ssdp:discover"')) {
                     //   Antworten an diesen HOST und PORT.
                     $serverports = $this->GetRokuEmulatorPort();
+                    $this->SendDebug('Roku Ports', json_encode($serverports), 0);
                     if(!empty($serverports))
                     {
                         foreach ($serverports as $serverport) {
