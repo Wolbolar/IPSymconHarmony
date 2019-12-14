@@ -234,7 +234,7 @@ class HarmonyHub extends IPSModule
             IPS_SetName($ScriptID, $Scriptname);
             IPS_SetParent($ScriptID, $MainCatID);
             IPS_SetIdent($ScriptID, $scriptident);
-            $content = '<?
+            $content = '<?php
 Switch ($_IPS[\'SENDER\']) 
     { 
     Default: 
@@ -478,9 +478,12 @@ Switch ($_IPS[\'SENDER\'])
             $this->RegisterProfileIntegerHarmonyAss(
                 'LogitechHarmony.Activity' . $hubipident, 'Popcorn', '', '', -1, ($profilemax + 1), 0, 0, $ProfileAssActivities
             );
-            $this->RegisterVariableInteger('HarmonyActivity', 'Harmony Activity', 'LogitechHarmony.Activity' . $hubipident, 12);
+            $this->RegisterVariableInteger('HarmonyActivity', $this->Translate('Harmony Activity'), 'LogitechHarmony.Activity' . $hubipident, 12);
             $this->EnableAction('HarmonyActivity');
+            $this->RegisterVariableInteger('HarmonyActivityStarted', $this->Translate('Harmony Activity Started'), 'LogitechHarmony.Activity' . $hubipident, 13);
+            $this->RegisterVariableInteger('HarmonyActivityPrevious', $this->Translate('Harmony Previous Activity'), 'LogitechHarmony.Activity' . $hubipident, 13);
             SetValueInteger($this->GetIDForIdent('HarmonyActivity'), -1);
+            SetValueInteger($this->GetIDForIdent('HarmonyActivityStarted'), -1);
         }
     }
 
@@ -572,6 +575,33 @@ Switch ($_IPS[\'SENDER\'])
                 $ActivityName    = array_search($CurrentActivity, $activities);
                 IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished');
                 SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
+            } elseif (strpos($content, 'connect.stateDigest?notify')) { // Notify Message
+                $this->DeleteBuffer();
+                $bufferdelete = true;
+                //CDATA auslesen
+                $content = $this->XMPP_getPayload($content);
+                // $type = $content['type']; // notify
+                //  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
+                if (isset($content['activityId'])) {
+                    $CurrentActivity = intval($content['activityId']);
+                    $activityStatus  = intval($content['activityStatus']);
+                    $activities      = $this->GetAvailableAcitivities();
+                    $ActivityName    = array_search($CurrentActivity, $activities);
+                    if ($activityStatus == 2) {
+                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
+                        $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
+                        $this->SetValue('HarmonyActivity', $CurrentActivity);
+                        $this->SetValue('HarmonyActivityPrevious', $previous_activity);
+                    } elseif ($activityStatus == 1) {
+                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
+                        $this->SetValue('HarmonyActivityStarted', $CurrentActivity);
+                    } elseif ($activityStatus == 0) {
+                        IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
+                        $this->SetValue('HarmonyActivity', $CurrentActivity);
+                        $this->SetValue('HarmonyActivityPrevious', $previous_activity);
+                    }
+                }
             } elseif (strpos($content, 'connect.stateDigest?notify')) { // Notify Message
                 $this->DeleteBuffer();
                 $bufferdelete = true;
@@ -1674,5 +1704,32 @@ Switch ($_IPS[\'SENDER\'])
         }
 
         return $value;
+    }
+
+    /***********************************************************
+     * Migrations
+     ***********************************************************/
+
+    /**
+     * Polyfill for IP-Symcon 4.4 and older
+     * @param string $Ident
+     * @param mixed $Value
+     */
+    //Add this Polyfill for IP-Symcon 4.4 and older
+    protected function SetValue($Ident, $Value)
+    {
+        $valuestring = $Value;
+        if (IPS_GetKernelVersion() >= 5) {
+            parent::SetValue($Ident, $Value);
+        } else {
+            SetValue($this->GetIDForIdent($Ident), $Value);
+        }
+        if ($Value === true) {
+            $valuestring = "true";
+        }
+        if ($Value === false) {
+            $valuestring = "false";
+        }
+        $this->SendDebug("SetValue", "Set variable with objid" . $this->GetIDForIdent($Ident) . " and ident " . $Ident . " to " . $valuestring, 0);
     }
 }
