@@ -48,6 +48,7 @@ class SSDPRoku extends IPSModule
         // Wenn sich unserer IO ändert, wollen wir das auch wissen.
         $this->RegisterMessage($this->InstanceID, FM_CONNECT);
         $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
+        $this->SetReceiveDataFilter(".*M-SEARCH * HTTP/1.1.*");
 
         parent::ApplyChanges();
 
