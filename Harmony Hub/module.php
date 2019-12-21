@@ -262,7 +262,7 @@ Switch ($_IPS[\'SENDER\'])
     Case "WebFront":        // Zum schalten im Webfront 
         HarmonyHub_startActivity(' . $this->InstanceID . ', ' . $activity . ');   
     }  
-?>';
+';
             IPS_SetScriptContent($ScriptID, $content);
         }
 
@@ -597,9 +597,7 @@ Switch ($_IPS[\'SENDER\'])
                         $this->SetValue('HarmonyActivityStarted', $CurrentActivity);
                     } elseif ($activityStatus == 0) {
                         IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
-                        $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
                         $this->SetValue('HarmonyActivity', $CurrentActivity);
-                        $this->SetValue('HarmonyActivityPrevious', $previous_activity);
                     }
                 }
             } elseif (strpos($content, 'connect.stateDigest?notify')) { // Notify Message
