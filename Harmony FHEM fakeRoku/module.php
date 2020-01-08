@@ -29,19 +29,19 @@ class HarmonyfakeRoku extends IPSModule
 
         $this->RegisterProfileAssociation(
             'LogitechHarmony.FakeRoku', 'Keyboard', '', '', 0, 1, 0, 0, 1, [
-                                          [0, $this->Translate('Up'), '', -1],
-                                          [1, $this->Translate('Down'), '', -1],
-                                          [2, $this->Translate('Left'), '', -1],
-                                          [3, $this->Translate('Right'), '', -1],
-                                          [4, $this->Translate('Select'), '', -1],
-                                          [5, $this->Translate('Back'), '', -1],
-                                          [6, $this->Translate('Play'), '', -1],
-                                          [7, $this->Translate('Reverse'), '', -1],
-                                          [8, $this->Translate('Forward'), '', -1],
-                                          [9, $this->Translate('Search'), '', -1],
-                                          [10, $this->Translate('info'), '', -1],
-                                          [11, $this->Translate('Home'), '', -1],
-                                          [12, $this->Translate('Instant Replay'), '', -1], ]
+                [0, $this->Translate('Up'), '', -1],
+                [1, $this->Translate('Down'), '', -1],
+                [2, $this->Translate('Left'), '', -1],
+                [3, $this->Translate('Right'), '', -1],
+                [4, $this->Translate('Select'), '', -1],
+                [5, $this->Translate('Back'), '', -1],
+                [6, $this->Translate('Play'), '', -1],
+                [7, $this->Translate('Reverse'), '', -1],
+                [8, $this->Translate('Forward'), '', -1],
+                [9, $this->Translate('Search'), '', -1],
+                [10, $this->Translate('info'), '', -1],
+                [11, $this->Translate('Home'), '', -1],
+                [12, $this->Translate('Instant Replay'), '', -1], ]
         );
 
         $this->RegisterVariableInteger('KeyFakeRoku', 'Roku Emulator', 'LogitechHarmony.FakeRoku', $this->_getPosition());
@@ -342,80 +342,80 @@ class HarmonyfakeRoku extends IPSModule
                 foreach ($activities as $key => $activity) {
                     $form = array_merge_recursive(
                         $form, [
-                                 [
-                                     'type'    => 'ExpansionPanel',
-                                     'caption' => $key,
-                                     'items'   => [
-                                         [
-                                             'type'     => 'List',
-                                             'name'     => $this->GetListName($HubID, $activity),
-                                             'caption'  => 'Roku Emulator Keys',
-                                             'rowCount' => 13,
-                                             'add'      => false,
-                                             'delete'   => false,
-                                             'sort'     => [
-                                                 'column'    => 'command',
-                                                 'direction' => 'ascending', ],
-                                             'columns'  => [
-                                                 [
-                                                     'name'    => 'command',
-                                                     'label'   => 'command',
-                                                     'width'   => '200px',
-                                                     'save'    => true,
-                                                     'visible' => true, ],
-                                                 [
-                                                     'name'  => 'rokuscript',
-                                                     'label' => 'script',
-                                                     'width' => 'auto',
-                                                     'save'  => true,
-                                                     'edit'  => [
-                                                         'type' => 'SelectScript', ], ],
-                                                 [
-                                                     'name'    => 'key_id',
-                                                     'label'   => 'Key ID',
-                                                     'width'   => 'auto',
-                                                     'save'    => true,
-                                                     'visible' => false, ], ],
-                                             'values'   => [
-                                                 [
-                                                     'command' => 'Up',
-                                                     'key_id'  => 0, ],
-                                                 [
-                                                     'command' => 'Down',
-                                                     'key_id'  => 1, ],
-                                                 [
-                                                     'command' => 'Left',
-                                                     'key_id'  => 2, ],
-                                                 [
-                                                     'command' => 'Right',
-                                                     'key_id'  => 3, ],
-                                                 [
-                                                     'command' => 'Select',
-                                                     'key_id'  => 4, ],
-                                                 [
-                                                     'command' => 'Back',
-                                                     'key_id'  => 5, ],
-                                                 [
-                                                     'command' => 'Play',
-                                                     'key_id'  => 6, ],
-                                                 [
-                                                     'command' => 'Reverse',
-                                                     'key_id'  => 7, ],
-                                                 [
-                                                     'command' => 'Forward',
-                                                     'key_id'  => 8, ],
-                                                 [
-                                                     'command' => 'Search',
-                                                     'key_id'  => 9, ],
-                                                 [
-                                                     'command' => 'Info',
-                                                     'key_id'  => 10, ],
-                                                 [
-                                                     'command' => 'Home',
-                                                     'key_id'  => 11, ],
-                                                 [
-                                                     'command' => 'Instant Replay',
-                                                     'key_id'  => 12, ], ], ], ], ], ]
+                            [
+                                'type'    => 'ExpansionPanel',
+                                'caption' => $key,
+                                'items'   => [
+                                    [
+                                        'type'     => 'List',
+                                        'name'     => $this->GetListName($HubID, $activity),
+                                        'caption'  => 'Roku Emulator Keys',
+                                        'rowCount' => 13,
+                                        'add'      => false,
+                                        'delete'   => false,
+                                        'sort'     => [
+                                            'column'    => 'command',
+                                            'direction' => 'ascending', ],
+                                        'columns'  => [
+                                            [
+                                                'name'    => 'command',
+                                                'label'   => 'command',
+                                                'width'   => '200px',
+                                                'save'    => true,
+                                                'visible' => true, ],
+                                            [
+                                                'name'  => 'rokuscript',
+                                                'label' => 'script',
+                                                'width' => 'auto',
+                                                'save'  => true,
+                                                'edit'  => [
+                                                    'type' => 'SelectScript', ], ],
+                                            [
+                                                'name'    => 'key_id',
+                                                'label'   => 'Key ID',
+                                                'width'   => 'auto',
+                                                'save'    => true,
+                                                'visible' => false, ], ],
+                                        'values'   => [
+                                            [
+                                                'command' => 'Up',
+                                                'key_id'  => 0, ],
+                                            [
+                                                'command' => 'Down',
+                                                'key_id'  => 1, ],
+                                            [
+                                                'command' => 'Left',
+                                                'key_id'  => 2, ],
+                                            [
+                                                'command' => 'Right',
+                                                'key_id'  => 3, ],
+                                            [
+                                                'command' => 'Select',
+                                                'key_id'  => 4, ],
+                                            [
+                                                'command' => 'Back',
+                                                'key_id'  => 5, ],
+                                            [
+                                                'command' => 'Play',
+                                                'key_id'  => 6, ],
+                                            [
+                                                'command' => 'Reverse',
+                                                'key_id'  => 7, ],
+                                            [
+                                                'command' => 'Forward',
+                                                'key_id'  => 8, ],
+                                            [
+                                                'command' => 'Search',
+                                                'key_id'  => 9, ],
+                                            [
+                                                'command' => 'Info',
+                                                'key_id'  => 10, ],
+                                            [
+                                                'command' => 'Home',
+                                                'key_id'  => 11, ],
+                                            [
+                                                'command' => 'Instant Replay',
+                                                'key_id'  => 12, ], ], ], ], ], ]
                     );
                 }
             }
@@ -479,21 +479,21 @@ class HarmonyfakeRoku extends IPSModule
         if ($number_hubs == 0) {
             $form = array_merge_recursive(
                 $form, [
-                         [
-                             'type'  => 'Label',
-                             'label' => 'No hub found, please configure harmony hub first', ], ]
+                    [
+                        'type'  => 'Label',
+                        'label' => 'No hub found, please configure harmony hub first', ], ]
             );
         } else {
             $form = array_merge_recursive(
                 $form, [
-                         [
-                             'type'  => 'Label',
-                             'label' => 'Please select the Harmony Hub for configuration:', ],
-                         [
-                             'name'    => 'HarmonyHubObjID',
-                             'type'    => 'Select',
-                             'caption' => 'Harmony Hub',
-                             'options' => $this->GetHarmonyHubList(), ], ]
+                    [
+                        'type'  => 'Label',
+                        'label' => 'Please select the Harmony Hub for configuration:', ],
+                    [
+                        'name'    => 'HarmonyHubObjID',
+                        'type'    => 'Select',
+                        'caption' => 'Harmony Hub',
+                        'options' => $this->GetHarmonyHubList(), ], ]
             );
         }
 
@@ -501,9 +501,9 @@ class HarmonyfakeRoku extends IPSModule
         if ($HarmonyHubObjID > 0) {
             $form = array_merge_recursive(
                 $form, [
-                         [
-                             'type'  => 'Label',
-                             'label' => 'configure activities', ], ]
+                    [
+                        'type'  => 'Label',
+                        'label' => 'configure activities', ], ]
             );
             $form = $this->GetHubActivitiesExpansionPanels($HarmonyHubObjID, $form);
         }

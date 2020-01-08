@@ -576,14 +576,14 @@ class HarmonyDevice extends IPSModule
         if ($CheckVolumeControl) {
             $form = array_merge_recursive(
                 $form, [
-                         [
-                             'name'    => 'VolumeControl',
-                             'type'    => 'CheckBox',
-                             'caption' => 'Volume Control', ],
-                         [
-                             'name'    => 'MaxStepVolume',
-                             'type'    => 'NumberSpinner',
-                             'caption' => 'Steps Volume', ], ]
+                    [
+                        'name'    => 'VolumeControl',
+                        'type'    => 'CheckBox',
+                        'caption' => 'Volume Control', ],
+                    [
+                        'name'    => 'MaxStepVolume',
+                        'type'    => 'NumberSpinner',
+                        'caption' => 'Steps Volume', ], ]
             );
         }
 
