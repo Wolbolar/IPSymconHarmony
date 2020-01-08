@@ -128,7 +128,7 @@ class HarmonyDiscovery extends IPSModule
 
     private function DiscoverDevices(): array
     {
-        $devices = $this->mSearch();
+        $devices = $this->mSearch('urn:myharmony-com:device:harmony:1');
         $this->SendDebug('Discover Response:', json_encode($devices), 0);
         $harmony_info = $this->GetHarmonyInfo($devices);
         foreach ($harmony_info as $device) {
