@@ -705,10 +705,10 @@ Switch ($_IPS[\'SENDER\'])
         if ($category) {
             $form = array_merge_recursive(
                 $form, [
-                    [
-                        'name'    => 'script_category',
-                        'type'    => 'SelectCategory',
-                        'caption' => 'Script category', ], ]
+                         [
+                             'name'    => 'script_category',
+                             'type'    => 'SelectCategory',
+                             'caption' => 'Script category', ], ]
             );
         }
 

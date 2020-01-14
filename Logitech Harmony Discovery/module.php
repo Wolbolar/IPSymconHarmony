@@ -128,7 +128,7 @@ class HarmonyDiscovery extends IPSModule
 
     private function DiscoverDevices(): array
     {
-        $devices = $this->mSearch('urn:myharmony-com:device:harmony:1');
+        $devices = $this->mSearch();
         $this->SendDebug('Discover Response:', json_encode($devices), 0);
         $harmony_info = $this->GetHarmonyInfo($devices);
         foreach ($harmony_info as $device) {
@@ -141,29 +141,115 @@ class HarmonyDiscovery extends IPSModule
         return $harmony_info;
     }
 
-    protected function mSearch($st = 'upnp:rootdevice')
+    protected function mSearch($st = 'upnp:rootdevice', $mx = 2, $man = 'ssdp:discover', $from = null, $port = null, $sockTimout = 3)
     {
-        $ssdp_ids = IPS_GetInstanceListByModuleID('{FFFFA648-B296-E785-96ED-065F7CEE6F29}');
-        $ssdp_id = $ssdp_ids[0];
-        $devices = YC_SearchDevices($ssdp_id, $st);
+        $user_agent = 'MacOSX/10.8.2 UPnP/1.1 PHP-UPnP/0.0.1a';
+        // BUILD MESSAGE
+        $msg = 'M-SEARCH * HTTP/1.1' . "\r\n";
+        $msg .= 'HOST: 239.255.255.250:1900' . "\r\n";
+        $msg .= 'MAN: "' . $man . '"' . "\r\n";
+        $msg .= 'MX: ' . $mx . "\r\n";
+        $msg .= 'ST:' . $st . "\r\n";
+        $msg .= 'USER-AGENT: ' . $user_agent . "\r\n";
+        $msg .= '' . "\r\n";
+        // MULTICAST MESSAGE
+        $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        if (!$socket) {
+            return [];
+        }
+        socket_set_option($socket, SOL_SOCKET, SO_BROADCAST, true);
+        socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, true);
+        // SET TIMEOUT FOR RECIEVE
+        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => $sockTimout, 'usec' => 100000]);
+        //socket_bind($socket, '0.0.0.0', 0);
+        if (@socket_sendto($socket, $msg, strlen($msg), 0, '239.255.255.250', 1900) === false) {
+            return [];
+        }
+        // RECIEVE RESPONSE
+        $response = [];
+        do {
+            $buf   = null;
+            $bytes = @socket_recvfrom($socket, $buf, 2048, 0, $from, $port);
+            if ($bytes === false) {
+                break;
+            }
+            if (!is_null($buf)) {
+                $response[] = $this->parseMSearchResponse($buf);
+            }
+        } while (!is_null($buf));
+        // CLOSE SOCKET
+        socket_close($socket);
         $harmony_response = [];
-        $i = 0;
-        foreach($devices as $device)
-        {
-            if(isset($device['ST']))
-            {
-                if($device['ST'] == 'urn:myharmony-com:device:harmony:1')
-                {
-                    $uuid               = str_ireplace('uuid:', '', $device['USN']);
+        foreach ($response as $device) {
+            if (isset($device['st'])) {
+                if ($device['st'] == 'urn:myharmony-com:device:harmony:1') {
+                    $uuid               = str_ireplace('uuid:', '', $device['usn']);
                     $cutoff             = strpos($uuid, '::');
                     $uuid               = substr($uuid, 0, $cutoff);
-                    $harmony_response[$i]['uuid'] = $uuid;
-                    $harmony_response[$i]['location'] = $device['Location'];
-                    $i++;
+                    $harmony_response[] = ['uuid' => $uuid, 'location' => $device['location']];
                 }
             }
         }
+
         return $harmony_response;
+    }
+
+    protected function parseMSearchResponse($response)
+    {
+        $responseArr    = explode("\r\n", $response);
+        $parsedResponse = [];
+        foreach ($responseArr as $key => $row) {
+            if (stripos($row, 'http') === 0) {
+                $parsedResponse['http'] = $row;
+                $this->SendDebug('Discovered Device http:', json_encode($parsedResponse['http']), 0);
+            }
+            if (stripos($row, 'cach') === 0) {
+                $parsedResponse['cache-control'] = str_ireplace('cache-control: ', '', $row);
+                $this->SendDebug('Discovered Device cache-control:', json_encode($parsedResponse['cache-control']), 0);
+            }
+            if (stripos($row, 'date') === 0) {
+                $parsedResponse['date'] = str_ireplace('date: ', '', $row);
+                $this->SendDebug('Discovered Device date:', json_encode($parsedResponse['date']), 0);
+            }
+            if (stripos($row, 'ext') === 0) {
+                $parsedResponse['ext'] = str_ireplace('ext: ', '', $row);
+                $this->SendDebug('Discovered Device ext:', json_encode($parsedResponse['ext']), 0);
+            }
+            if (stripos($row, 'loca') === 0) {
+                $parsedResponse['location'] = str_ireplace('location: ', '', $row);
+                $this->SendDebug('Discovered Device location:', json_encode($parsedResponse['location']), 0);
+            }
+            if (stripos($row, 'serv') === 0) {
+                $parsedResponse['server'] = str_ireplace('server: ', '', $row);
+                $this->SendDebug('Discovered Device server:', json_encode($parsedResponse['server']), 0);
+            }
+            if (stripos($row, 'st:') === 0) {
+                $parsedResponse['st'] = str_ireplace('st: ', '', $row);
+                $this->SendDebug('Discovered Device st:', json_encode($parsedResponse['st']), 0);
+            }
+            if (stripos($row, 'usn:') === 0) {
+                $parsedResponse['usn'] = str_ireplace('usn: ', '', $row);
+                $this->SendDebug('Discovered Device usn:', json_encode($parsedResponse['usn']), 0);
+            }
+            if (stripos($row, 'cont') === 0) {
+                $parsedResponse['content-length'] = str_ireplace('content-length: ', '', $row);
+                $this->SendDebug('Discovered Device content-length:', json_encode($parsedResponse['content-length']), 0);
+            }
+            if (stripos($row, 'nt:') === 0) {
+                $parsedResponse['nt'] = str_ireplace('nt: ', '', $row);
+                $this->SendDebug('Discovered Device nt:', json_encode($parsedResponse['nt']), 0);
+            }
+            if (stripos($row, 'nl-deviceid') === 0) {
+                $parsedResponse['nl-deviceid'] = str_ireplace('nl-deviceid: ', '', $row);
+                $this->SendDebug('Discovered Device nl-deviceid:', json_encode($parsedResponse['nl-deviceid']), 0);
+            }
+            if (stripos($row, 'nl-devicename:') === 0) {
+                $parsedResponse['nl-devicename'] = str_ireplace('nl-devicename: ', '', $row);
+                $this->SendDebug('Discovered Device nl-devicename:', json_encode($parsedResponse['nl-devicename']), 0);
+            }
+        }
+
+        return $parsedResponse;
     }
 
     protected function GetHarmonyInfo($result)

@@ -48,7 +48,7 @@ class SSDPRoku extends IPSModule
         // Wenn sich unserer IO ändert, wollen wir das auch wissen.
         $this->RegisterMessage($this->InstanceID, FM_CONNECT);
         $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
-        $this->SetReceiveDataFilter('.*M-SEARCH * HTTP/1.1.*');
+        $this->SetReceiveDataFilter(".*M-SEARCH * HTTP/1.1.*");
 
         parent::ApplyChanges();
 
@@ -67,7 +67,6 @@ class SSDPRoku extends IPSModule
 
     /** Interne Funktion des SDK.
      * Verarbeitet alle Nachrichten auf die wir uns registriert haben.
-     *
      * @param $TimeStamp
      * @param $SenderID
      * @param $Message
