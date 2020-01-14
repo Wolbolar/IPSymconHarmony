@@ -8,8 +8,7 @@ require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 
 class HarmonyDiscovery extends IPSModule
 {
-    use HarmonyBufferHelper, HarmonyDebugHelper;
-
+    use HarmonyBufferHelper; use HarmonyDebugHelper;
     public function Create()
     {
         //Never delete this line!
