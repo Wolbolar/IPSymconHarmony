@@ -8,8 +8,7 @@ require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 
 class HarmonyConfigurator extends IPSModule
 {
-    use HarmonyBufferHelper, HarmonyDebugHelper;
-
+    use HarmonyBufferHelper; use HarmonyDebugHelper;
     public function Create()
     {
         //Never delete this line!
@@ -705,10 +704,10 @@ Switch ($_IPS[\'SENDER\'])
         if ($category) {
             $form = array_merge_recursive(
                 $form, [
-                         [
-                             'name'    => 'script_category',
-                             'type'    => 'SelectCategory',
-                             'caption' => 'Script category', ], ]
+                    [
+                        'name'    => 'script_category',
+                        'type'    => 'SelectCategory',
+                        'caption' => 'Script category', ], ]
             );
         }
 
