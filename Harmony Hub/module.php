@@ -597,7 +597,9 @@ Switch ($_IPS[\'SENDER\'])
                         $this->SetValue('HarmonyActivityStarted', $CurrentActivity);
                     } elseif ($activityStatus == 0) {
                         IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
                         $this->SetValue('HarmonyActivity', $CurrentActivity);
+                        $this->SetValue('HarmonyActivityPrevious', $previous_activity);
                     }
                 }
             } elseif (strpos($content, 'connect.stateDigest?notify')) { // Notify Message
@@ -1709,10 +1711,9 @@ Switch ($_IPS[\'SENDER\'])
      ***********************************************************/
 
     /**
-     * Polyfill for IP-Symcon 4.4 and older.
-     *
+     * Polyfill for IP-Symcon 4.4 and older
      * @param string $Ident
-     * @param mixed  $Value
+     * @param mixed $Value
      */
     //Add this Polyfill for IP-Symcon 4.4 and older
     protected function SetValue($Ident, $Value)
@@ -1724,11 +1725,11 @@ Switch ($_IPS[\'SENDER\'])
             SetValue($this->GetIDForIdent($Ident), $Value);
         }
         if ($Value === true) {
-            $valuestring = 'true';
+            $valuestring = "true";
         }
         if ($Value === false) {
-            $valuestring = 'false';
+            $valuestring = "false";
         }
-        $this->SendDebug('SetValue', 'Set variable with objid' . $this->GetIDForIdent($Ident) . ' and ident ' . $Ident . ' to ' . $valuestring, 0);
+        $this->SendDebug("SetValue", "Set variable with objid" . $this->GetIDForIdent($Ident) . " and ident " . $Ident . " to " . $valuestring, 0);
     }
 }

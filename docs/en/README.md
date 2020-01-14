@@ -187,6 +187,59 @@ The current activity is displayed in the variable Harmony Activity, which is loc
 
 The variable names and the name of the commands are created as they are stored by the name in the Harmony Hub. For each created variable also the description field is used, here stands the actual command inside which is sent to the Harmony Hub. Therefore, the description field of the variable must not be changed. The name of the variable as well as the command names that are stored in the variable profile of the variable can be customized by the user. However, the order in the variable profile should not change
 
+#### Respond to keystrokes on the Harmony Remote in IP-Symcon
+
+In order to be able to react to keystrokes on a Harmony Remote, an additional device must first be integrated into the Harmony Hub and then integrated into the Harmony action in which the keystroke should react.
+To do this, a new instance _SSDP Roku_ must first be created in IP-Symcon under Splitter.
+
+![Webfront](img/SSDP_Roku.png?raw=true "Webfront")
+
+
+Then another instance _Logitech Harmony Roku Emulator_ should be created.
+
+Now the device can be searched for and added in the Harmony app. To do this, click in the Harmony app _Harmony setup_ -> _Add and edit devices and actions_ -> _Devices_ -> _Add device_ -> _Search for WiFi devices_.
+After a while, the Harmony app should have found devices in the WLAN and a selection of the devices found should be displayed. There should also be an entry _Roku 3_.
+If you click on the _i_ (info symbol) you should see the name IP-Symcon (Roku Device). With _Next_ the device is added to the devices of the Harmony Hub.
+The device can now either be switched individually from the app or the device is integrated into Harmony actions.
+
+#### Dim the light down on Play and dim it up during a break
+
+After the Roku device has been added, this is also integrated into the Harmony action in which the key presses are to be evaluated.
+
+![TVRoku1](img/tv_roku1.png?raw=true "TVRoku1") 
+
+Then switch to the key assignment settings in MyHarmony and assign the key a command from the _IP-Symcon Roku 3_ device
+
+![TVRoku2](img/tv_roku2.png?raw=true "TVRoku2") 
+
+In IP-Symcon, the _Logitech Harmony Roku Emulator_ instance shows the last key press that was performed on the Roku Emulator device.
+ 
+![TVRoku3](img/tv_roku3.png?raw=true "TVRoku3") 
+
+In the instance, a script can be assigned to the key commands per action, which is executed as soon as the key has been pressed.
+
+![TVRoku4](img/tv_roku4.png?raw=true "TVRoku4") 
+
+Only the commands shown in IP-Symcon are transferred from the Harmony Remote to IP-Symcon. So you can e.g. when pressing Play the command _Play_ and when pressing Pause
+assign the command _Instant Replay_ in the MyHarmony app. Now the appropriate script has to be assigned, in the example picture the scripts are called _Dimming up lighting_ and _Dimming down lighting_.
+The respective scripts now include all commands that should be executed as soon as the play button is pressed. This is usually the standard function of the device that is controlled in the Harmony action and other commands.
+
+An example of dimming a Hue lamp on Play
+
+```php
+<?php
+IPS_RunScript(53512); // Dreambox Play
+$list = ["BRIGHTNESS" => 0, "TRANSITIONTIME" => 40];// Helligkeit in (0 bis 254), transitiontime x 100ms 10 entspricht 1 s
+$lightId = 33485; // Coachlampen
+HUE_SetValues($lightId, $list);
+``` 
+
+Any device that can be controlled from IP-Symcon can then be addressed in the script. So you can e.g. also dim KNX, LCN, Homematic, Hue etc.
+
+The settings are to be made for each Harmony action in which key presses are to be evaluated.
+
+So you can then integrate the device into the Harmony actions, in which you want to evaluate a keystroke of the Harmony Remote, and place it on the buttons of the Harmony.
+IP-Symcon then evaluates this keystroke and any device that is controlled by IP-Symcon can be switched in this way.
 
 ## 4. Function reference
 
