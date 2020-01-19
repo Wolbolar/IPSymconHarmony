@@ -1562,7 +1562,7 @@ Switch ($_IPS[\'SENDER\'])
             [
                 'name'    => 'Logmessage',
                 'type'    => 'CheckBox',
-                'caption' => 'Log Message', ],];
+                'caption' => 'Log Message', ], ];
 
         return $form;
     }
