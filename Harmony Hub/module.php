@@ -23,6 +23,7 @@ class HarmonyHub extends IPSModule
         $this->RegisterPropertyBoolean('HarmonyVars', false);
         $this->RegisterPropertyBoolean('HarmonyScript', false);
         $this->RegisterPropertyBoolean('Alexa', false);
+        $this->RegisterPropertyBoolean('Logmessage', false);
         $this->RegisterPropertyInteger('UpdateInterval', 40);
         $this->RegisterTimer('HarmonyHubSocketTimer', 0, 'HarmonyHub_UpdateSocket(' . $this->InstanceID . ');');
         $this->RegisterAttributeString('HarmonySessionToken', '');
@@ -573,7 +574,11 @@ Switch ($_IPS[\'SENDER\'])
                 $CurrentActivity = intval($content['activityId']);
                 $activities      = $this->GetAvailableAcitivities();
                 $ActivityName    = array_search($CurrentActivity, $activities);
-                IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished');
+                if($this->ReadPropertyBoolean('Logmessage'))
+                {
+                    IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished');
+                }
+                $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished', 0);
                 SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
             } elseif (strpos($content, 'connect.stateDigest?notify')) { // Notify Message
                 $this->DeleteBuffer();
@@ -588,15 +593,27 @@ Switch ($_IPS[\'SENDER\'])
                     $activities      = $this->GetAvailableAcitivities();
                     $ActivityName    = array_search($CurrentActivity, $activities);
                     if ($activityStatus == 2) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started', 0);
                         $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
                         $this->SetValue('HarmonyActivity', $CurrentActivity);
                         $this->SetValue('HarmonyActivityPrevious', $previous_activity);
                     } elseif ($activityStatus == 1) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting', 0);
                         $this->SetValue('HarmonyActivityStarted', $CurrentActivity);
                     } elseif ($activityStatus == 0) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Hub Status is off', 0);
                         $previous_activity = GetValue($this->GetIDForIdent('HarmonyActivity'));
                         $this->SetValue('HarmonyActivity', $CurrentActivity);
                         $this->SetValue('HarmonyActivityPrevious', $previous_activity);
@@ -615,12 +632,24 @@ Switch ($_IPS[\'SENDER\'])
                     $activities      = $this->GetAvailableAcitivities();
                     $ActivityName    = array_search($CurrentActivity, $activities);
                     if ($activityStatus == 2) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started', 0);
                         SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
                     } elseif ($activityStatus == 1) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting', 0);
                     } elseif ($activityStatus == 0) {
-                        IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        if($this->ReadPropertyBoolean('Logmessage'))
+                        {
+                            IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
+                        }
+                        $this->SendDebug('Logitech Harmony Hub', 'Hub Status is off', 0);
                     }
                 }
             }
@@ -1529,7 +1558,11 @@ Switch ($_IPS[\'SENDER\'])
                 'name'    => 'UpdateInterval',
                 'type'    => 'NumberSpinner',
                 'caption' => 'Update Interval',
-                'suffix'  => 'seconds', ], ];
+                'suffix'  => 'seconds', ],
+            [
+                'name'    => 'Logmessage',
+                'type'    => 'CheckBox',
+                'caption' => 'Log Message', ],];
 
         return $form;
     }

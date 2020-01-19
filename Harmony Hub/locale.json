@@ -43,7 +43,8 @@
       "interval after the socket is disconnected and restored": "intervall nachdem der socket getrennt und wiederhergestellt wird",
       "Harmony Activity": "Harmony Aktivität",
       "Harmony Activity Started": "gestartete Harmony Aktivität",
-      "Harmony Previous Activity": "vorhergehende Harmony Aktivität"
+      "Harmony Previous Activity": "vorhergehende Harmony Aktivität",
+      "Log Message": "Protokollnachricht"
 
     }
   }
