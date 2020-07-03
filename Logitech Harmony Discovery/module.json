@@ -9,5 +9,6 @@
   "parentRequirements": [],
   "childRequirements": [],
   "implemented": [],
-  "prefix": "HarmonyDiscovery"
+  "prefix": "HarmonyDiscovery",
+  "url": "https://github.com/Wolbolar/IPSymconHarmony"
 }
