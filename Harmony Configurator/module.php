@@ -172,7 +172,7 @@ class HarmonyConfigurator extends IPSModule
                                     IPS_SetName($ScriptID, $Scriptname);
                                     IPS_SetParent($ScriptID, $CGID);
                                     IPS_SetIdent($ScriptID, $controllgroupident);
-                                    $content = '<? LHD_Send(' . $harmony_objid . ', "' . $harmonycommand['command'] . '");?>';
+                                    $content = '<?php LHD_Send(' . $harmony_objid . ', "' . $harmonycommand['command'] . '");';
                                     IPS_SetScriptContent($ScriptID, $content);
                                 }
                                 $assid++;

@@ -9,5 +9,6 @@
   "implemented": [
     "{7924862A-0EEA-46B9-B431-97A3108BA380}"
   ],
-    "prefix": "HarmonyConfig"
+    "prefix": "HarmonyConfig",
+    "url": "https://github.com/Wolbolar/IPSymconHarmony"
 }
