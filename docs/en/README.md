@@ -197,6 +197,12 @@ To do this, a new instance _SSDP Roku_ must first be created in IP-Symcon under 
 
 Then another instance _Logitech Harmony Roku Emulator_ should be created.
 
+![RokuEmulator](img/roku_emulator_1.png?raw=true "Roku Emulator")
+
+Select a port and a Harmony Hub in the created instance.
+
+![RokuEmulator](img/roku_emulator_2.png?raw=true "Roku Emulator")
+
 Now the device can be searched for and added in the Harmony app. To do this, click in the Harmony app _Harmony setup_ -> _Add and edit devices and actions_ -> _Devices_ -> _Add device_ -> _Search for WiFi devices_.
 After a while, the Harmony app should have found devices in the WLAN and a selection of the devices found should be displayed. There should also be an entry _Roku 3_.
 If you click on the _i_ (info symbol) you should see the name IP-Symcon (Roku Device). With _Next_ the device is added to the devices of the Harmony Hub.
