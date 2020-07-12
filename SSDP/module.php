@@ -48,7 +48,11 @@ class SSDPRoku extends IPSModule
         // Wenn sich unserer IO ändert, wollen wir das auch wissen.
         $this->RegisterMessage($this->InstanceID, FM_CONNECT);
         $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
-        $this->SetReceiveDataFilter('.*M-SEARCH * HTTP/1.1.*');
+        // todo set filter
+        // $this->SetReceiveDataFilter('.*M-SEARCH.*');
+        //  M-SEARCH * HTTP/1.1
+        $this->SetReceiveDataFilter('.*M\-SEARCH \* HTTP\/1\.1.*');
+
 
         parent::ApplyChanges();
 
@@ -155,8 +159,12 @@ class SSDPRoku extends IPSModule
         {
             foreach ($rokuemulators as $rokuemulator) {
                 $ServerSocketPort = IPS_GetProperty($rokuemulator, 'ServerSocketPort');
+                $this->SendDebug('Roku Emulalator', 'found instance ' . $rokuemulator . ', using port ' . $ServerSocketPort, 0);
                 $serverports[]    = $ServerSocketPort;
             }
+        }
+        else{
+            $this->SendDebug('Roku Emulalator', 'could not find any installed roku emulator', 0);
         }
         return $serverports;
     }
@@ -309,6 +317,7 @@ class SSDPRoku extends IPSModule
         switch ($Request) { // REQUEST
             case 'M-SEARCH * HTTP/1.1':
                 // hier Sucht ein Gerät.
+                $this->SendDebug('M-SEARCH', 'received', 0);
                 // Sucht es nach uns ?
                 if ($this->ReadPropertyBoolean('ExtendedDebug')) {
                     $this->SendDebug('Receive REQUEST', $Request, 0);
