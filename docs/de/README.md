@@ -196,10 +196,16 @@ Die Variablennamen und die Bezeichnung der Befehle werden so angelegt wie diese 
 Um auf Tastendrücke einer Harmony Remote reagieren zu können muss zunächst ein zusätzliches Gerät im Harmony Hub eingebunden werden und dieses dann in die Harmony Aktion eingebunden werden, in der auf einen Tastendruck reagiert werden soll.
 Dazu ist zunächst in IP-Symcon unter Splitter eine neue Instanz _SSDP Roku_ anzulegen. 
 
-![Webfront](img/SSDP_Roku.png?raw=true "Webfront")
+![SSDPRoku](img/SSDP_Roku.png?raw=true "SSDP Roku")
 
 
 Anschließend wird eine weitere Instanz _Logitech Harmony Roku Emulator_ angelegt.
+
+![RokuEmulator](img/roku_emulator_1.png?raw=true "Roku Emulator")
+
+In der neuen Instanz ist der Port auszuwählen sowie der passende Harmony Hub.
+
+![RokuEmulator](img/roku_emulator_2.png?raw=true "Roku Emulator")
 
 Jetzt kann in der Harmony App das Gerät gesucht und hinzugefügt werden. Dazu ist in der Harmony App _Harmony-Einrichtung_ -> _Geräte und Aktionen hinzufügen und bearbeiten_ -> _Geräte_ -> _Gerät hinzufügen_ -> _WLAN-Geräte suchen_ anzuklicken.
 Nach einer Weile sollte von der Harmony App Geräte im WLAN gefunden worden sein und eine Auswahl der gefundenen Geräte angezeigt werden. Es sollte auch ein Eintrag _Roku 3_ vorhanden sein.

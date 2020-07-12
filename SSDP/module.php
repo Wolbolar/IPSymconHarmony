@@ -48,9 +48,6 @@ class SSDPRoku extends IPSModule
         // Wenn sich unserer IO ändert, wollen wir das auch wissen.
         $this->RegisterMessage($this->InstanceID, FM_CONNECT);
         $this->RegisterMessage($this->InstanceID, FM_DISCONNECT);
-        // todo set filter
-        // $this->SetReceiveDataFilter('.*M-SEARCH.*');
-        //  M-SEARCH * HTTP/1.1
         $this->SetReceiveDataFilter('.*M\-SEARCH \* HTTP\/1\.1.*');
 
 
@@ -206,8 +203,6 @@ class SSDPRoku extends IPSModule
             $Header[] = 'HOST: 239.255.255.250:1900';
             $Header[] = 'CACHE-CONTROL: max-age=300';
             $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
-            // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
-            // $Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
             //$Header[] = "NT: roku:ecp";
             //$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
             //$Header[] = "USN: uuid:" . $this->MySerial.'::roku:ecp:';
