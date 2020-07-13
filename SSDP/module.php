@@ -10,7 +10,7 @@ require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
  * @property string $myIP IP-Adresse von IPS
  * @property string $Buffer
  */
-class SSDPRoku extends IPSModule
+class SSDPHarmony extends IPSModule
 {
     // use fügt bestimmte Traits dieser Klasse hinzu.
     use HarmonyDebugHelper, // Erweitert die SendDebug Methode von IPS um Arrays und Objekte.
@@ -32,7 +32,7 @@ class SSDPRoku extends IPSModule
 
         // $this->RegisterPropertyInteger('HarmonyHubRokuEmulatorID', 0);
         $this->RegisterPropertyBoolean('ExtendedDebug', true);
-        $this->RegisterTimer('SendNotify', 0, 'SSDPRoku_TimerNotify($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('SendNotify', 0, 'SSDPHarmony_TimerNotify($_IPS[\'TARGET\']);');
         // Alle Instanz-Buffer initialisieren
         $this->MySerial  = md5(openssl_random_pseudo_bytes(10));
         $this->SendQueue = [];
@@ -58,7 +58,7 @@ class SSDPRoku extends IPSModule
             return;
         }
 
-        $this->RegisterHook('/hook/roku' . $this->InstanceID);
+        $this->RegisterHook('/hook/harmonyemulator' . $this->InstanceID);
         // Unseren Parent merken und auf dessen Statusänderungen registrieren.
         $this->RegisterParent();
         if ($this->HasActiveParent()) {
@@ -156,12 +156,12 @@ class SSDPRoku extends IPSModule
         {
             foreach ($rokuemulators as $rokuemulator) {
                 $ServerSocketPort = IPS_GetProperty($rokuemulator, 'ServerSocketPort');
-                $this->SendDebug('Roku Emulalator', 'found instance ' . $rokuemulator . ', using port ' . $ServerSocketPort, 0);
+                $this->SendDebug('Roku Emulator', 'found instance ' . $rokuemulator . ', using port ' . $ServerSocketPort, 0);
                 $serverports[]    = $ServerSocketPort;
             }
         }
         else{
-            $this->SendDebug('Roku Emulalator', 'could not find any installed roku emulator', 0);
+            $this->SendDebug('Roku Emulator', 'could not find any installed roku emulator', 0);
         }
         return $serverports;
     }
@@ -244,8 +244,6 @@ class SSDPRoku extends IPSModule
             $Header[] = 'CACHE-CONTROL: max-age=300';
             $Header[] = 'ST: roku:ecp';
             $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
-            // $Header[] = "LOCATION: http://" . $bind_ip . ":3777/hook/roku" . $this->InstanceID;
-            //$Header[] = "LOCATION: http://192.168.55.10:3777/hook/roku10052"; // second IPS
             $Header[] = 'USN: uuid:roku:ecp:' . $this->MySerial;
             $Header[] = '';
             $Header[] = '';

@@ -1,11 +1,11 @@
 {
     "id": "{058CE601-4353-F473-EA14-A2B7B94628A0}",
-    "name": "SSDPRoku",
+    "name": "SSDPHarmony",
     "type": 2,
     "vendor": "Logitech",
-    "aliases":["SSDP Roku"],
+    "aliases":["SSDP Harmony"],
     "parentRequirements": ["{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}"],
     "childRequirements": [],
     "implemented": ["{7A1272A4-CBDB-46EF-BFC6-DCF4A53D2FC7}"],
-    "prefix": "SSDPRoku"
+    "prefix": "SSDPHarmony"
 }
