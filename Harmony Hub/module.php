@@ -968,6 +968,38 @@ Switch ($_IPS[\'SENDER\'])
         $this->XMPP_Send($iqString);
     }
 
+    public function PingKeepAlive()
+    {
+        $iqString = "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    /*
+     * sub
+harmony_ping($)
+{
+  my( $hash ) = @_;
+
+  return if( $hash->{ConnectionState} eq "Disconnected" );
+
+  if( $hash->{remoteId} ) {
+    my $txt = chr(0x89) . chr(0);
+    syswrite( $hash->{CD}, $txt );
+
+    RemoveInternalTimer($hash);
+    InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
+    return;
+  }
+
+  ++$id;
+  harmony_send($hash, "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>");
+
+  RemoveInternalTimer($hash);
+  InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
+}
+     */
+
+
     /**
      * Sends a request to swap Auth Token for a Session token to the XMPP Server
      * The returned IQ Message with the Session token is processed by processIQ().
