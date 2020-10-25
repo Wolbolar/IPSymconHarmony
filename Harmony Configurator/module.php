@@ -571,7 +571,8 @@ Switch ($_IPS[\'SENDER\'])
                             'HarmonyScript'         => $this->ReadPropertyBoolean('HarmonyScript'), ],
                         'location'      => $this->SetLocation($hostname, $hubip)
 
-                    ], ];
+                    ],
+                    ];
             }
         }
 

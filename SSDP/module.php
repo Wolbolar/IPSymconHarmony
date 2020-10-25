@@ -193,6 +193,11 @@ class SSDPHarmony extends IPSModule
      */
     protected function SendNotify(int $serverport)
     {
+        $network_info = Sys_GetNetworkInfo();
+        $ip_adress = $network_info[0]['IP'];
+        if ($this->ReadPropertyBoolean('ExtendedDebug')) {
+            $this->SendDebug('IP', $ip_adress, 0);
+        }
         $parent = $this->GetParent();
         if($parent > 0)
         {
@@ -202,7 +207,7 @@ class SSDPHarmony extends IPSModule
             $Header[] = 'NOTIFY * HTTP/1.1';
             $Header[] = 'HOST: 239.255.255.250:1900';
             $Header[] = 'CACHE-CONTROL: max-age=300';
-            $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
+            $Header[] = 'LOCATION: http://' . $ip_adress . ':' . $serverport . '/';
             //$Header[] = "NT: roku:ecp";
             //$Header[] = "USN: uuid:roku:ecp:" . $this->MySerial;
             //$Header[] = "USN: uuid:" . $this->MySerial.'::roku:ecp:';
@@ -234,22 +239,24 @@ class SSDPHarmony extends IPSModule
      */
     public function SendSearchResponse(string $Host, int $Port, int $serverport)
     {
+        $network_info = Sys_GetNetworkInfo();
+        $ip_adress = $network_info[0]['IP'];
+        if ($this->ReadPropertyBoolean('ExtendedDebug')) {
+            $this->SendDebug('IP', $ip_adress, 0);
+        }
         $parent = $this->GetParent();
         if($parent > 0)
         {
-            $parent_form = IPS_GetConfiguration($parent);
-            $bind_ip     = json_decode($parent_form, true)['BindIP'];
-
             $Header[] = 'HTTP/1.1 200 OK';
             $Header[] = 'CACHE-CONTROL: max-age=300';
             $Header[] = 'ST: roku:ecp';
-            $Header[] = 'LOCATION: http://' . $bind_ip . ':' . $serverport . '/';
+            $Header[] = 'LOCATION: http://' . $ip_adress . ':' . $serverport . '/';
             $Header[] = 'USN: uuid:roku:ecp:' . $this->MySerial;
             $Header[] = '';
             $Header[] = '';
             $Payload  = implode("\r\n", $Header);
             if ($this->ReadPropertyBoolean('ExtendedDebug')) {
-                $this->SendDebug('SendSearchResponse', $Payload, 0);
+                $this->SendDebug('Send Search Response', $Payload, 0);
             }
             $SendData =
                 ['DataID' => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}', 'Buffer' => utf8_encode($Payload), 'ClientIP' => $Host, 'ClientPort' => $Port];
