@@ -5,7 +5,12 @@
 			"Please create also the roku emulator instance and select the created instance below": "Bitte eine Roku Emulator Instanz anlegen und in dem Feld unten selektieren",
 			"configuration valid": "Konfiguration gültig",
 			"Harmony Device is inactive": "Harmony Device ist inaktiv",
-			"creating instance": "Die Instanz wird erstellt"
+			"Creating instance.": "Die Instanz wird erstellt",
+			"Extended Debug (show all debug messages) / deselect to show only incoming commands": "Erweitertes Debug (alle Debug-Meldungen anzeigen) / Deaktivieren Sie diese Option, um nur eingehende Befehle anzuzeigen",
+			"Extended Debug": "Erweitertes Debug",
+			"You have to configure the local IP address in the IO.": "Sie müssen die lokale IP-Adresse im IO konfigurieren.",
+			"Config valid": "Instanz aktiv",
+			"Interface closed": "Schnittstelle geschlossen"
 		}
 	}
 }
