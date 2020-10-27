@@ -2,12 +2,12 @@
   "elements": [
     {
       "type": "Label",
-      "label": "Sie müssen die lokale IP-Adresse im IO konfigurieren."
+      "label": "You have to configure the local IP address in the IO.\""
     },
     { "type": "Label", "label": "This instance is sending response to device search"},
     {
       "type": "Label",
-      "label": "Extended Debug (show all debug messages) / deselect to show only incomming commands"
+      "label": "Extended Debug (show all debug messages) / deselect to show only incoming commands"
     },
     {
       "name": "ExtendedDebug",
