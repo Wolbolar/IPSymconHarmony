@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (!defined('IPS_BASE')) {
     // --- BASE MESSAGE
     define('IPS_BASE', 10000);                             //Base Message
@@ -185,11 +187,11 @@ trait DebugHelper
     {
         if (is_object($Data)) {
             foreach ($Data as $Key => $DebugData) {
-                $this->SendDebug($Message.':'.$Key, $DebugData, 0);
+                $this->SendDebug($Message . ':' . $Key, $DebugData, 0);
             }
         } elseif (is_array($Data)) {
             foreach ($Data as $Key => $DebugData) {
-                $this->SendDebug($Message.':'.$Key, $DebugData, 0);
+                $this->SendDebug($Message . ':' . $Key, $DebugData, 0);
             }
         } elseif (is_bool($Data)) {
             $this->SendDebug($Message, ($Data ? 'TRUE' : 'FALSE'), 0);
@@ -197,7 +199,7 @@ trait DebugHelper
             if (IPS_GetKernelRunlevel() == KR_READY) {
                 parent::SendDebug($Message, (string) $Data, $Format);
             } else {
-                IPS_LogMessage('SSDPTest:'.$Message, (string) $Data);
+                IPS_LogMessage('SSDPTest:' . $Message, (string) $Data);
             }
         }
     }

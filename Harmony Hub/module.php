@@ -8,6 +8,59 @@ require_once __DIR__ . '/../libs/ConstHelper.php';
 // https://www.symcon.de/forum/threads/22682-Logitech-Harmony-Ultimate-Smart-Control-Hub-library?highlight=harmony
 class HarmonyHub extends IPSModule
 {
+    /**
+     * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
+     * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur Verfügung gestellt:.
+     */
+    protected $lockgetConfig = false;
+
+    //Buffer
+    protected $BufferHarmonyIn;
+
+    protected $HARMONY_CLIENT_RESOURCE = 'ips';  // gatorade. ?
+
+    // This 'from' value can be retrieved from the messages received by the Server ("to" field). But it does not seem necessary.
+    protected $from = 'guest';
+
+    public function __get($name)
+    {
+        if (strpos($name, 'Multi_') === 0) {
+            $curCount = $this->GetBuffer('BufferCount_' . $name);
+            if ($curCount == false) {
+                $curCount = 0;
+            }
+            $data = '';
+            for ($i = 0; $i < $curCount; $i++) {
+                $data .= $this->GetBuffer('BufferPart' . $i . '_' . $name);
+            }
+        } else {
+            $data = $this->GetBuffer($name);
+        }
+
+        return unserialize($data);
+    }
+
+    public function __set($name, $value)
+    {
+        $data = serialize($value);
+        if (strpos($name, 'Multi_') === 0) {
+            $oldCount = $this->GetBuffer('BufferCount_' . $name);
+            if ($oldCount == false) {
+                $oldCount = 0;
+            }
+            $parts = str_split($data, 8000);
+            $newCount = strval(count($parts));
+            $this->SetBuffer('BufferCount_' . $name, $newCount);
+            for ($i = 0; $i < $newCount; $i++) {
+                $this->SetBuffer('BufferPart' . $i . '_' . $name, $parts[$i]);
+            }
+            for ($i = $newCount; $i < $oldCount; $i++) {
+                $this->SetBuffer('BufferPart' . $i . '_' . $name, '');
+            }
+        } else {
+            $this->SetBuffer($name, $data);
+        }
+    }
     public function Create()
     {
         //Never delete this line!
@@ -59,44 +112,6 @@ class HarmonyHub extends IPSModule
         $this->SetCyclicTimerInterval();
     }
 
-    /**
-     * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
-     * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur Verfügung gestellt:.
-     */
-    protected $lockgetConfig = false;
-
-    private function ValidateConfiguration()
-    {
-        $ip       = $this->GetParentIP();
-        $email    = $this->ReadPropertyString('Email');
-        $password = $this->ReadPropertyString('Password');
-
-        //IP prüfen
-        if (!filter_var($ip, FILTER_VALIDATE_IP) === false) {
-            $this->SendDebug('Harmony Hub', 'IP adress ok', 0);
-        } else {
-            $this->SetStatus(203); //IP Adresse ist ungültig
-        }
-
-        //Email und Passwort prüfen
-        if ($email == '' || $password == '') {
-            $this->SetStatus(205); //Felder dürfen nicht leer sein
-        } elseif ($email !== '' && $password !== '' && (!filter_var($ip, FILTER_VALIDATE_IP) === false)) {
-            $userauthtoken = $this->ReadAttributeString('HarmonyUserAuthToken');
-            if ($userauthtoken == '') {
-                $this->RegisterUser($email, $password);
-            }
-        }
-        // Status Aktiv
-        $this->SetStatus(102);
-    }
-
-    protected function SetCyclicTimerInterval()
-    {
-        $updateinterval = $this->ReadPropertyInteger('UpdateInterval') * 1000;
-        $this->SetTimerInterval('HarmonyHubSocketTimer', $updateinterval);
-    }
-
     public function HarmonyReachable(bool $reachable)
     {
         if ($reachable) {
@@ -128,15 +143,6 @@ class HarmonyHub extends IPSModule
         }
     }
 
-    protected function configFilePath()
-    {
-        $IPSDir         = IPS_GetKernelDir();
-        $HarmonyDir     = 'webfront/user/Harmony_Config.txt';
-        $configFilePath = $IPSDir . $HarmonyDir;
-
-        return $configFilePath;
-    }
-
     public function UpdateSocket()
     {
         $IOHarmonyHub = $this->GetParent();
@@ -145,28 +151,6 @@ class HarmonyHub extends IPSModule
         }
         //$this->getDiscoveryInfo();
         $this->WriteAttributeBoolean('HarmonyInSession', false);
-    }
-
-    private function GetParentIP()
-    {
-        $host     = '';
-        $ParentID = $this->GetParent();
-        if ($ParentID > 0) {
-            $host = IPS_GetProperty($ParentID, 'Host');
-            // @IPS_SetName($ParentID, "Logitech Harmony Hub IO Socket (" . $this->ReadPropertyString('Host') . ")");
-        } else {
-            $this->SendDebug('Harmony Hub', 'Could not find IO. Please connect IO to Splitter', 0);
-            $this->SetStatus(207);
-        }
-
-        return $host;
-    }
-
-    private function GetHarmonyConfigTimestamp()
-    {
-        $HarmonyConfigTimestamp = $this->ReadAttributeInteger('HarmonyConfigTimestamp');
-
-        return $HarmonyConfigTimestamp;
     }
 
     //Profile zuweisen und Geräte anlegen
@@ -196,9 +180,472 @@ class HarmonyHub extends IPSModule
         $this->getDiscoveryInfo();
     }
 
+    // Testfunktion Data an Child weitergeben
+    public function SendTest(string $Text)
+    {
+        // Weiterleitung zu allen Gerät-/Device-Instanzen
+        $this->SendDebug('Logitech Harmony Hub', 'Send :' . $Text, 0);
+        $this->SendDataToChildren(
+            json_encode(['DataID' => '{7924862A-0EEA-46B9-B431-97A3108BA380}', 'Buffer' => $Text])
+        ); //Harmony Splitter Interface GUI
+    }
+
+    // Data an Child weitergeben
+    public function ReceiveData($JSONString)
+    {
+
+        // Empfangene Daten vom I/O
+        $data = json_decode($JSONString);
+        $dataio = utf8_decode($data->Buffer);
+        //$dataiomessage = json_encode($dataio);
+        $this->SendDebug('Logitech Harmony Hub IO In', $dataio, 0);
+
+        //Daten müssen erst zusammengesetzt werden
+        $this->BufferIn($data->Buffer);
+
+        // Weiterleitung zu allen Gerät-/Device-Instanzen
+        //$this->SendDataToChildren(json_encode(Array("DataID" => "{7924862A-0EEA-46B9-B431-97A3108BA380}", "Buffer" => $data->Buffer))); //Harmony Splitter Interface GUI
+    }
+
+    public function ReadHarmonyConfig()
+    {
+        $harmonyconfig = $this->ReadAttributeString('HarmonyConfig');
+
+        return $harmonyconfig;
+    }
+
+    //################# DATAPOINT RECEIVE FROM CHILD
+
+    // Type String, Declaration can be used when PHP 7 is available
+    //public function ForwardData(string $JSONString)
+    public function ForwardData($JSONString)
+    {
+        $this->SendDebug('Forward data', $JSONString, 0);
+        // Empfangene Daten von der Device Instanz
+        $data = json_decode($JSONString);
+        $datasend = $data->Buffer;
+        if (property_exists($datasend, 'Method')) {
+            $this->SendDebug('Forward data', 'Method: ' . $datasend->Method, 0);
+            if ($datasend->Method == 'GetHarmonyConfigJSON') {
+                $devices_json = $this->GetHarmonyConfig();
+                $this->SendDebug('Logitech Harmony Hub', 'Get Harmony Config', 0);
+
+                return $devices_json;
+            }
+            if ($datasend->Method == 'GetHarmonyConfigTimestamp') {
+                $GetHarmonyConfigTimestamp = $this->GetHarmonyConfigTimestamp();
+
+                return $GetHarmonyConfigTimestamp;
+            }
+            if ($datasend->Method == 'GetHubIP') {
+                $hubip = $this->GetParentIP();
+                $this->SendDebug('Logitech Harmony Hub', 'IP Adress: ' . $hubip, 0);
+
+                return $hubip;
+            }
+            if ($datasend->Method == 'getConfig') {
+                $this->getConfig();
+            }
+            if ($datasend->Method == 'GetAvailableAcitivities') {
+                $currentactivities = $this->GetAvailableAcitivities();
+                $currentactivities_json = json_encode($currentactivities);
+                $this->SendDebug('Forward data', 'Send: ' . $currentactivities_json, 0);
+
+                return $currentactivities_json;
+            }
+        }
+
+        if (property_exists($datasend, 'DeviceID')) {
+            $DeviceID = $datasend->DeviceID;
+            $Command = $datasend->Command;
+            $BluetoothDevice = $datasend->BluetoothDevice;
+            $commandoutobjid = @$this->GetIDForIdent('CommandOut');
+            if ($commandoutobjid > 0) {
+                SetValueString($commandoutobjid, 'DeviceID: ' . $DeviceID . ', Command: ' . $Command . ', BluetoothDevice: ' . $BluetoothDevice);
+            }
+            $this->SendDebug(
+                'Logitech Harmony Hub',
+                'ForwardData HarmonyHub Splitter: DeviceID: ' . $DeviceID . ', Command: ' . $Command . ', BluetoothDevice: ' . $BluetoothDevice, 0
+            );
+            $this->sendcommand($DeviceID, $Command, $BluetoothDevice);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * RequestAction.
+     *
+     * @param string $Ident
+     * @param        $Value
+     */
+    //Type String, Declaration can be used when PHP 7 is available
+    //public function RequestAction(string $Ident, $Value)
+    public function RequestAction($Ident, $Value)
+    {
+        if ($Ident == 'HarmonyActivity') {
+            $activityID = $Value;
+            $this->startActivity($activityID);
+        }
+    }
+
+    public function Send(string $payload)
+    {
+        $this->SendDataToParent(json_encode(['DataID' => '{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}', 'Buffer' => $payload]));
+    }
+
+    public function Ping()
+    {
+        $iqString = "<iq type='get' id='2320426445' from='guest'>
+			<oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pingvnd.logitech.ping'>
+			</oa>
+			</iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    public function PingKeepAlive()
+    {
+        $iqString = "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    /*
+     * sub
+harmony_ping($)
+{
+  my( $hash ) = @_;
+
+  return if( $hash->{ConnectionState} eq "Disconnected" );
+
+  if( $hash->{remoteId} ) {
+    my $txt = chr(0x89) . chr(0);
+    syswrite( $hash->{CD}, $txt );
+
+    RemoveInternalTimer($hash);
+    InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
+    return;
+  }
+
+  ++$id;
+  harmony_send($hash, "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>");
+
+  RemoveInternalTimer($hash);
+  InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
+}
+     */
+
+    /**
+     * Sends a request to swap Auth Token for a Session token to the XMPP Server
+     * The returned IQ Message with the Session token is processed by processIQ().
+     *
+     */
+    public function sendSessionTokenRequest()
+    {
+        $token = GetValue($this->GetIDForIdent('HarmonyUserAuthToken'));
+        $tokenString = $token . ':name=foo#iOS6.0.1#iPhone'; // "token=".
+
+        $this->XMPP_Send(
+            "<iq type='get' id='3174962747' from='guest'><oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pair'>token="
+            . $tokenString . '</oa></iq>'
+        );
+    }
+
+    /**
+     * Sends request to get Harmony configuration to XMPP Server
+     * The server will return the xml encoded config in a IQ/OA reply.
+     *
+     */
+    public function getConfig()
+    {
+        //$this->lockgetConfig = true;
+        $this->WriteAttributeBoolean('Configlock', true);
+        $this->XMPP_OpenStream();
+        $iqString = "<iq type='get' id='2320426445' from='guest'>
+		  <oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?config'>
+		  </oa>
+		</iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    /**
+     * Opens the stream to XMPP Server.
+     *
+     */
+    public function XMPP_OpenStream()
+    {
+        $this->XMPP_Send(
+            "<stream:stream to='connect.logitech.com' xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' xml:lang='en' version='1.0'>"
+        ); //  xmlns:xml="http://www.w3.org/XML/1998/namespace"
+    }
+
+    /**
+     * Closes the stream to XMPP Server.
+     *
+     */
+    public function XMPP_CloseStream()
+    {
+        $this->XMPP_Send('</stream:stream>');  // <presence type='unavailable'/>
+    }
+
+    /**
+     * Sends a request to the XMPP Server to get the current Activity ID.
+     *
+     */
+    public function getCurrentActivity()
+    {
+        $iqString = "<iq type='get' id='2320426445' from='" . $this->from . "'>
+		  <oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity'>
+		  </oa>
+		</iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    /**
+     * Sends a request to the XMPP Server to get Infos (Firmware Version, Hub Name).
+     *
+     */
+    public function getDiscoveryInfo()
+    {
+        $iqString = "<iq type='get' id='2320426445' from='" . $this->from . "'>
+		<oa xmlns='connect.logitech.com' mime='connect.discoveryinfo?get'>format=json</oa>	
+		</iq>";
+        $this->XMPP_Send($iqString);
+    }
+
+    /**
+     * Sends request to send an IR command to start a given activity to the XMPP Server
+     * The Activity ID has to be retrieved from the config. No error check is made.
+     *
+     * @param $activityID
+     *
+     * @internal param $activityID ID as retrieved from the Harmony config
+     *
+     * timestamp A unix timestamp so the hub can identify the order of incoming activity triggering request
+     */
+    public function startActivity(int $activityID)
+    {
+        //$timestamp = time();
+        //$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=".$activityID.":timestamp=".$timestamp."</oa></iq>";
+        $iqString =
+            "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId="
+            . $activityID . ':timestamp=0</oa></iq>';
+        $this->SendDebug('Logitech Harmony Hub', 'Sending: ' . $iqString, 0);
+        $this->XMPP_Send($iqString);
+    }
+
+    /**
+     * Internal Authentication Processing function.
+     */
+    public function processAuth()
+    {
+        // If we have been in a Sesssion Auth, we authenticate as guest to get the identity
+        $identity = GetValue($this->GetIDForIdent('HarmonyIdentity'));
+        if ($this->ReadAttributeBoolean('HarmonyInSession')) { // Stream open auth ok
+            //XMPP_Auth('guest@x.com', 'guest');
+            //$this->XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
+            $this->XMPP_Auth($identity . '@connect.logitech.com', $identity); // Authenticate as session
+            //SetValue($inSessionVarId, false);
+            $this->WriteAttributeBoolean('HarmonyInSession', true);
+        } else { // Stream open no auth
+            if ($identity == '') {
+                $this->sendSessionTokenRequest();
+            } else {
+                $this->XMPP_Auth($identity . '@connect.logitech.com', $identity); // Authenticate as session
+            }
+            $this->WriteAttributeBoolean('HarmonyInSession', true);
+        }
+    }
+
+    //UserAuthToken abholen falls nicht vorhanden
+    public function RegisterUser(string $email, string $password)
+    {
+        $LOGITECH_AUTH_URL = 'https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json/GetUserAuthToken';
+        $timeout = 30;
+
+        $credentials = [
+            'email'    => $email,
+            'password' => $password, ];
+        $json_string = json_encode($credentials); // '{'.$cmd.'}';
+
+        $ch = curl_init($LOGITECH_AUTH_URL);
+
+        $options = [
+            CURLOPT_TIMEOUT        => $timeout,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_VERBOSE        => 1,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => ['Content-type: application/json; charset=utf-8'],
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $json_string, ];
+
+        // Setting curl options
+        curl_setopt_array($ch, $options);
+        // Getting results
+        $json_result = curl_exec($ch);
+        if ($json_result === false) {
+            die(curl_error($ch));
+        }
+        $result = json_decode($json_result);
+
+        if (!curl_errno($ch)) {
+            // No Error
+            if (empty($result->GetUserAuthTokenResult)) {
+                $UserAuthToken = '';
+                $this->SendDebug('Logitech Harmony Hub', 'No token transmitted', 0);
+            } else {
+                $UserAuthToken = $result->GetUserAuthTokenResult;
+            }
+            $this->WriteAttributeString('HarmonyUserAuthToken', $UserAuthToken);
+        } else {
+            $this->SendDebug('Logitech Harmony Hub', 'Error: Authentification failed', 0);
+            $this->SendDebug('Logitech Harmony Hub', 'Error: Curl failed - ' . curl_error($ch), 0);
+        }
+
+        //print_r ($result);
+        return $json_result;
+    }
+
+    //DeviceIDs auslesen
+    public function GetHarmonyDeviceIDs()
+    {
+        $config = $this->GetHarmonyConfigJSON();
+        $currentactivities = [];
+        if (isset($config['device'])) {
+            $devices[] = $config['device'];
+            foreach ($devices as $harmonydevicelist) {
+                foreach ($harmonydevicelist as $harmonydevice) {
+                    $label = $harmonydevice['label'];
+                    $harmonyid = $harmonydevice['id'];
+                    $currentactivities[$label] = $harmonyid;
+                }
+            }
+        }
+
+        return $currentactivities;
+    }
+
+    //Verfügbare Aktivitäten ausgeben
+    public function GetAvailableAcitivities()
+    {
+        $config = $this->GetHarmonyConfigJSON();
+        $currentactivities = [];
+        if (isset($config['activity'])) {
+            $activities[] = $config['activity'];
+            foreach ($activities as $activitieslist) {
+                foreach ($activitieslist as $activity) {
+                    $label = $activity['label'];
+                    $id = $activity['id'];
+                    $currentactivities[$label] = $id;
+                }
+            }
+        } else {
+            $this->SendDebug('Get Activities', 'Could not find activities', 0);
+        }
+
+        return $currentactivities;
+    }
+
+    //Get JSON from Harmony Config
+    public function GetHarmonyConfigJSON()
+    {
+        $json = $this->GetHarmonyConfig();
+        $devices = [];
+        if ($json != '') {
+            $devices = json_decode($json, true);
+        } else {
+            $this->SendDebug('Get Harmony Config', 'Config ist empty', 0);
+        }
+
+        return $devices;
+    }
+
+    //Link für Harmony Activity anlegen
+    public function CreateAktivityLink()
+    {
+        $hubname = GetValue($this->GetIDForIdent('HarmonyHubName'));
+        $hubip = $this->GetParentIP();
+        $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
+        $CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
+        //Prüfen ob Kategorie schon existiert
+        $HubCategoryID = @IPS_GetObjectIDByIdent('CatLogitechHub_' . $hubipident, $CategoryID);
+        if ($HubCategoryID === false) {
+            $HubCategoryID = IPS_CreateCategory();
+            IPS_SetName($HubCategoryID, 'Logitech' . $hubname);
+            IPS_SetIdent($HubCategoryID, 'CatLogitechHub_' . $hubipident);
+            IPS_SetInfo($HubCategoryID, $hubip);
+            IPS_SetParent($HubCategoryID, $CategoryID);
+        }
+        //Prüfen ob Instanz schon vorhanden
+        $InstanzID = @IPS_GetObjectIDByIdent('Logitech_Harmony_Hub_' . $hubipident, $HubCategoryID);
+        if ($InstanzID === false) {
+            $InsID = IPS_CreateInstance('{485D0419-BE97-4548-AA9C-C083EB82E61E}');
+            IPS_SetName($InsID, 'Logitech Harmony Hub'); // Instanz benennen
+            IPS_SetIdent($InsID, 'Logitech_Harmony_Hub_' . $hubipident);
+            IPS_SetParent($InsID, $HubCategoryID); // Instanz einsortieren unter dem Objekt mit der ID "$HubCategoryID"
+
+            // Anlegen eines neuen Links für Harmony Aktivity
+            $LinkID = IPS_CreateLink();             // Link anlegen
+            IPS_SetName($LinkID, 'Logitech Harmony Hub Activity'); // Link benennen
+            IPS_SetParent($LinkID, $InsID); // Link einsortieren
+            IPS_SetLinkTargetID($LinkID, $this->GetIDForIdent('HarmonyActivity'));    // Link verknüpfen
+        }
+    }
+
+    //-- Harmony API
+
+    /**
+     * Interne Funktion des SDK.
+     * Wird von der Console aufgerufen, wenn 'unser' IO-Parent geöffnet wird.
+     * Außerdem nutzen wir sie in Applychanges, da wir dort die Daten zum konfigurieren nutzen.
+     */
+    public function GetConfigurationForParent()
+    {
+        $Config['Port'] = 5222; // Harmony Port
+        return json_encode($Config);
+    }
+
+    /*
+     * Configuration Form
+     */
+
+    /**
+     * build configuration form.
+     *
+     * @return string
+     */
+    public function GetConfigurationForm()
+    {
+        // return current form
+        return json_encode(
+            [
+                'elements' => $this->FormHead(),
+                'actions'  => $this->FormActions(),
+                'status'   => $this->FormStatus(), ]
+        );
+    }
+
+    protected function SetCyclicTimerInterval()
+    {
+        $updateinterval = $this->ReadPropertyInteger('UpdateInterval') * 1000;
+        $this->SetTimerInterval('HarmonyHubSocketTimer', $updateinterval);
+    }
+
+    protected function configFilePath()
+    {
+        $IPSDir = IPS_GetKernelDir();
+        $HarmonyDir = 'webfront/user/Harmony_Config.txt';
+        $configFilePath = $IPSDir . $HarmonyDir;
+
+        return $configFilePath;
+    }
+
     protected function SetupActivityScripts($HubCategoryID, $hubname)
     {
-        $hubip      = $this->GetParentIP();
+        $hubip = $this->GetParentIP();
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
         $activities = $this->GetAvailableAcitivities();
         //Prüfen ob Kategorie schon existiert
@@ -224,11 +671,11 @@ class HarmonyHub extends IPSModule
 
     protected function CreateActivityScript($Scriptname, $MainCatID, $hubip, $activity)
     {
-        $Scriptname  = $this->ReplaceSpecialCharacters($Scriptname);
-        $hubipident  = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $Ident       = 'Script_Hub_' . $hubipident . '_' . $activity;
+        $Scriptname = $this->ReplaceSpecialCharacters($Scriptname);
+        $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
+        $Ident = 'Script_Hub_' . $hubipident . '_' . $activity;
         $scriptident = $this->CreateIdent($Ident);
-        $ScriptID    = @IPS_GetObjectIDByIdent($scriptident, $MainCatID);
+        $ScriptID = @IPS_GetObjectIDByIdent($scriptident, $MainCatID);
 
         if ($ScriptID === false) {
             $ScriptID = IPS_CreateScript(0);
@@ -279,7 +726,7 @@ Switch ($_IPS[\'SENDER\'])
 
     protected function CreateIdent($str)
     {
-        $search  = [
+        $search = [
             'ä',
             'ö',
             'ü',
@@ -429,20 +876,20 @@ Switch ($_IPS[\'SENDER\'])
 
     protected function SetHarmonyActivityProfile()
     {
-        $hubip      = $this->GetParentIP();
+        $hubip = $this->GetParentIP();
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $config     = $this->GetHarmonyConfigJSON();
+        $config = $this->GetHarmonyConfigJSON();
         if (isset($config['device'])) {
-            $activities[]         = $config['activity'];
-            $devices[]            = $config['device'];
+            $activities[] = $config['activity'];
+            $devices[] = $config['device'];
             $ProfileAssActivities = [];
-            $assid                = 1;
+            $assid = 1;
             foreach ($activities as $activitieslist) {
                 foreach ($activitieslist as $activity) {
-                    $label            = $activity['label'];
+                    $label = $activity['label'];
                     $suggestedDisplay = $activity['suggestedDisplay'];
                     $this->SendDebug('Harmony Activity', 'suggested display ' . $suggestedDisplay, 0);
-                    $id                      = $activity['id'];
+                    $id = $activity['id'];
                     $activityTypeDisplayName = $activity['activityTypeDisplayName'];
                     $this->SendDebug('Harmony Activity', 'activity type display name ' . $activityTypeDisplayName, 0);
                     $controlGroup = $activity['controlGroup'];
@@ -497,36 +944,6 @@ Switch ($_IPS[\'SENDER\'])
         return $instance['ConnectionID'];
     }
 
-    // Testfunktion Data an Child weitergeben
-    public function SendTest(string $Text)
-    {
-        // Weiterleitung zu allen Gerät-/Device-Instanzen
-        $this->SendDebug('Logitech Harmony Hub', 'Send :' . $Text, 0);
-        $this->SendDataToChildren(
-            json_encode(['DataID' => '{7924862A-0EEA-46B9-B431-97A3108BA380}', 'Buffer' => $Text])
-        ); //Harmony Splitter Interface GUI
-    }
-
-    // Data an Child weitergeben
-    public function ReceiveData($JSONString)
-    {
-
-        // Empfangene Daten vom I/O
-        $data   = json_decode($JSONString);
-        $dataio = utf8_decode($data->Buffer);
-        //$dataiomessage = json_encode($dataio);
-        $this->SendDebug('Logitech Harmony Hub IO In', $dataio, 0);
-
-        //Daten müssen erst zusammengesetzt werden
-        $this->BufferIn($data->Buffer);
-
-        // Weiterleitung zu allen Gerät-/Device-Instanzen
-        //$this->SendDataToChildren(json_encode(Array("DataID" => "{7924862A-0EEA-46B9-B431-97A3108BA380}", "Buffer" => $data->Buffer))); //Harmony Splitter Interface GUI
-    }
-
-    //Buffer
-    protected $BufferHarmonyIn;
-
     protected function BufferIn($data)
     {
         // bereits im Puffer der Instanz vorhandene Daten in $databuffer kopieren
@@ -538,10 +955,10 @@ Switch ($_IPS[\'SENDER\'])
 
         // auf Inhalt prüfen und nach Typ auswerten
         preg_match('/^<[a-z]*/', $databuffer, $tag);
-        $tag          = str_replace('<', '', $tag);
-        $tag          = $tag[0];
+        $tag = str_replace('<', '', $tag);
+        $tag = $tag[0];
         $bufferdelete = false;
-        $configlock   = $this->ReadAttributeBoolean('Configlock');
+        $configlock = $this->ReadAttributeBoolean('Configlock');
 
         if (strpos($databuffer, '</iq>') && ($configlock == true)) {
             //Daten komplett, weiterreichen
@@ -572,10 +989,9 @@ Switch ($_IPS[\'SENDER\'])
                 $content = $this->XMPP_getPayload($content);
                 // $type = $content['type']; // startActivityFinished
                 $CurrentActivity = intval($content['activityId']);
-                $activities      = $this->GetAvailableAcitivities();
-                $ActivityName    = array_search($CurrentActivity, $activities);
-                if($this->ReadPropertyBoolean('Logmessage'))
-                {
+                $activities = $this->GetAvailableAcitivities();
+                $ActivityName = array_search($CurrentActivity, $activities);
+                if ($this->ReadPropertyBoolean('Logmessage')) {
                     IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished');
                 }
                 $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' finished', 0);
@@ -589,12 +1005,11 @@ Switch ($_IPS[\'SENDER\'])
                 //  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
                 if (isset($content['activityId'])) {
                     $CurrentActivity = intval($content['activityId']);
-                    $activityStatus  = intval($content['activityStatus']);
-                    $activities      = $this->GetAvailableAcitivities();
-                    $ActivityName    = array_search($CurrentActivity, $activities);
+                    $activityStatus = intval($content['activityStatus']);
+                    $activities = $this->GetAvailableAcitivities();
+                    $ActivityName = array_search($CurrentActivity, $activities);
                     if ($activityStatus == 2) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started', 0);
@@ -602,15 +1017,13 @@ Switch ($_IPS[\'SENDER\'])
                         $this->SetValue('HarmonyActivity', $CurrentActivity);
                         $this->SetValue('HarmonyActivityPrevious', $previous_activity);
                     } elseif ($activityStatus == 1) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting', 0);
                         $this->SetValue('HarmonyActivityStarted', $CurrentActivity);
                     } elseif ($activityStatus == 0) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Hub Status is off', 0);
@@ -628,25 +1041,22 @@ Switch ($_IPS[\'SENDER\'])
                 //  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
                 if (isset($content['activityId'])) {
                     $CurrentActivity = intval($content['activityId']);
-                    $activityStatus  = intval($content['activityStatus']);
-                    $activities      = $this->GetAvailableAcitivities();
-                    $ActivityName    = array_search($CurrentActivity, $activities);
+                    $activityStatus = intval($content['activityStatus']);
+                    $activities = $this->GetAvailableAcitivities();
+                    $ActivityName = array_search($CurrentActivity, $activities);
                     if ($activityStatus == 2) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started', 0);
                         SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
                     } elseif ($activityStatus == 1) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is starting', 0);
                     } elseif ($activityStatus == 0) {
-                        if($this->ReadPropertyBoolean('Logmessage'))
-                        {
+                        if ($this->ReadPropertyBoolean('Logmessage')) {
                             IPS_LogMessage('Logitech Harmony Hub', 'Hub Status is off');
                         }
                         $this->SendDebug('Logitech Harmony Hub', 'Hub Status is off', 0);
@@ -676,32 +1086,6 @@ Switch ($_IPS[\'SENDER\'])
         }
     }
 
-    private function DeleteBuffer()
-    {
-        $this->SetMultiBuffer('HarmonyBufferIN', '');
-    }
-
-    private function WriteBuffer($databuffer)
-    {
-        // Inhalt von $databuffer im Puffer speichern
-        $this->SetMultiBuffer('HarmonyBufferIN', $databuffer);
-    }
-
-    private function GetBufferIN()
-    {
-        // bereits im Puffer der Instanz vorhandene Daten in $databuffer kopieren
-        $databuffer = $this->GetMultiBuffer('HarmonyBufferIN');
-
-        return $databuffer;
-    }
-
-    public function ReadHarmonyConfig()
-    {
-        $harmonyconfig = $this->ReadAttributeString('HarmonyConfig');
-
-        return $harmonyconfig;
-    }
-
     //read incoming data
     protected function ReadPayload($payload, $tag)
     {
@@ -711,22 +1095,21 @@ Switch ($_IPS[\'SENDER\'])
                 break;
             case 'message':
                 $content = $this->XMPP_getPayload($payload);
-                $type    = $content['type'];
+                $type = $content['type'];
                 if ($type == 'short') { //Message bei Tastendruck
-
                 } elseif ($type == 'startActivityFinished') { // Message bei Activity
                     $CurrentActivity = intval($content['activityId']);
-                    $activities      = $this->GetAvailableAcitivities();
-                    $ActivityName    = array_search($CurrentActivity, $activities);
+                    $activities = $this->GetAvailableAcitivities();
+                    $ActivityName = array_search($CurrentActivity, $activities);
                     $this->SendDebug('Logitech Harmony Hub', 'Activity  ' . $ActivityName . ' started und finished', 0);
                     SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
                 } //  activityStatus	0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
                 elseif ($type == 'notify') { // Notify z.B. Hue oder Activity
                     if (isset($content['activityId'])) {
                         $CurrentActivity = intval($content['activityId']);
-                        $activityStatus  = intval($content['activityStatus']);
-                        $activities      = $this->GetAvailableAcitivities();
-                        $ActivityName    = array_search($CurrentActivity, $activities);
+                        $activityStatus = intval($content['activityStatus']);
+                        $activities = $this->GetAvailableAcitivities();
+                        $ActivityName = array_search($CurrentActivity, $activities);
                         SetValueInteger($this->GetIDForIdent('HarmonyActivity'), $CurrentActivity);
                         if ($activityStatus == 2) {
                             $this->SendDebug('Logitech Harmony Hub', 'Activity ' . $ActivityName . ' is started', 0);
@@ -784,7 +1167,7 @@ Switch ($_IPS[\'SENDER\'])
                     preg_match('/<!\[CDATA\[\s*(.*)\s*/', $xml, $cdata); // <!\[(CDATA)\[\s*(.*?)\s*>
                     $data = $cdata[1];
                     if (!strpos($data, 'result=')) {
-                        $posend   = strpos($data, ']]');
+                        $posend = strpos($data, ']]');
                         $activity = substr($data, 7, ($posend - 7));
                         $this->SendDebug('Logitech Harmony Hub', 'HarmonyActivity: ' . $activity, 0);
                         SetValue($this->GetIDForIdent('HarmonyActivity'), $activity);
@@ -793,13 +1176,13 @@ Switch ($_IPS[\'SENDER\'])
                     preg_match('/<!\[CDATA\[\s*(.*)\s*/', $xml, $cdata); // <!\[(CDATA)\[\s*(.*?)\s*>
                     $jsonrawstring = $cdata[1];
                     if (strpos($jsonrawstring, 'current_fw_version')) {
-                        $jsonrawlength     = strlen($jsonrawstring);
-                        $jsonend           = strripos($jsonrawstring, ']]>');
+                        $jsonrawlength = strlen($jsonrawstring);
+                        $jsonend = strripos($jsonrawstring, ']]>');
                         $jsondiscoveryinfo = substr($jsonrawstring, 0, ($jsonend - $jsonrawlength));
-                        $discoveryinfo     = json_decode($jsondiscoveryinfo, true);
+                        $discoveryinfo = json_decode($jsondiscoveryinfo, true);
                         // Auslesen Firmware und Name
                         $FirmwareVersion = $discoveryinfo['current_fw_version'];
-                        $HarmonyHubName  = $discoveryinfo['friendlyName'];
+                        $HarmonyHubName = $discoveryinfo['friendlyName'];
                         // $hubProfiles = $discoveryinfo['hubProfiles'];
                         $uuid = $discoveryinfo['uuid'];
                         // $remoteId = $discoveryinfo['remoteId'];
@@ -835,7 +1218,7 @@ Switch ($_IPS[\'SENDER\'])
                             SetValue($inSessionVarId, true); // We are in the Session Auth Process
                             }
                         }
-                    */
+                     */
                 }
             }
             if ($tag[2] == 'bind') { // This is not an OA message, we suppose it is a resource binding or identity request reply
@@ -877,182 +1260,6 @@ Switch ($_IPS[\'SENDER\'])
         }
     }
 
-    //################# DATAPOINT RECEIVE FROM CHILD
-
-    // Type String, Declaration can be used when PHP 7 is available
-    //public function ForwardData(string $JSONString)
-    public function ForwardData($JSONString)
-    {
-        $this->SendDebug('Forward data', $JSONString, 0);
-        // Empfangene Daten von der Device Instanz
-        $data     = json_decode($JSONString);
-        $datasend = $data->Buffer;
-        if (property_exists($datasend, 'Method')) {
-            $this->SendDebug('Forward data', 'Method: ' . $datasend->Method, 0);
-            if ($datasend->Method == 'GetHarmonyConfigJSON') {
-                $devices_json = $this->GetHarmonyConfig();
-                $this->SendDebug('Logitech Harmony Hub', 'Get Harmony Config', 0);
-
-                return $devices_json;
-            }
-            if ($datasend->Method == 'GetHarmonyConfigTimestamp') {
-                $GetHarmonyConfigTimestamp = $this->GetHarmonyConfigTimestamp();
-
-                return $GetHarmonyConfigTimestamp;
-            }
-            if ($datasend->Method == 'GetHubIP') {
-                $hubip = $this->GetParentIP();
-                $this->SendDebug('Logitech Harmony Hub', 'IP Adress: ' . $hubip, 0);
-
-                return $hubip;
-            }
-            if ($datasend->Method == 'getConfig') {
-                $this->getConfig();
-            }
-            if ($datasend->Method == 'GetAvailableAcitivities') {
-                $currentactivities      = $this->GetAvailableAcitivities();
-                $currentactivities_json = json_encode($currentactivities);
-                $this->SendDebug('Forward data', 'Send: ' . $currentactivities_json, 0);
-
-                return $currentactivities_json;
-            }
-        }
-
-        if (property_exists($datasend, 'DeviceID')) {
-            $DeviceID        = $datasend->DeviceID;
-            $Command         = $datasend->Command;
-            $BluetoothDevice = $datasend->BluetoothDevice;
-            $commandoutobjid = @$this->GetIDForIdent('CommandOut');
-            if ($commandoutobjid > 0) {
-                SetValueString($commandoutobjid, 'DeviceID: ' . $DeviceID . ', Command: ' . $Command . ', BluetoothDevice: ' . $BluetoothDevice);
-            }
-            $this->SendDebug(
-                'Logitech Harmony Hub',
-                'ForwardData HarmonyHub Splitter: DeviceID: ' . $DeviceID . ', Command: ' . $Command . ', BluetoothDevice: ' . $BluetoothDevice, 0
-            );
-            $this->sendcommand($DeviceID, $Command, $BluetoothDevice);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * RequestAction.
-     *
-     * @param string $Ident
-     * @param        $Value
-     */
-    //Type String, Declaration can be used when PHP 7 is available
-    //public function RequestAction(string $Ident, $Value)
-    public function RequestAction($Ident, $Value)
-    {
-        if ($Ident == 'HarmonyActivity') {
-            $activityID = $Value;
-            $this->startActivity($activityID);
-        }
-    }
-
-    public function Send(string $payload)
-    {
-        $this->SendDataToParent(json_encode(['DataID' => '{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}', 'Buffer' => $payload]));
-    }
-
-    public function Ping()
-    {
-        $iqString = "<iq type='get' id='2320426445' from='guest'>
-			<oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pingvnd.logitech.ping'>
-			</oa>
-			</iq>";
-        $this->XMPP_Send($iqString);
-    }
-
-    public function PingKeepAlive()
-    {
-        $iqString = "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>";
-        $this->XMPP_Send($iqString);
-    }
-
-    /*
-     * sub
-harmony_ping($)
-{
-  my( $hash ) = @_;
-
-  return if( $hash->{ConnectionState} eq "Disconnected" );
-
-  if( $hash->{remoteId} ) {
-    my $txt = chr(0x89) . chr(0);
-    syswrite( $hash->{CD}, $txt );
-
-    RemoveInternalTimer($hash);
-    InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
-    return;
-  }
-
-  ++$id;
-  harmony_send($hash, "<iq type='get' id='ping-$id'><ping xmlns='urn:xmpp:ping'/></iq>");
-
-  RemoveInternalTimer($hash);
-  InternalTimer(gettimeofday()+50, "harmony_ping", $hash, 0);
-}
-     */
-
-
-    /**
-     * Sends a request to swap Auth Token for a Session token to the XMPP Server
-     * The returned IQ Message with the Session token is processed by processIQ().
-     *
-     **/
-    public function sendSessionTokenRequest()
-    {
-        $token       = GetValue($this->GetIDForIdent('HarmonyUserAuthToken'));
-        $tokenString = $token . ':name=foo#iOS6.0.1#iPhone'; // "token=".
-
-        $this->XMPP_Send(
-            "<iq type='get' id='3174962747' from='guest'><oa xmlns='connect.logitech.com' mime='vnd.logitech.connect/vnd.logitech.pair'>token="
-            . $tokenString . '</oa></iq>'
-        );
-    }
-
-    /**
-     * Sends request to get Harmony configuration to XMPP Server
-     * The server will return the xml encoded config in a IQ/OA reply.
-     *
-     **/
-    public function getConfig()
-    {
-        //$this->lockgetConfig = true;
-        $this->WriteAttributeBoolean('Configlock', true);
-        $this->XMPP_OpenStream();
-        $iqString = "<iq type='get' id='2320426445' from='guest'>
-		  <oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?config'>
-		  </oa>
-		</iq>";
-        $this->XMPP_Send($iqString);
-    }
-
-    /**
-     * Opens the stream to XMPP Server.
-     *
-     **/
-    public function XMPP_OpenStream()
-    {
-        $this->XMPP_Send(
-            "<stream:stream to='connect.logitech.com' xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' xml:lang='en' version='1.0'>"
-        ); //  xmlns:xml="http://www.w3.org/XML/1998/namespace"
-    }
-
-    /**
-     * Closes the stream to XMPP Server.
-     *
-     **/
-    public function XMPP_CloseStream()
-    {
-        $this->XMPP_Send('</stream:stream>');  // <presence type='unavailable'/>
-    }
-
     /**
      * Sends XMPP message to XMPP server
      * If the socket is closed, adds the command to a queue array for subsequent execution.
@@ -1060,10 +1267,10 @@ harmony_ping($)
      * @param string $payload
      *
      * @return bool true if success
-     **/
+     */
     protected function XMPP_Send($payload)
     {
-        $parentactive          = $this->HasActiveParent();
+        $parentactive = $this->HasActiveParent();
         $instanceHarmonySocket = $this->GetParent();
         // Open the socket if it is disconnected
         if (!$parentactive && $instanceHarmonySocket > 0) {
@@ -1079,18 +1286,13 @@ harmony_ping($)
         return $parentactive;
     }
 
-    protected $HARMONY_CLIENT_RESOURCE = 'ips';  // gatorade. ?
-
-    // This 'from' value can be retrieved from the messages received by the Server ("to" field). But it does not seem necessary.
-    protected $from = 'guest';
-
     /**
      * Sends Auth request to XMPP server.
      *
      * @param string $user
      * @param string $password
      *
-     **/
+     */
     protected function XMPP_Auth($user, $password)
     {
         $this->SendDebug('Logitech Harmony Hub', 'Authenticating with ' . $user . ' - ' . $password, 0);
@@ -1103,7 +1305,7 @@ harmony_ping($)
      *
      * @param string $resource A resource name
      *
-     **/
+     */
     protected function XMPP_Bind($resource)
     {
         $this->SendDebug('Logitech Harmony Hub', 'Binding with resource ' . $resource, 0);
@@ -1113,7 +1315,7 @@ harmony_ping($)
     /**
      * Sends Session request to XMPP server.
      *
-     **/
+     */
     protected function XMPP_Session()
     {
         $this->SendDebug('Logitech Harmony Hub', 'Sending Session request', 0);
@@ -1128,7 +1330,7 @@ harmony_ping($)
      * @return array CDATA content formatted as 'type': Type of message, 'activityId', 'errorCode', 'errorString'
      *               activityId    ID of the current activity.
      *               activityStatus    0 = Hub is off, 1 = Activity is starting, 2 = Activity is started, 3 = Hub is turning off
-     **/
+     */
     protected function XMPP_getPayload($xml)
     {
         preg_match('/type="[a-zA-Z\.]+\?(.*)">/', $xml, $type);  // type= "connect.stateDigest?notify"
@@ -1157,37 +1359,12 @@ harmony_ping($)
             $content = explode(':', $cdata[2]);
 
             foreach ($content as $item) {
-                $itemParts            = explode('=', $item);
+                $itemParts = explode('=', $item);
                 $items[$itemParts[0]] = $itemParts[1];
             }
         }
 
         return $items;
-    }
-
-    /**
-     * Sends a request to the XMPP Server to get the current Activity ID.
-     *
-     **/
-    public function getCurrentActivity()
-    {
-        $iqString = "<iq type='get' id='2320426445' from='" . $this->from . "'>
-		  <oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity'>
-		  </oa>
-		</iq>";
-        $this->XMPP_Send($iqString);
-    }
-
-    /**
-     * Sends a request to the XMPP Server to get Infos (Firmware Version, Hub Name).
-     *
-     **/
-    public function getDiscoveryInfo()
-    {
-        $iqString = "<iq type='get' id='2320426445' from='" . $this->from . "'>
-		<oa xmlns='connect.logitech.com' mime='connect.discoveryinfo?get'>format=json</oa>	
-		</iq>";
-        $this->XMPP_Send($iqString);
     }
 
     /**
@@ -1242,11 +1419,11 @@ harmony_ping($)
      * @internal param DeviceID DeviceID as retrieved from the Harmony config
      * @internal param Command Command as retrieved from teh Harmony config
      *
-     **/
+     */
     protected function sendcommandAction($deviceID, $command)
     {
         $identityVariableId = $this->GetIDForIdent('HarmonyIdentity');
-        $identity           = GetValue($identityVariableId);
+        $identity = GetValue($identityVariableId);
         if ($identity == '') {
             $this->sendSessionTokenRequest();
             IPS_Sleep(500);
@@ -1273,11 +1450,11 @@ harmony_ping($)
      *
      * @internal param DeviceID DeviceID as retrieved from the Harmony config
      * @internal param Command Command as retrieved from teh Harmony config
-     **/
+     */
     protected function sendcommandRender($deviceID, $command)
     {
         $identityVariableId = $this->GetIDForIdent('HarmonyIdentity');
-        $identity           = GetValue($identityVariableId);
+        $identity = GetValue($identityVariableId);
         if ($identity == '') {
             $this->sendSessionTokenRequest();
             IPS_Sleep(500);
@@ -1289,161 +1466,12 @@ harmony_ping($)
         $this->XMPP_Send($iqString);
     }
 
-    /**
-     * Sends request to send an IR command to start a given activity to the XMPP Server
-     * The Activity ID has to be retrieved from the config. No error check is made.
-     *
-     * @param $activityID
-     *
-     * @internal param $activityID ID as retrieved from the Harmony config
-     *
-     * timestamp A unix timestamp so the hub can identify the order of incoming activity triggering request
-     **/
-    public function startActivity(int $activityID)
-    {
-        //$timestamp = time();
-        //$iqString = "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId=".$activityID.":timestamp=".$timestamp."</oa></iq>";
-        $iqString =
-            "<iq type='get' id='5e518d07-bcc2-4634-ba3d-c20f338d8927-2'><oa xmlns='connect.logitech.com' mime='vnd.logitech.harmony/vnd.logitech.harmony.engine?startactivity'>activityId="
-            . $activityID . ':timestamp=0</oa></iq>';
-        $this->SendDebug('Logitech Harmony Hub', 'Sending: ' . $iqString, 0);
-        $this->XMPP_Send($iqString);
-    }
-
-    /**
-     * Internal Authentication Processing function.
-     **/
-    public function processAuth()
-    {
-        // If we have been in a Sesssion Auth, we authenticate as guest to get the identity
-        $identity = GetValue($this->GetIDForIdent('HarmonyIdentity'));
-        if ($this->ReadAttributeBoolean('HarmonyInSession')) { // Stream open auth ok
-            //XMPP_Auth('guest@x.com', 'guest');
-            //$this->XMPP_Auth('guest@connect.logitech.com', 'gatorade.'); // Authenticate as guest
-            $this->XMPP_Auth($identity . '@connect.logitech.com', $identity); // Authenticate as session
-            //SetValue($inSessionVarId, false);
-            $this->WriteAttributeBoolean('HarmonyInSession', true);
-        } else { // Stream open no auth
-            if ($identity == '') {
-                $this->sendSessionTokenRequest();
-            } else {
-                $this->XMPP_Auth($identity . '@connect.logitech.com', $identity); // Authenticate as session
-            }
-            $this->WriteAttributeBoolean('HarmonyInSession', true);
-        }
-    }
-
-    //UserAuthToken abholen falls nicht vorhanden
-    public function RegisterUser(string $email, string $password)
-    {
-        $LOGITECH_AUTH_URL = 'https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json/GetUserAuthToken';
-        $timeout           = 30;
-
-        $credentials = [
-            'email'    => $email,
-            'password' => $password, ];
-        $json_string = json_encode($credentials); // '{'.$cmd.'}';
-
-        $ch = curl_init($LOGITECH_AUTH_URL);
-
-        $options = [
-            CURLOPT_TIMEOUT        => $timeout,
-            CURLOPT_CONNECTTIMEOUT => $timeout,
-            CURLOPT_VERBOSE        => 1,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['Content-type: application/json; charset=utf-8'],
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $json_string, ];
-
-        // Setting curl options
-        curl_setopt_array($ch, $options);
-        // Getting results
-        $json_result = curl_exec($ch);
-        if ($json_result === false) {
-            die(curl_error($ch));
-        }
-        $result = json_decode($json_result);
-
-        if (!curl_errno($ch)) {
-            // No Error
-            if (empty($result->GetUserAuthTokenResult)) {
-                $UserAuthToken = '';
-                $this->SendDebug('Logitech Harmony Hub', 'No token transmitted', 0);
-            } else {
-                $UserAuthToken = $result->GetUserAuthTokenResult;
-            }
-            $this->WriteAttributeString('HarmonyUserAuthToken', $UserAuthToken);
-        } else {
-            $this->SendDebug('Logitech Harmony Hub', 'Error: Authentification failed', 0);
-            $this->SendDebug('Logitech Harmony Hub', 'Error: Curl failed - ' . curl_error($ch), 0);
-        }
-
-        //print_r ($result);
-        return $json_result;
-    }
-
-    //DeviceIDs auslesen
-    public function GetHarmonyDeviceIDs()
-    {
-        $config            = $this->GetHarmonyConfigJSON();
-        $currentactivities = [];
-        if (isset($config['device'])) {
-            $devices[] = $config['device'];
-            foreach ($devices as $harmonydevicelist) {
-                foreach ($harmonydevicelist as $harmonydevice) {
-                    $label                     = $harmonydevice['label'];
-                    $harmonyid                 = $harmonydevice['id'];
-                    $currentactivities[$label] = $harmonyid;
-                }
-            }
-        }
-
-        return $currentactivities;
-    }
-
-    //Verfügbare Aktivitäten ausgeben
-    public function GetAvailableAcitivities()
-    {
-        $config            = $this->GetHarmonyConfigJSON();
-        $currentactivities = [];
-        if (isset($config['activity'])) {
-            $activities[] = $config['activity'];
-            foreach ($activities as $activitieslist) {
-                foreach ($activitieslist as $activity) {
-                    $label                     = $activity['label'];
-                    $id                        = $activity['id'];
-                    $currentactivities[$label] = $id;
-                }
-            }
-        } else {
-            $this->SendDebug('Get Activities', 'Could not find activities', 0);
-        }
-
-        return $currentactivities;
-    }
-
-    //Get JSON from Harmony Config
-    public function GetHarmonyConfigJSON()
-    {
-        $json    = $this->GetHarmonyConfig();
-        $devices = [];
-        if ($json != '') {
-            $devices = json_decode($json, true);
-        } else {
-            $this->SendDebug('Get Harmony Config', 'Config ist empty', 0);
-        }
-
-        return $devices;
-    }
-
     protected function GetHarmonyConfig()
     {
         $jsonrawstring = $this->ReadAttributeString('HarmonyConfig');
-        $jsonstart     = strpos($jsonrawstring, '![CDATA[');
+        $jsonstart = strpos($jsonrawstring, '![CDATA[');
         $jsonrawlength = strlen($jsonrawstring);
-        $jsonend       = strripos($jsonrawstring, ']]></oa></iq><iq/>');
+        $jsonend = strripos($jsonrawstring, ']]></oa></iq><iq/>');
         if ($jsonend == false) {
             $jsonend = strripos($jsonrawstring, ']]></oa></iq>');
         }
@@ -1456,38 +1484,6 @@ harmony_ping($)
         }
 
         return $json;
-    }
-
-    //Link für Harmony Activity anlegen
-    public function CreateAktivityLink()
-    {
-        $hubname    = GetValue($this->GetIDForIdent('HarmonyHubName'));
-        $hubip      = $this->GetParentIP();
-        $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
-        //Prüfen ob Kategorie schon existiert
-        $HubCategoryID = @IPS_GetObjectIDByIdent('CatLogitechHub_' . $hubipident, $CategoryID);
-        if ($HubCategoryID === false) {
-            $HubCategoryID = IPS_CreateCategory();
-            IPS_SetName($HubCategoryID, 'Logitech' . $hubname);
-            IPS_SetIdent($HubCategoryID, 'CatLogitechHub_' . $hubipident);
-            IPS_SetInfo($HubCategoryID, $hubip);
-            IPS_SetParent($HubCategoryID, $CategoryID);
-        }
-        //Prüfen ob Instanz schon vorhanden
-        $InstanzID = @IPS_GetObjectIDByIdent('Logitech_Harmony_Hub_' . $hubipident, $HubCategoryID);
-        if ($InstanzID === false) {
-            $InsID = IPS_CreateInstance('{485D0419-BE97-4548-AA9C-C083EB82E61E}');
-            IPS_SetName($InsID, 'Logitech Harmony Hub'); // Instanz benennen
-            IPS_SetIdent($InsID, 'Logitech_Harmony_Hub_' . $hubipident);
-            IPS_SetParent($InsID, $HubCategoryID); // Instanz einsortieren unter dem Objekt mit der ID "$HubCategoryID"
-
-            // Anlegen eines neuen Links für Harmony Aktivity
-            $LinkID = IPS_CreateLink();             // Link anlegen
-            IPS_SetName($LinkID, 'Logitech Harmony Hub Activity'); // Link benennen
-            IPS_SetParent($LinkID, $InsID); // Link einsortieren
-            IPS_SetLinkTargetID($LinkID, $this->GetIDForIdent('HarmonyActivity'));    // Link verknüpfen
-        }
     }
 
     //Profile
@@ -1522,46 +1518,13 @@ harmony_ping($)
             $MinValue = $Associations[0][0];
             $MaxValue = $Associations[sizeof($Associations)-1][0];
         }
-        */
+         */
         $this->RegisterProfileIntegerHarmony($Name, $Icon, $Prefix, $Suffix, $MinValue, $MaxValue, $Stepsize, $Digits);
 
         //boolean IPS_SetVariableProfileAssociation ( string $ProfilName, float $Wert, string $Name, string $Icon, int $Farbe )
         foreach ($Associations as $Association) {
             IPS_SetVariableProfileAssociation($Name, $Association[0], $Association[1], $Association[2], $Association[3]);
         }
-    }
-
-    //-- Harmony API
-
-    /**
-     * Interne Funktion des SDK.
-     * Wird von der Console aufgerufen, wenn 'unser' IO-Parent geöffnet wird.
-     * Außerdem nutzen wir sie in Applychanges, da wir dort die Daten zum konfigurieren nutzen.
-     */
-    public function GetConfigurationForParent()
-    {
-        $Config['Port'] = 5222; // Harmony Port
-        return json_encode($Config);
-    }
-
-    /***********************************************************
-     * Configuration Form
-     ***********************************************************/
-
-    /**
-     * build configuration form.
-     *
-     * @return string
-     */
-    public function GetConfigurationForm()
-    {
-        // return current form
-        return json_encode(
-            [
-                'elements' => $this->FormHead(),
-                'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
-        );
     }
 
     /**
@@ -1689,12 +1652,12 @@ harmony_ping($)
 
     protected function GetLinkObjIDs()
     {
-        $hubip         = $this->GetParentIP();
-        $hubipident    = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $CategoryID    = $this->ReadPropertyInteger('ImportCategoryID');
+        $hubip = $this->GetParentIP();
+        $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
+        $CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
         $HubCategoryID = @IPS_GetObjectIDByIdent('CatLogitechHub_' . $hubipident, $CategoryID);
-        $MainCatID     = @IPS_GetObjectIDByIdent('LogitechActivitiesScripts_' . $hubipident, $HubCategoryID);
-        $linkobjids    = IPS_GetChildrenIDs($MainCatID);
+        $MainCatID = @IPS_GetObjectIDByIdent('LogitechActivitiesScripts_' . $hubipident, $HubCategoryID);
+        $linkobjids = IPS_GetChildrenIDs($MainCatID);
 
         return $linkobjids;
     }
@@ -1711,69 +1674,9 @@ harmony_ping($)
         return $catempty;
     }
 
-    public function __get($name)
-    {
-        if (strpos($name, 'Multi_') === 0) {
-            $curCount = $this->GetBuffer('BufferCount_' . $name);
-            if ($curCount == false) {
-                $curCount = 0;
-            }
-            $data = '';
-            for ($i = 0; $i < $curCount; $i++) {
-                $data .= $this->GetBuffer('BufferPart' . $i . '_' . $name);
-            }
-        } else {
-            $data = $this->GetBuffer($name);
-        }
-
-        return unserialize($data);
-    }
-
-    public function __set($name, $value)
-    {
-        $data = serialize($value);
-        if (strpos($name, 'Multi_') === 0) {
-            $oldCount = $this->GetBuffer('BufferCount_' . $name);
-            if ($oldCount == false) {
-                $oldCount = 0;
-            }
-            $parts    = str_split($data, 8000);
-            $newCount = strval(count($parts));
-            $this->SetBuffer('BufferCount_' . $name, $newCount);
-            for ($i = 0; $i < $newCount; $i++) {
-                $this->SetBuffer('BufferPart' . $i . '_' . $name, $parts[$i]);
-            }
-            for ($i = $newCount; $i < $oldCount; $i++) {
-                $this->SetBuffer('BufferPart' . $i . '_' . $name, '');
-            }
-        } else {
-            $this->SetBuffer($name, $data);
-        }
-    }
-
-    private function SetMultiBuffer($name, $value)
-    {
-        if (IPS_GetKernelVersion() >= 5) {
-            $this->{'Multi_' . $name} = $value;
-        } else {
-            $this->SetBuffer($name, $value);
-        }
-    }
-
-    private function GetMultiBuffer($name)
-    {
-        if (IPS_GetKernelVersion() >= 5) {
-            $value = $this->{'Multi_' . $name};
-        } else {
-            $value = $this->GetBuffer($name);
-        }
-
-        return $value;
-    }
-
-    /***********************************************************
+    /*
      * Migrations
-     ***********************************************************/
+     */
 
     /**
      * Polyfill for IP-Symcon 4.4 and older.
@@ -1797,5 +1700,92 @@ harmony_ping($)
             $valuestring = 'false';
         }
         $this->SendDebug('SetValue', 'Set variable with objid' . $this->GetIDForIdent($Ident) . ' and ident ' . $Ident . ' to ' . $valuestring, 0);
+    }
+
+    private function ValidateConfiguration()
+    {
+        $ip = $this->GetParentIP();
+        $email = $this->ReadPropertyString('Email');
+        $password = $this->ReadPropertyString('Password');
+
+        //IP prüfen
+        if (!filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            $this->SendDebug('Harmony Hub', 'IP adress ok', 0);
+        } else {
+            $this->SetStatus(203); //IP Adresse ist ungültig
+        }
+
+        //Email und Passwort prüfen
+        if ($email == '' || $password == '') {
+            $this->SetStatus(205); //Felder dürfen nicht leer sein
+        } elseif ($email !== '' && $password !== '' && (!filter_var($ip, FILTER_VALIDATE_IP) === false)) {
+            $userauthtoken = $this->ReadAttributeString('HarmonyUserAuthToken');
+            if ($userauthtoken == '') {
+                $this->RegisterUser($email, $password);
+            }
+        }
+        // Status Aktiv
+        $this->SetStatus(102);
+    }
+
+    private function GetParentIP()
+    {
+        $host = '';
+        $ParentID = $this->GetParent();
+        if ($ParentID > 0) {
+            $host = IPS_GetProperty($ParentID, 'Host');
+        // @IPS_SetName($ParentID, "Logitech Harmony Hub IO Socket (" . $this->ReadPropertyString('Host') . ")");
+        } else {
+            $this->SendDebug('Harmony Hub', 'Could not find IO. Please connect IO to Splitter', 0);
+            $this->SetStatus(207);
+        }
+
+        return $host;
+    }
+
+    private function GetHarmonyConfigTimestamp()
+    {
+        $HarmonyConfigTimestamp = $this->ReadAttributeInteger('HarmonyConfigTimestamp');
+
+        return $HarmonyConfigTimestamp;
+    }
+
+    private function DeleteBuffer()
+    {
+        $this->SetMultiBuffer('HarmonyBufferIN', '');
+    }
+
+    private function WriteBuffer($databuffer)
+    {
+        // Inhalt von $databuffer im Puffer speichern
+        $this->SetMultiBuffer('HarmonyBufferIN', $databuffer);
+    }
+
+    private function GetBufferIN()
+    {
+        // bereits im Puffer der Instanz vorhandene Daten in $databuffer kopieren
+        $databuffer = $this->GetMultiBuffer('HarmonyBufferIN');
+
+        return $databuffer;
+    }
+
+    private function SetMultiBuffer($name, $value)
+    {
+        if (IPS_GetKernelVersion() >= 5) {
+            $this->{'Multi_' . $name} = $value;
+        } else {
+            $this->SetBuffer($name, $value);
+        }
+    }
+
+    private function GetMultiBuffer($name)
+    {
+        if (IPS_GetKernelVersion() >= 5) {
+            $value = $this->{'Multi_' . $name};
+        } else {
+            $value = $this->GetBuffer($name);
+        }
+
+        return $value;
     }
 }

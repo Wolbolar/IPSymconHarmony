@@ -19,8 +19,11 @@ class HarmonyRokuEmulator extends IPSModule
         $this->RegisterPropertyInteger('ServerSocketPort', 42450);
         $this->RegisterPropertyInteger('HarmonyHubObjID', 0);
         $this->RegisterPropertyInteger('HarmonyHubActivity', 0);
-        $this->CreateActivityProperties();
+
         $this->MySerial = md5(openssl_random_pseudo_bytes(10));
+
+        //we will wait until the kernel is ready
+        $this->RegisterMessage(0, IPS_KERNELMESSAGE);
     }
 
     public function ApplyChanges()
@@ -52,41 +55,20 @@ class HarmonyRokuEmulator extends IPSModule
         $this->ValidateConfiguration();
     }
 
-    /**
-     * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
-     * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur Verfügung gestellt:.
-     */
-    private function ValidateConfiguration()
-    {
-        $this->SetStatus(102);
-    }
-
-    /**
-     * checks, if configuration is complete.
-     *
-     * @return bool
-     */
-    private function CheckConfiguration()
-    {
-        $ServerSocketPort = $this->ReadPropertyInteger('ServerSocketPort');
-        if ($ServerSocketPort > 0) {
-            return true;
-        }
-
-        if ($ServerSocketPort == 0) {
-            $this->_debug('Roku Emulator', 'Please select a port');
-            $this->SetStatus(202);
-
-            return false;
-        }
-
-        return true;
-    }
-
     public function GetConfigurationForParent()
     {
         $Config['Port'] = $this->ReadPropertyInteger('ServerSocketPort'); // Server Socket Port
         return json_encode($Config);
+    }
+
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        $this->LogMessage('SenderID: ' . $SenderID . ', Message: ' . $Message . ', Data:' . json_encode($Data), KL_DEBUG);
+        if ($Message == IPS_KERNELMESSAGE) {
+            if ($Data[0] === KR_READY) {
+                $this->CreateActivityProperties();
+            }
+        }
     }
 
     public function ReceiveData($JSONString)
@@ -109,10 +91,52 @@ class HarmonyRokuEmulator extends IPSModule
         if ($pos == 0) {
             // cut off data
             $keypress_pos = strpos($dataio, 'keypress');
-            $http_pos     = strpos($dataio, 'HTTP');
-            $data         = substr($dataio, $keypress_pos + 9, ($http_pos - ($keypress_pos + 10)));
+            $http_pos = strpos($dataio, 'HTTP');
+            $data = substr($dataio, $keypress_pos + 9, ($http_pos - ($keypress_pos + 10)));
             $this->WriteValues($data);
         }
+    }
+
+    public function RequestAction($Ident, $Value)
+    {
+        $ObjID = $this->GetIDForIdent($Ident);
+        // $lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
+        SetValue($ObjID, $Value);
+        //SetValue($lastkeyid, $keyval);
+    }
+
+    //Variablen anlegen
+    public function SetupVariable(string $VarIdent, string $VarName, string $VarProfile)
+    {
+        $variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, $VarProfile);
+        $this->EnableAction($VarIdent);
+
+        return $variablenID;
+    }
+
+    /*
+     * Configuration Form
+     */
+
+    /**
+     * build configuration form.
+     *
+     * @return string
+     */
+    public function GetConfigurationForm()
+    {
+        // update status, when configuration is not complete
+        if (!$this->CheckConfiguration()) {
+            $this->SetStatus(201);
+        }
+
+        // return current form
+        return json_encode(
+            [
+                'elements' => $this->FormHead(),
+                'actions'  => $this->FormActions(),
+                'status'   => $this->FormStatus(), ]
+        );
     }
 
     protected function WriteValues($data)
@@ -175,9 +199,9 @@ class HarmonyRokuEmulator extends IPSModule
 
     protected function StartRokuKeyscript($command)
     {
-        $activity     = $this->GetCurrentActivity();
+        $activity = $this->GetCurrentActivity();
         $activityname = $activity['activityname'];
-        $activityid   = $activity['activityid'];
+        $activityid = $activity['activityid'];
         $this->SendDebug('Logitech Roku', 'Current activity: ' . $activityname, 0);
         $this->SendDebug('Logitech Roku', 'Current activity id: ' . $activityid, 0);
         $harmonyid = $this->ReadPropertyInteger('HarmonyHubObjID');
@@ -206,9 +230,9 @@ class HarmonyRokuEmulator extends IPSModule
     protected function GetCurrentActivity()
     {
         $HarmonyHubObjID = $this->ReadPropertyInteger('HarmonyHubObjID');
-        $activityname    = GetValueFormatted(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
-        $activityid      = GetValue(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
-        $activity        = ['activityname' => $activityname, 'activityid' => $activityid];
+        $activityname = GetValueFormatted(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
+        $activityid = GetValue(IPS_GetObjectIDByIdent('HarmonyActivity', $HarmonyHubObjID));
+        $activity = ['activityname' => $activityname, 'activityid' => $activityid];
 
         return $activity;
     }
@@ -243,7 +267,7 @@ class HarmonyRokuEmulator extends IPSModule
 </device>
 </root>
 ';
-        $Header[]     = 'HTTP/1.1 200 OK';
+        $Header[] = 'HTTP/1.1 200 OK';
         // $Header[] = "LOCATION: http://" . $this->GetIP() . ":".$this->ReadPropertyInteger("ServerSocketPort");
         // $Header[] = "Content-Type: application/xml; charset=utf-8";
         // $Header[] = "ST: roku:ecp";
@@ -253,8 +277,8 @@ class HarmonyRokuEmulator extends IPSModule
         $Header[] = 'Content-Length: ' . strlen($rokuresponse);
         $Header[] = 'Connection: Close';
         $Header[] = "\r\n";
-        $Payload  = implode("\r\n", $Header);
-        $Payload  .= '<?xml version="1.0" encoding="utf-8" ?>' . $rokuresponse;
+        $Payload = implode("\r\n", $Header);
+        $Payload .= '<?xml version="1.0" encoding="utf-8" ?>' . $rokuresponse;
 
         $result = $this->SendToSocket($Host, $Port, $Payload);
 
@@ -274,10 +298,10 @@ class HarmonyRokuEmulator extends IPSModule
 
     protected function GetIP()
     {
-        $ssdpid     = IPS_GetInstanceListByModuleID('{058CE601-4353-F473-EA14-A2B7B94628A0}')[0]; // SSDP;
-        $instance   = IPS_GetInstance($ssdpid);
+        $ssdpid = IPS_GetInstanceListByModuleID('{058CE601-4353-F473-EA14-A2B7B94628A0}')[0]; // SSDP;
+        $instance = IPS_GetInstance($ssdpid);
         $parentssdp = $instance['ConnectionID'];
-        $myIP       = IPS_GetProperty($parentssdp, 'BindIP');
+        $myIP = IPS_GetProperty($parentssdp, 'BindIP');
 
         return $myIP;
     }
@@ -297,7 +321,7 @@ class HarmonyRokuEmulator extends IPSModule
     protected function GetHarmonyHubList()
     {
         $harmonyhubs = $this->GetHarmonyHubs();
-        $options     = [
+        $options = [
             [
                 'caption' => 'Please choose',
                 'value'   => 0, ], ];
@@ -320,7 +344,7 @@ class HarmonyRokuEmulator extends IPSModule
     protected function GetHubActivitiesExpansionPanels($HubID, $form)
     {
         if (strlen(strval($HubID)) == 5) {
-            $activities        = $this->GetHubActivities($HubID);
+            $activities = $this->GetHubActivities($HubID);
             $number_activities = count($activities);
             if ($number_activities > 0) {
                 foreach ($activities as $key => $activity) {
@@ -343,20 +367,20 @@ class HarmonyRokuEmulator extends IPSModule
                                         'columns'  => [
                                             [
                                                 'name'    => 'command',
-                                                'label'   => 'command',
+                                                'caption'   => 'command',
                                                 'width'   => '200px',
                                                 'save'    => true,
                                                 'visible' => true, ],
                                             [
                                                 'name'  => 'rokuscript',
-                                                'label' => 'script',
+                                                'caption' => 'script',
                                                 'width' => 'auto',
                                                 'save'  => true,
                                                 'edit'  => [
                                                     'type' => 'SelectScript', ], ],
                                             [
                                                 'name'    => 'key_id',
-                                                'label'   => 'Key ID',
+                                                'caption'   => 'Key ID',
                                                 'width'   => 'auto',
                                                 'save'    => true,
                                                 'visible' => false, ], ],
@@ -426,14 +450,6 @@ class HarmonyRokuEmulator extends IPSModule
         return $name;
     }
 
-    public function RequestAction($Ident, $Value)
-    {
-        $ObjID = $this->GetIDForIdent($Ident);
-        // $lastkeyid = $this->GetIDForIdent("LastKeystrokeFakeRoku");
-        SetValue($ObjID, $Value);
-        //SetValue($lastkeyid, $keyval);
-    }
-
     /**
      * register profiles.
      *
@@ -500,40 +516,6 @@ class HarmonyRokuEmulator extends IPSModule
         }
     }
 
-    //Variablen anlegen
-    public function SetupVariable(string $VarIdent, string $VarName, string $VarProfile)
-    {
-        $variablenID = $this->RegisterVariableInteger($VarIdent, $VarName, $VarProfile);
-        $this->EnableAction($VarIdent);
-
-        return $variablenID;
-    }
-
-    /***********************************************************
-     * Configuration Form
-     ***********************************************************/
-
-    /**
-     * build configuration form.
-     *
-     * @return string
-     */
-    public function GetConfigurationForm()
-    {
-        // update status, when configuration is not complete
-        if (!$this->CheckConfiguration()) {
-            $this->SetStatus(201);
-        }
-
-        // return current form
-        return json_encode(
-            [
-                'elements' => $this->FormHead(),
-                'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
-        );
-    }
-
     /**
      * return form configurations on configuration step.
      *
@@ -541,25 +523,25 @@ class HarmonyRokuEmulator extends IPSModule
      */
     protected function FormHead()
     {
-        $form            = [
+        $form = [
             [
                 'type'  => 'Label',
-                'label' => 'Roku Emulator IP-Symcon', ],
+                'caption' => 'Roku Emulator IP-Symcon', ],
             [
                 'type'  => 'Label',
-                'label' => 'Please select port to use for the Roku emulator:', ],
+                'caption' => 'Please select port to use for the Roku emulator:', ],
             [
                 'name'    => 'ServerSocketPort',
                 'type'    => 'NumberSpinner',
                 'caption' => 'Port', ], ];
-        $ssdproku        = $this->GetSSDPRoku();
+        $ssdproku = $this->GetSSDPRoku();
         $number_ssdproku = count($ssdproku);
         if ($number_ssdproku == 0) {
             $form = array_merge_recursive(
                 $form, [
                     [
                         'type'  => 'Label',
-                        'label' => 'No SSDP Roku instance found, please create SSDP Roku instance first', ], ]
+                        'caption' => 'No SSDP Roku instance found, please create SSDP Roku instance first', ], ]
             );
         }
         $harmonyhubs = $this->GetHarmonyHubs();
@@ -569,14 +551,14 @@ class HarmonyRokuEmulator extends IPSModule
                 $form, [
                     [
                         'type'  => 'Label',
-                        'label' => 'No hub found, please configure harmony hub first', ], ]
+                        'caption' => 'No hub found, please configure harmony hub first', ], ]
             );
         } else {
             $form = array_merge_recursive(
                 $form, [
                     [
                         'type'  => 'Label',
-                        'label' => 'Please select the Harmony Hub for configuration:', ],
+                        'caption' => 'Please select the Harmony Hub for configuration:', ],
                     [
                         'name'    => 'HarmonyHubObjID',
                         'type'    => 'Select',
@@ -591,7 +573,7 @@ class HarmonyRokuEmulator extends IPSModule
                 $form, [
                     [
                         'type'  => 'Label',
-                        'label' => 'configure activities', ], ]
+                        'caption' => 'configure activities', ], ]
             );
             $form = $this->GetHubActivitiesExpansionPanels($HarmonyHubObjID, $form);
         }
@@ -620,15 +602,15 @@ class HarmonyRokuEmulator extends IPSModule
     {
         $form = [
             [
-                'code'    => 101,
+                'code'    => IS_CREATING,
                 'icon'    => 'inactive',
                 'caption' => 'Creating instance.', ],
             [
-                'code'    => 102,
+                'code'    => IS_ACTIVE,
                 'icon'    => 'active',
                 'caption' => 'Roku emulator device created.', ],
             [
-                'code'    => 104,
+                'code'    => IS_INACTIVE,
                 'icon'    => 'inactive',
                 'caption' => 'interface closed.', ],
             [
@@ -651,9 +633,59 @@ class HarmonyRokuEmulator extends IPSModule
         return $form;
     }
 
-    /***********************************************************
+    /*
+     * Migrations
+     */
+
+    /**
+     * Polyfill for IP-Symcon 4.4 and older.
+     *
+     * @param $Ident
+     * @param $Value
+     */
+    protected function SetValue($Ident, $Value)
+    {
+        if (IPS_GetKernelVersion() >= 5) {
+            parent::SetValue($Ident, $Value);
+        } elseif ($id = @$this->GetIDForIdent($Ident)) {
+            SetValue($id, $Value);
+        }
+    }
+
+    /**
+     * Die folgenden Funktionen stehen automatisch zur Verfügung, wenn das Modul über die "Module Control" eingefügt wurden.
+     * Die Funktionen werden, mit dem selbst eingerichteten Prefix, in PHP und JSON-RPC wiefolgt zur Verfügung gestellt:.
+     */
+    private function ValidateConfiguration()
+    {
+        $this->SetStatus(102);
+    }
+
+    /**
+     * checks, if configuration is complete.
+     *
+     * @return bool
+     */
+    private function CheckConfiguration()
+    {
+        $ServerSocketPort = $this->ReadPropertyInteger('ServerSocketPort');
+        if ($ServerSocketPort > 0) {
+            return true;
+        }
+
+        if ($ServerSocketPort == 0) {
+            $this->_debug('Roku Emulator', 'Please select a port');
+            $this->SetStatus(202);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /*
      * Helper methods
-     ***********************************************************/
+     */
 
     /**
      * send debug log.
@@ -677,24 +709,5 @@ class HarmonyRokuEmulator extends IPSModule
         $this->position++;
 
         return $this->position;
-    }
-
-    /***********************************************************
-     * Migrations
-     ***********************************************************/
-
-    /**
-     * Polyfill for IP-Symcon 4.4 and older.
-     *
-     * @param $Ident
-     * @param $Value
-     */
-    protected function SetValue($Ident, $Value)
-    {
-        if (IPS_GetKernelVersion() >= 5) {
-            parent::SetValue($Ident, $Value);
-        } elseif ($id = @$this->GetIDForIdent($Ident)) {
-            SetValue($id, $Value);
-        }
     }
 }

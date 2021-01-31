@@ -15,7 +15,9 @@
       "configuration valid": "Konfiguration gültig",
       "Harmony Device is inactive": "Harmony Device ist inaktiv",
       "Roku emulator device created.": "Roku Emulator Gerät erstellt.",
-      "creating instance": "Die Instanz wird erstellt"
+      "creating instance": "Die Instanz wird erstellt",
+      "script": "Skript",
+      "variable": "Variable"
     }
   }
 }

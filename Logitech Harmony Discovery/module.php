@@ -8,7 +8,8 @@ require_once __DIR__ . '/../libs/HarmonyDebugHelper.php';
 
 class HarmonyDiscovery extends IPSModule
 {
-    use HarmonyBufferHelper; use HarmonyDebugHelper;
+    use HarmonyBufferHelper;
+    use HarmonyDebugHelper;
     public function Create()
     {
         //Never delete this line!
@@ -65,79 +66,43 @@ class HarmonyDiscovery extends IPSModule
         }
     }
 
-    /**
-     * Liefert alle Geräte.
-     *
-     * @return array configlist all devices
-     */
-    private function Get_ListConfiguration()
+    public function GetDevices()
     {
-        $config_list        = [];
-        $ConfiguratorIDList = IPS_GetInstanceListByModuleID('{E1FB3491-F78D-457A-89EC-18C832F4E6D9}'); // Harmony  Configurator
-        $devices            = $this->DiscoverDevices();
-        $this->SendDebug('Discovered Logitech Harmony Hubs', json_encode($devices), 0);
-        $email    = $this->ReadPropertyString('Email');
-        $password = $this->ReadPropertyString('Password');
-        if (!empty($devices)) {
-            foreach ($devices as $device) {
-                $instanceID = 0;
-                $name       = $device['name'];
-                $uuid       = $device['uuid'];
-                $host       = $device['host'];
-                $device_id  = 0;
-                foreach ($ConfiguratorIDList as $ConfiguratorID) {
-                    if ($uuid == IPS_GetProperty($ConfiguratorID, 'uuid')) {
-                        $configurator_name = IPS_GetName($ConfiguratorID);
-                        $this->SendDebug(
-                            'Harmony Discovery', 'configurator found: ' . utf8_decode($configurator_name) . ' (' . $ConfiguratorID . ')', 0
-                        );
-                        $instanceID = $ConfiguratorID;
-                    }
-                }
+        $devices = $this->ReadPropertyString('devices');
 
-                $config_list[] = [
-                    'instanceID' => $instanceID,
-                    'id'         => $device_id,
-                    'name'       => $name,
-                    'uuid'       => $uuid,
-                    'host'       => $host,
-                    'create'     => [
-                        [
-                            'moduleID'      => '{E1FB3491-F78D-457A-89EC-18C832F4E6D9}',
-                            'configuration' => [
-                                'name' => $name,
-                                'uuid' => $uuid,
-                                'host' => $host, ], ],
-                        [
-                            'moduleID'      => '{03B162DB-7A3A-41AE-A676-2444F16EBEDF}',
-                            'configuration' => [
-                                'Email'    => $email,
-                                'Password' => $password, ], ],
-                        [
-                            'moduleID'      => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
-                            'configuration' => [
-                                'Host' => $host,
-                                'Port' => 5222,
-                                'Open' => true, ], ], ], ];
-            }
-        }
-
-        return $config_list;
+        return $devices;
     }
 
-    private function DiscoverDevices(): array
+    public function Discover()
     {
-        $devices = $this->mSearch();
-        $this->SendDebug('Discover Response:', json_encode($devices), 0);
-        $harmony_info = $this->GetHarmonyInfo($devices);
-        foreach ($harmony_info as $device) {
-            $this->SendDebug('name:', $device['name'], 0);
-            $this->SendDebug('uuid:', $device['uuid'], 0);
-            $this->SendDebug('host:', $device['host'], 0);
-            $this->SendDebug('port:', $device['port'], 0);
-        }
+        $this->LogMessage($this->Translate('Background Discovery of Logitech Harmony Hubs'), KL_NOTIFY);
+        $this->WriteAttributeString('devices', json_encode($this->DiscoverDevices()));
 
-        return $harmony_info;
+        return json_encode($this->DiscoverDevices());
+    }
+
+    /*
+     * Configuration Form
+     */
+
+    /**
+     * build configuration form.
+     *
+     * @return string
+     */
+    public function GetConfigurationForm()
+    {
+        // return current form
+        $Form = json_encode(
+            [
+                'elements' => $this->FormElements(),
+                'actions'  => $this->FormActions(),
+                'status'   => $this->FormStatus(), ]
+        );
+        $this->SendDebug('FORM', $Form, 0);
+        $this->SendDebug('FORM', json_last_error_msg(), 0);
+
+        return $Form;
     }
 
     protected function mSearch($st = 'upnp:rootdevice', $mx = 2, $man = 'ssdp:discover', $from = null, $port = null, $sockTimout = 3)
@@ -167,7 +132,7 @@ class HarmonyDiscovery extends IPSModule
         // RECIEVE RESPONSE
         $response = [];
         do {
-            $buf   = null;
+            $buf = null;
             $bytes = @socket_recvfrom($socket, $buf, 2048, 0, $from, $port);
             if ($bytes === false) {
                 break;
@@ -182,9 +147,9 @@ class HarmonyDiscovery extends IPSModule
         foreach ($response as $device) {
             if (isset($device['st'])) {
                 if ($device['st'] == 'urn:myharmony-com:device:harmony:1') {
-                    $uuid               = str_ireplace('uuid:', '', $device['usn']);
-                    $cutoff             = strpos($uuid, '::');
-                    $uuid               = substr($uuid, 0, $cutoff);
+                    $uuid = str_ireplace('uuid:', '', $device['usn']);
+                    $cutoff = strpos($uuid, '::');
+                    $uuid = substr($uuid, 0, $cutoff);
                     $harmony_response[] = ['uuid' => $uuid, 'location' => $device['location']];
                 }
             }
@@ -195,7 +160,7 @@ class HarmonyDiscovery extends IPSModule
 
     protected function parseMSearchResponse($response)
     {
-        $responseArr    = explode("\r\n", $response);
+        $responseArr = explode("\r\n", $response);
         $parsedResponse = [];
         foreach ($responseArr as $key => $row) {
             if (stripos($row, 'http') === 0) {
@@ -255,72 +220,20 @@ class HarmonyDiscovery extends IPSModule
     {
         $harmony_info = [];
         foreach ($result as $device) {
-            $uuid           = $device['uuid'];
-            $location       = $device['location'];
-            $description    = $this->GetXML($location);
-            $xml            = simplexml_load_string($description);
-            $name           = strval($xml->device->friendlyName);
-            $location       = str_ireplace('http://', '', $location);
-            $location       = explode(':', $location);
-            $ip             = $location[0];
-            $cutoff         = strpos($location[1], '/');
-            $port           = substr($location[1], 0, $cutoff);
+            $uuid = $device['uuid'];
+            $location = $device['location'];
+            $description = $this->GetXML($location);
+            $xml = simplexml_load_string($description);
+            $name = strval($xml->device->friendlyName);
+            $location = str_ireplace('http://', '', $location);
+            $location = explode(':', $location);
+            $ip = $location[0];
+            $cutoff = strpos($location[1], '/');
+            $port = substr($location[1], 0, $cutoff);
             $harmony_info[] = ['name' => $name, 'uuid' => $uuid, 'host' => $ip, 'port' => $port];
         }
 
         return $harmony_info;
-    }
-
-    private function GetXML($url)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        // $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);   //get status code
-        $result = curl_exec($ch);
-        curl_close($ch);
-
-        return $result;
-    }
-
-    public function GetDevices()
-    {
-        $devices = $this->ReadPropertyString('devices');
-
-        return $devices;
-    }
-
-    public function Discover()
-    {
-        $this->LogMessage($this->Translate('Background Discovery of Logitech Harmony Hubs'), KL_NOTIFY);
-        $this->WriteAttributeString('devices', json_encode($this->DiscoverDevices()));
-
-        return json_encode($this->DiscoverDevices());
-    }
-
-    /***********************************************************
-     * Configuration Form
-     ***********************************************************/
-
-    /**
-     * build configuration form.
-     *
-     * @return string
-     */
-    public function GetConfigurationForm()
-    {
-        // return current form
-        $Form = json_encode(
-            [
-                'elements' => $this->FormElements(),
-                'actions'  => $this->FormActions(),
-                'status'   => $this->FormStatus(), ]
-        );
-        $this->SendDebug('FORM', $Form, 0);
-        $this->SendDebug('FORM', json_last_error_msg(), 0);
-
-        return $Form;
     }
 
     /**
@@ -412,5 +325,93 @@ class HarmonyDiscovery extends IPSModule
                 'caption' => 'Please follow the instructions.', ], ];
 
         return $form;
+    }
+
+    /**
+     * Liefert alle Geräte.
+     *
+     * @return array configlist all devices
+     */
+    private function Get_ListConfiguration()
+    {
+        $config_list = [];
+        $ConfiguratorIDList = IPS_GetInstanceListByModuleID('{E1FB3491-F78D-457A-89EC-18C832F4E6D9}'); // Harmony  Configurator
+        $devices = $this->DiscoverDevices();
+        $this->SendDebug('Discovered Logitech Harmony Hubs', json_encode($devices), 0);
+        $email = $this->ReadPropertyString('Email');
+        $password = $this->ReadPropertyString('Password');
+        if (!empty($devices)) {
+            foreach ($devices as $device) {
+                $instanceID = 0;
+                $name = $device['name'];
+                $uuid = $device['uuid'];
+                $host = $device['host'];
+                $device_id = 0;
+                foreach ($ConfiguratorIDList as $ConfiguratorID) {
+                    if ($uuid == IPS_GetProperty($ConfiguratorID, 'uuid')) {
+                        $configurator_name = IPS_GetName($ConfiguratorID);
+                        $this->SendDebug(
+                            'Harmony Discovery', 'configurator found: ' . utf8_decode($configurator_name) . ' (' . $ConfiguratorID . ')', 0
+                        );
+                        $instanceID = $ConfiguratorID;
+                    }
+                }
+
+                $config_list[] = [
+                    'instanceID' => $instanceID,
+                    'id'         => $device_id,
+                    'name'       => $name,
+                    'uuid'       => $uuid,
+                    'host'       => $host,
+                    'create'     => [
+                        [
+                            'moduleID'      => '{E1FB3491-F78D-457A-89EC-18C832F4E6D9}',
+                            'configuration' => [
+                                'name' => $name,
+                                'uuid' => $uuid,
+                                'host' => $host, ], ],
+                        [
+                            'moduleID'      => '{03B162DB-7A3A-41AE-A676-2444F16EBEDF}',
+                            'configuration' => [
+                                'Email'    => $email,
+                                'Password' => $password, ], ],
+                        [
+                            'moduleID'      => '{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}',
+                            'configuration' => [
+                                'Host' => $host,
+                                'Port' => 5222,
+                                'Open' => true, ], ], ], ];
+            }
+        }
+
+        return $config_list;
+    }
+
+    private function DiscoverDevices(): array
+    {
+        $devices = $this->mSearch();
+        $this->SendDebug('Discover Response:', json_encode($devices), 0);
+        $harmony_info = $this->GetHarmonyInfo($devices);
+        foreach ($harmony_info as $device) {
+            $this->SendDebug('name:', $device['name'], 0);
+            $this->SendDebug('uuid:', $device['uuid'], 0);
+            $this->SendDebug('host:', $device['host'], 0);
+            $this->SendDebug('port:', $device['port'], 0);
+        }
+
+        return $harmony_info;
+    }
+
+    private function GetXML($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        // $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);   //get status code
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return $result;
     }
 }
