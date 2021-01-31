@@ -2,7 +2,7 @@
   "elements": [
     {
       "type": "Label",
-      "label": "You have to configure the local IP address in the IO.\""
+      "label": "You have to configure the local IP address in the IO."
     },
     { "type": "Label", "label": "This instance is sending response to device search"},
     {
