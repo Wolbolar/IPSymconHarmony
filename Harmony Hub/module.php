@@ -243,6 +243,12 @@ class HarmonyHub extends IPSModule
 
                 return $hubip;
             }
+            if ($datasend->Method == 'GetHubName') {
+                $hubname = $this->GetName();
+                $this->SendDebug('Logitech Harmony Hub', 'Name: ' . $hubname, 0);
+
+                return $hubname;
+            }
             if ($datasend->Method == 'getConfig') {
                 $this->getConfig();
             }
@@ -566,7 +572,7 @@ harmony_ping($)
     //Link für Harmony Activity anlegen
     public function CreateAktivityLink()
     {
-        $hubname = GetValue($this->GetIDForIdent('HarmonyHubName'));
+        $hubname = $this->GetName();
         $hubip = $this->GetParentIP();
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
         $CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
@@ -1725,7 +1731,7 @@ Switch ($_IPS[\'SENDER\'])
             }
         }
         // Status Aktiv
-        $this->SetStatus(102);
+        $this->SetStatus(IS_ACTIVE);
     }
 
     private function GetParentIP()
@@ -1741,6 +1747,11 @@ Switch ($_IPS[\'SENDER\'])
         }
 
         return $host;
+    }
+
+    private function GetName()
+    {
+        return GetValue($this->GetIDForIdent('HarmonyHubName'));
     }
 
     private function GetHarmonyConfigTimestamp()
