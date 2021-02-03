@@ -37,7 +37,6 @@ class HarmonyConfigurator extends IPSModule
     // Geräte Skripte und Links anlegen
     public function SetupHarmony()
     {
-        $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $HubCategoryID = $this->CreateHarmonyHubCategory();
         //Konfig prüfen
         $HarmonyConfig = $this->SendData('GetHarmonyConfigJSON');
@@ -70,10 +69,9 @@ class HarmonyConfigurator extends IPSModule
 
     public function SetupActivityScripts(int $HubCategoryID)
     {
-        $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $hubip = $this->SendData('GetHubIP');
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $hubname = GetValue(IPS_GetObjectIDByIdent('HarmonyHubName', $MyParent));
+        $hubname = $this->SendData('GetHubName');
         $activities_json = $this->SendData('GetAvailableAcitivities');
         $this->SendDebug('Harmony Hub Activities', $activities_json, 0);
         if (!empty($activities_json)) {
@@ -142,7 +140,7 @@ class HarmonyConfigurator extends IPSModule
      *
      * @return string
      */
-    public function GetConfigurationForm()
+    public function GetConfigurationForm(): string
     {
         // return current form
         $Form = json_encode(
@@ -157,7 +155,10 @@ class HarmonyConfigurator extends IPSModule
         return $Form;
     }
 
-    protected function CreateHarmonyHubCategory()
+    /**
+     * @return int
+     */
+    protected function CreateHarmonyHubCategory(): int
     {
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $hubip = $this->SendData('GetHubIP');
@@ -178,7 +179,10 @@ class HarmonyConfigurator extends IPSModule
         return $HubCategoryID;
     }
 
-    protected function CreateHarmonyScriptCategory()
+    /**
+     * @return int
+     */
+    protected function CreateHarmonyScriptCategory(): int
     {
         $CategoryID = $this->ReadPropertyInteger('ImportCategoryID');
         //Prüfen ob Kategorie schon existiert
@@ -195,7 +199,10 @@ class HarmonyConfigurator extends IPSModule
         return $HubScriptCategoryID;
     }
 
-    protected function GetCurrentHarmonyDevices()
+    /**
+     * @return array
+     */
+    protected function GetCurrentHarmonyDevices(): array
     {
         $HarmonyInstanceIDList = IPS_GetInstanceListByModuleID('{B0B4D0C2-192E-4669-A624-5D5E72DBB555}'); // Harmony Devices
         $HarmonyInstanceList = [];
@@ -274,7 +281,14 @@ class HarmonyConfigurator extends IPSModule
         }
     }
 
-    protected function CreateActivityScript($Scriptname, $MainCatID, $hubip, $activity)
+    /**
+     * @param $Scriptname
+     * @param $MainCatID
+     * @param $hubip
+     * @param $activity
+     * @return int
+     */
+    protected function CreateActivityScript($Scriptname, $MainCatID, $hubip, $activity): int
     {
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $Scriptname = $this->ReplaceSpecialCharacters($Scriptname);
@@ -526,7 +540,7 @@ Switch ($_IPS[\'SENDER\'])
      *
      * @return array
      */
-    protected function FormHead()
+    protected function FormHead(): array
     {
         $category = false;
 
@@ -609,7 +623,7 @@ Switch ($_IPS[\'SENDER\'])
      *
      * @return array
      */
-    protected function FormActions()
+    protected function FormActions(): array
     {
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $form = [
@@ -643,7 +657,7 @@ Switch ($_IPS[\'SENDER\'])
      *
      * @return array
      */
-    protected function FormStatus()
+    protected function FormStatus(): array
     {
         $form = [
             [
@@ -675,7 +689,7 @@ Switch ($_IPS[\'SENDER\'])
      *
      * @return array configlist all devices
      */
-    private function Get_ListConfiguration()
+    private function Get_ListConfiguration(): array
     {
         $config_list = [];
         $HarmonyInstanceIDList = IPS_GetInstanceListByModuleID('{B0B4D0C2-192E-4669-A624-5D5E72DBB555}'); // Harmony Devices
@@ -753,7 +767,12 @@ Switch ($_IPS[\'SENDER\'])
         return $config_list;
     }
 
-    private function SetLocation($hostname, $hubip)
+    /**
+     * @param $hostname
+     * @param $hubip
+     * @return array
+     */
+    private function SetLocation($hostname, $hubip): array
     {
         /*
         $tree_position = [
@@ -788,7 +807,7 @@ Switch ($_IPS[\'SENDER\'])
      *
      * @return string
      */
-    private function SendData(string $Method)
+    private function SendData(string $Method): string
     {
         $Data['DataID'] = '{EF26FF17-6C5B-4EFE-A7E2-63F599B84345}';
         $Data['Buffer'] = ['Method' => $Method];
