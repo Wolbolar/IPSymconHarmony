@@ -1752,6 +1752,7 @@ Switch ($_IPS[\'SENDER\'])
     private function GetName()
     {
         return GetValue($this->GetIDForIdent('HarmonyHubName'));
+        // $hubname = GetValue(IPS_GetObjectIDByIdent('HarmonyHubName', $MyParent));
     }
 
     private function GetHarmonyConfigTimestamp()

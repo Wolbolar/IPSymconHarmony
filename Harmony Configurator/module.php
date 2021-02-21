@@ -108,7 +108,7 @@ class HarmonyConfigurator extends IPSModule
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $hubip = $this->SendData('GetHubIP');
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $hubname = GetValue(IPS_GetObjectIDByIdent('HarmonyHubName', $MyParent));
+        $hubname = $this->SendData('GetHubName');
         $HubCategoryID = $this->CreateHarmonyHubCategory();
         //Prüfen ob Instanz schon vorhanden
         $InstanzID = @IPS_GetObjectIDByIdent('Logitech_Harmony_Hub_Activities_' . $hubipident, $HubCategoryID);
