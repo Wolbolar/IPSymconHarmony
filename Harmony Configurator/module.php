@@ -160,10 +160,9 @@ class HarmonyConfigurator extends IPSModule
      */
     protected function CreateHarmonyHubCategory(): int
     {
-        $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $hubip = $this->SendData('GetHubIP');
         $hubipident = str_replace('.', '_', $hubip); // Replaces all . with underline.
-        $hubname = GetValue(IPS_GetObjectIDByIdent('HarmonyHubName', $MyParent));
+        $hubname = $this->SendData('GetHubName');
         $CategoryID = $this->CreateHarmonyScriptCategory();
         //Prüfen ob Kategorie schon existiert
         $HubCategoryID = @IPS_GetObjectIDByIdent('CatLogitechHub_' . $hubipident, $CategoryID);
@@ -695,7 +694,7 @@ Switch ($_IPS[\'SENDER\'])
         $HarmonyInstanceIDList = IPS_GetInstanceListByModuleID('{B0B4D0C2-192E-4669-A624-5D5E72DBB555}'); // Harmony Devices
         $MyParent = IPS_GetInstance($this->InstanceID)['ConnectionID'];
         $this->SendDebug('Harmony Config', 'Configurator ConnectionID: ' . $MyParent, 0);
-        $hostname = GetValue(IPS_GetObjectIDByIdent('HarmonyHubName', $MyParent));
+        $hubname = $this->SendData('GetHubName');
         $hubip = $this->SendData('GetHubIP');
         $config = $this->SendData('GetHarmonyConfigJSON');
         $this->SendDebug('Harmony Config', $config, 0);
@@ -757,7 +756,7 @@ Switch ($_IPS[\'SENDER\'])
                             'deviceTypeDisplayName' => $deviceTypeDisplayName,
                             'HarmonyVars'           => $this->ReadPropertyBoolean('HarmonyVars'),
                             'HarmonyScript'         => $this->ReadPropertyBoolean('HarmonyScript'), ],
-                        'location'      => $this->SetLocation($hostname, $hubip)
+                        'location'      => $this->SetLocation($hubname, $hubip)
 
                     ],
                     ];
