@@ -197,7 +197,13 @@ class SSDPHarmony extends IPSModule
                 $this->SendDebug('Send Search Response', $Payload, 0);
             }
             $SendData =
-                ['DataID' => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}', 'Buffer' => utf8_encode($Payload), 'ClientIP' => $Host, 'ClientPort' => $Port];
+                [
+                    'DataID' => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
+                    'Buffer' => mb_convert_encoding($Payload, 'UTF-8', 'ISO-8859-1'),
+                    'ClientIP' => $Host,
+                    'ClientPort' => $Port,
+                    'Type'       => 0
+                ];
             // $this->SendDebug("SendToParent", $SendData, 0);
             $this->SendDataToParent(json_encode($SendData));
         }
@@ -209,7 +215,7 @@ class SSDPHarmony extends IPSModule
         //$this->SendDebug("Receive", $ReceiveData, 0);
 
         $databuffer = $this->GetBufferIN();
-        $data = $databuffer . utf8_decode($ReceiveData->Buffer);
+        $data = $databuffer . mb_convert_encoding($ReceiveData->Buffer, 'ISO-8859-1', 'UTF-8');
         if (substr($data, -4) != "\r\n\r\n") { // HEADER nicht komplett ?
             $this->WriteBuffer($data);
 
@@ -374,9 +380,11 @@ class SSDPHarmony extends IPSModule
             }
             $SendData = [
                 'DataID'     => '{C8792760-65CF-4C53-B5C7-A30FCC84FEFE}',
-                'Buffer'     => utf8_encode($Payload),
+                'Buffer'     => mb_convert_encoding($Payload, 'UTF-8', 'ISO-8859-1'),
                 'ClientIP'   => '239.255.255.250',
-                'ClientPort' => 1900, ];
+                'ClientPort' => 1900,
+                'Type'       => 0
+                ];
             //        $this->SendDebug("SendToParent", $SendData, 0);
             $this->SendDataToParent(json_encode($SendData));
         }
